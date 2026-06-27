@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useUserContext } from "@/contexts/user-context";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -79,79 +80,100 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isAlumni, setIsAlumni] = useState(true);
 
-  // Initialize data
+  // Supabase Option Listings States
+  const [campuses, setCampuses] = useState<{ id: string; name: string; status?: string }[]>([]);
+  const [educations, setEducations] = useState<{ id: string; name: string }[]>([]);
+  const [courses, setCourses] = useState<{ id: string; name: string }[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(true);
+
+  // Initialize data and load options from Supabase
   useEffect(() => {
-    // 1. First check localStorage for previously saved profile details
-    const stored = localStorage.getItem("ngconnect_profile");
-    if (stored) {
+    async function loadProfileAndOptions() {
       try {
-        const parsed = JSON.parse(stored);
-        setName(parsed.name || "");
-        setEmail(parsed.email || "");
-        setPhone(parsed.phone || "");
-        setGender(parsed.gender || "");
-        setCity(parsed.city || "");
-        setState(parsed.state || "");
-        setCampus(parsed.campus || "");
-        setRole(parsed.role || "");
-        setBatch(parsed.batch || "");
-        setBio(parsed.bio || "");
-        setEducation(parsed.education || "");
-        setCourse(parsed.course || "");
-        setGithub(parsed.github || "");
-        setLinkedin(parsed.linkedin || "");
-        setSkills(parsed.skills || []);
-        setAvatarUrl(parsed.avatarUrl || "");
-        setSelectedTheme(parsed.selectedTheme || "midnight");
+        setIsLoadingOptions(true);
+        const supabase = createClient();
+
+        // 1. Fetch dropdown options from Supabase tables
+        const [campusesRes, educationsRes, coursesRes] = await Promise.all([
+          supabase.from("ng_campuses").select("id, name, status").order("name"),
+          supabase.from("highest_education").select("id, name").order("name"),
+          supabase.from("ng_courses").select("id, name").order("name"),
+        ]);
+
+        const allCampuses = campusesRes.data || [];
+        const allEducations = educationsRes.data || [];
+        const allCourses = coursesRes.data || [];
+
+        setEducations(allEducations);
+        setCourses(allCourses);
+
+        // 2. Fetch user profile data from Supabase Auth
+        const { data: { user } } = await supabase.auth.getUser();
         
-        // Prioritize context/Supabase truth if available
-        if (contextUser) {
-          setIsAlumni(contextUser.isAlumni !== false);
+        let metadata: any = {};
+        let userEmail = "";
+        let isUserAlumni = true;
+
+        if (user) {
+          metadata = user.user_metadata || {};
+          userEmail = user.email || "";
+          isUserAlumni = metadata.is_alumni !== false;
         } else {
-          setIsAlumni(parsed.isAlumni !== false);
+          // Fallback to local storage if not logged in
+          const stored = localStorage.getItem("ngconnect_profile");
+          if (stored) {
+            try {
+              metadata = JSON.parse(stored);
+              userEmail = metadata.email || "";
+              isUserAlumni = metadata.isAlumni !== false;
+            } catch (e) {
+              console.error("Error reading localStorage", e);
+            }
+          }
         }
-        return;
-      } catch (e) {
-        console.error("Error reading localStorage", e);
+
+        // Set campuses (show all campuses since this is for alumni, including closed ones)
+        setCampuses(allCampuses);
+
+        // Set states from metadata or context or empty defaults
+        setName(metadata.full_name || metadata.name || contextUser?.name || "");
+        setEmail(userEmail || contextUser?.email || "");
+        setPhone(metadata.phone || "");
+        setGender(metadata.gender || "");
+        setCity(metadata.city || "");
+        setState(metadata.state || "");
+        setCampus(metadata.campus || "");
+        setRole(metadata.role || contextUser?.role || "");
+        setBatch(metadata.batch || "");
+        setBio(metadata.bio || "");
+        setEducation(metadata.education || "");
+        setCourse(metadata.course || "");
+        setGithub(metadata.github || "");
+        setLinkedin(metadata.linkedin || "");
+        setSkills(metadata.skills || []);
+        setAvatarUrl(metadata.avatarUrl || metadata.avatar_url || contextUser?.avatar || "");
+        setSelectedTheme(metadata.selectedTheme || metadata.selected_theme || "midnight");
+        setIsAlumni(contextUser ? contextUser.isAlumni !== false : isUserAlumni);
+
+      } catch (error) {
+        console.error("Error loading data from Supabase:", error);
+        toast.error("Failed to load options from database.");
+      } finally {
+        setIsLoadingOptions(false);
       }
     }
 
-    // 2. Otherwise fallback to UserContext / Context User metadata if available
-    if (contextUser) {
-      setName(contextUser.name || "");
-      setEmail(contextUser.email || "");
-      setAvatarUrl(contextUser.avatar || "");
-      setRole(contextUser.role || "Student");
-      setIsAlumni(contextUser.isAlumni !== false);
-    } else {
-      // Complete Dummy Fallbacks for testing frontend immediately
-      setName("Nitin Sudarshan");
-      setEmail("nitin@navgurukul.org");
-      setPhone("+91 98765 43210");
-      setGender("Male");
-      setCity("Dharamshala");
-      setState("Himachal Pradesh");
-      setCampus("Dharamshala");
-      setRole("Admin");
-      setBatch("2020");
-      setBio("Full-stack enthusiast passionate about education, mentorship, and building open-source projects for the NavGurukul ecosystem.");
-      setEducation("Undergraduate (Bachelors)");
-      setCourse("Software Engineering (JavaScript)");
-      setGithub("https://github.com/nitin");
-      setLinkedin("https://linkedin.com/in/nitin");
-      setSkills(["React", "Next.js", "TypeScript"]);
-      setAvatarUrl("");
-      setIsAlumni(true);
-    }
+    loadProfileAndOptions();
   }, [contextUser]);
 
-  // Handle Mock Save
-  const handleSave = (e: React.FormEvent) => {
+  // Handle Save to Supabase Auth User Metadata
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
-    // Simulate saving delay
-    setTimeout(() => {
+    try {
+      const supabase = createClient();
+
       const profileData = {
         name,
         email,
@@ -170,15 +192,37 @@ export default function ProfilePage() {
         selectedTheme,
         education,
         course,
-        isAlumni
+        isAlumni,
+        
+        // Match Supabase user metadata standardized keys
+        full_name: name,
+        is_alumni: isAlumni,
+        avatar_url: avatarUrl,
+        selected_theme: selectedTheme
       };
 
-      localStorage.setItem("ngconnect_profile", JSON.stringify(profileData));
-      setIsSaving(false);
-      toast.success("Profile saved successfully!", {
-        description: "Your local profile configurations have been updated.",
+      const { error } = await supabase.auth.updateUser({
+        data: profileData
       });
-    }, 800);
+
+      if (error) {
+        throw error;
+      }
+
+      // Sync local storage as cache fallback
+      localStorage.setItem("ngconnect_profile", JSON.stringify(profileData));
+
+      toast.success("Profile saved successfully!", {
+        description: "Your profile details have been synced to Supabase.",
+      });
+    } catch (error: any) {
+      console.error("Error saving profile details:", error);
+      toast.error("Failed to save changes", {
+        description: error.message || "An error occurred while updating your profile.",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Skill Add Handler
@@ -465,11 +509,21 @@ export default function ProfilePage() {
                         <SelectValue placeholder="Select Campus" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Dharamshala">Dharamshala</SelectItem>
-                        <SelectItem value="Sarjapur">Sarjapur</SelectItem>
-                        <SelectItem value="Pune">Pune</SelectItem>
-                        <SelectItem value="Bengaluru">Bengaluru</SelectItem>
-                        <SelectItem value="Other">Other / Remote</SelectItem>
+                        {isLoadingOptions ? (
+                          <SelectItem value="loading" disabled>
+                            Loading campuses...
+                          </SelectItem>
+                        ) : campuses.length === 0 ? (
+                          <SelectItem value="none" disabled>
+                            No campuses available
+                          </SelectItem>
+                        ) : (
+                          campuses.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>
+                              {c.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -484,13 +538,21 @@ export default function ProfilePage() {
                         <SelectValue placeholder="Select Education" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="High School (10th)">High School (10th)</SelectItem>
-                        <SelectItem value="Intermediate (12th)">Intermediate (12th)</SelectItem>
-                        <SelectItem value="Diploma">Diploma</SelectItem>
-                        <SelectItem value="Undergraduate (Bachelors)">Undergraduate (Bachelors)</SelectItem>
-                        <SelectItem value="Postgraduate (Masters)">Postgraduate (Masters)</SelectItem>
-                        <SelectItem value="PhD">PhD / Doctorate</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        {isLoadingOptions ? (
+                          <SelectItem value="loading" disabled>
+                            Loading education...
+                          </SelectItem>
+                        ) : educations.length === 0 ? (
+                          <SelectItem value="none" disabled>
+                            No education levels available
+                          </SelectItem>
+                        ) : (
+                          educations.map((e) => (
+                            <SelectItem key={e.id} value={e.name}>
+                              {e.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -505,13 +567,21 @@ export default function ProfilePage() {
                         <SelectValue placeholder="Select Course" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Software Engineering (Python)">Software Engineering (Python)</SelectItem>
-                        <SelectItem value="Software Engineering (JavaScript)">Software Engineering (JavaScript)</SelectItem>
-                        <SelectItem value="Software Engineering (React/Frontend)">Software Engineering (React/Frontend)</SelectItem>
-                        <SelectItem value="Data Science & Analytics">Data Science & Analytics</SelectItem>
-                        <SelectItem value="Graphic Design & UX/UI">Graphic Design & UX/UI</SelectItem>
-                        <SelectItem value="Product Management">Product Management</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                        {isLoadingOptions ? (
+                          <SelectItem value="loading" disabled>
+                            Loading courses...
+                          </SelectItem>
+                        ) : courses.length === 0 ? (
+                          <SelectItem value="none" disabled>
+                            No courses available
+                          </SelectItem>
+                        ) : (
+                          courses.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>
+                              {c.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>

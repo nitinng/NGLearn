@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { UserRole, UserTeam } from "@/lib/roles";
 import { useUserContext } from "@/contexts/user-context";
@@ -31,7 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Shield, Users, Edit3, Loader2, GraduationCap } from "lucide-react";
+import { Shield, Users, Edit3, Loader2, GraduationCap, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 interface UsersTableProps {
   initialUsers: any[];
@@ -71,6 +72,33 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
   const [team, setTeam] = useState<UserTeam>("None");
   const [isAlumni, setIsAlumni] = useState<"Yes" | "No">("Yes");
   const [isSaving, setIsSaving] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Filter users by search term
+  const filteredUsers = useMemo(() => {
+    return (initialUsers || []).filter(user => {
+      const metadata = user.user_metadata || {};
+      const name = (metadata.full_name || metadata.name || "").toLowerCase();
+      const email = (user.email || "").toLowerCase();
+      const search = searchTerm.toLowerCase();
+      return name.includes(search) || email.includes(search);
+    });
+  }, [initialUsers, searchTerm]);
+
+  // Reset page when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredUsers.slice(start, start + itemsPerPage);
+  }, [filteredUsers, currentPage]);
 
   useEffect(() => {
     setMounted(true);
@@ -166,7 +194,23 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
   const isHardcodedSuper = selectedUser && ["nitin@navgurukul.org", "nitinsudarshan@gmail.com"].includes((selectedUser.email || "").toLowerCase());
 
   return (
-    <div className="w-full max-w-full overflow-hidden">
+    <div className="w-full max-w-full overflow-hidden space-y-4">
+      {/* Search Bar */}
+      <div className="flex items-center justify-between gap-4 bg-card/40 backdrop-blur-md border rounded-xl p-3 shadow-xs">
+        <div className="relative max-w-sm w-full">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 h-9.5 rounded-lg border-input bg-background/50 text-sm focus-visible:ring-1"
+          />
+        </div>
+        <div className="text-xs text-muted-foreground font-semibold">
+          {filteredUsers.length} of {initialUsers?.length || 0} users found
+        </div>
+      </div>
+
       <div className="rounded-xl border bg-card/60 backdrop-blur-md p-1 sm:p-2 shadow-sm overflow-x-auto w-full max-w-full">
         <Table>
           <TableHeader>
@@ -181,8 +225,8 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {initialUsers && initialUsers.length > 0 ? (
-              initialUsers.map((user) => {
+            {paginatedUsers && paginatedUsers.length > 0 ? (
+              paginatedUsers.map((user) => {
                 const metadata = user.user_metadata || {};
                 const name = metadata.full_name || metadata.name || "Unknown";
                 const avatar = metadata.avatar_url || metadata.picture || "";
@@ -272,6 +316,63 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 bg-card/45 backdrop-blur-sm border rounded-xl shadow-xs">
+          <div className="text-xs text-muted-foreground font-medium">
+            Showing <span className="font-semibold text-foreground">{Math.min(filteredUsers.length, (currentPage - 1) * itemsPerPage + 1)}</span> to{" "}
+            <span className="font-semibold text-foreground">{Math.min(filteredUsers.length, currentPage * itemsPerPage)}</span> of{" "}
+            <span className="font-semibold text-foreground">{filteredUsers.length}</span> entries
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="h-8 text-xs font-semibold px-3 rounded-lg"
+            >
+              Previous
+            </Button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                if (
+                  totalPages > 5 &&
+                  page !== 1 &&
+                  page !== totalPages &&
+                  Math.abs(page - currentPage) > 1
+                ) {
+                  if (page === 2 || page === totalPages - 1) {
+                    return <span key={page} className="text-muted-foreground px-1 text-xs">...</span>;
+                  }
+                  return null;
+                }
+                return (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(page)}
+                    className={`h-8 w-8 text-xs font-semibold p-0 rounded-lg ${currentPage === page ? "bg-primary text-primary-foreground" : ""}`}
+                  >
+                    {page}
+                  </Button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="h-8 text-xs font-semibold px-3 rounded-lg"
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
         <DialogContent className="sm:max-w-[425px] overflow-hidden rounded-2xl border bg-card p-6 shadow-2xl animate-in zoom-in-95 duration-200">

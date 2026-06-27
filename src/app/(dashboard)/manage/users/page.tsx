@@ -2,6 +2,7 @@ import React from 'react';
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { UsersTable } from "./users-table";
+import { UsersStatsCards, UsersStatsCharts } from "./users-stats";
 
 export default async function ManageUsersPage() {
   const supabase = createAdminClient();
@@ -33,7 +34,7 @@ export default async function ManageUsersPage() {
   });
 
   return (
-    <div className="flex flex-col gap-4 p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto overflow-hidden">
+    <div className="flex flex-col gap-4 p-4 sm:p-6 md:p-8 w-full max-w-7xl mx-auto pb-12">
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 dark:from-white dark:via-indigo-300 dark:to-white bg-clip-text text-transparent">
@@ -45,7 +46,14 @@ export default async function ManageUsersPage() {
         </div>
       </div>
 
+      {/* 1. Stat Cards */}
+      <UsersStatsCards users={filteredUsers} />
+
+      {/* 2. User Table (paginated) */}
       <UsersTable initialUsers={filteredUsers} isAdmin={!!isAdmin} />
+
+      {/* 3. Distribution Charts */}
+      <UsersStatsCharts users={filteredUsers} />
     </div>
   );
 }

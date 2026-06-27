@@ -10,6 +10,7 @@ import {
   GalleryVerticalEnd,
   Users,
   GraduationCap,
+  Database,
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
@@ -64,6 +65,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Settings",
       url: "#",
       icon: Settings,
+      items: [
+        {
+          title: "Data Management",
+          url: "/settings/data-management",
+        },
+      ],
     },
   ];
 
@@ -77,6 +84,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Alumni Network",
       url: "/manage/alumni-network",
       icon: GraduationCap,
+    },
+    {
+      title: "Master Data",
+      url: "/manage/master-data",
+      icon: Database,
     },
   ];
 
