@@ -1,15 +1,6 @@
-# Next.js Shadcn Boilerplate
+# NGConnect
 
-A clean, modern boilerplate featuring Next.js (App Router), Tailwind CSS, and Shadcn UI components.
-
-## Features
-
-- **Next.js 16** App Router
-- **Tailwind CSS v4** for modern styling
-- **Shadcn UI** pre-configured components
-- **Sidebar & Layout** included (built with Shadcn Sidebar)
-- **Dark Mode** support out of the box
-- **Fully type-safe** with TypeScript
+The NGConnect application platform built with Next.js (App Router), Tailwind CSS, and Shadcn UI components.
 
 ## Getting Started
 
@@ -24,20 +15,6 @@ A clean, modern boilerplate featuring Next.js (App Router), Tailwind CSS, and Sh
    ```
 
 3. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Structure
-
-- `src/app/`: Next.js App Router pages and layouts.
-- `src/components/`: Shadcn UI components and shared UI elements.
-- `src/contexts/`: React context providers (like `user-context`).
-- `src/lib/`: Utility functions.
-
-## Components Included
-
-This boilerplate includes several pre-built generic components:
-- `AppSidebar`: A generic application sidebar.
-- `SiteHeader`: A top navigation bar with a user menu and theme toggle.
-- `LoginForm`: A generic placeholder login form component.
 
 ## License
 

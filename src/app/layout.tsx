@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Next.js Shadcn Boilerplate",
-  description: "A clean, modern boilerplate with Next.js, Tailwind CSS, and Shadcn UI.",
+  title: "NGConnect",
+  description: "The NGConnect application platform.",
 };
 
 import { ThemeProvider } from "@/components/theme-provider"

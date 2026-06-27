@@ -7,6 +7,8 @@ import {
   Send,
   LayoutDashboard,
   Settings,
+  GalleryVerticalEnd,
+  Users,
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
@@ -20,7 +22,6 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { Fingerprint } from "lucide-react"
 import Link from "next/link"
 
 const data = {
@@ -65,6 +66,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  const navManage: NavItem[] = [
+    {
+      title: "Users",
+      url: "/manage/users",
+      icon: Users,
+    },
+  ];
+
   return (
     <Sidebar
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
@@ -80,11 +89,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   if (isMobile) setOpenMobile(false)
                 }}
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-indigo-600 text-sidebar-primary-foreground">
-                  <Fingerprint className="size-6" />
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <GalleryVerticalEnd className="size-4" />
                 </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">Boilerplate App</span>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-semibold">NGConnect</span>
                   <span className="truncate text-xs text-muted-foreground">
                     Admin Workspace
                   </span>
@@ -96,6 +105,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navGeneral} />
+        <NavMain items={navManage} label="Manage" />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
     </Sidebar>
