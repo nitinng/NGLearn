@@ -119,3 +119,34 @@ export interface MergedProfile extends AlumniMaster {
   // Whether this alumni has an alumni_profile row at all
   _has_profile: boolean;
 }
+
+// ============================================================
+// Coursera Integration Types
+// ============================================================
+
+export interface CourseraConfig {
+  id: string;
+  client_id: string;
+  client_secret: string;
+  org_id: string;
+  test_mode: boolean;
+  last_sync_at: string | null;
+  last_sync_status: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CourseraActivity {
+  id: string;
+  email: string;
+  course_id: string;
+  course_name: string;
+  overall_progress: number;
+  approx_total_hours: number;
+  completed: boolean;
+  membership_state: string;
+  last_activity_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+

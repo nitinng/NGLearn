@@ -23,6 +23,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { ImportBatch } from '@/types/import';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import LoadingView from '@/components/loading-view';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -201,7 +202,7 @@ export default function RollbackCenterPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex items-center gap-3">
           <Link
-            href="/settings/data-management"
+            href="/data-management"
             className="p-2 border border-border/80 rounded-md hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -241,6 +242,9 @@ export default function RollbackCenterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
+          {loading ? (
+            <LoadingView fullScreen={false} />
+          ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse min-w-[50rem]">
               <thead className="bg-muted/50 border-b border-border/60">
@@ -320,6 +324,7 @@ export default function RollbackCenterPage() {
               </tbody>
             </table>
           </div>
+          )}
         </CardContent>
       </Card>
 

@@ -358,7 +358,7 @@ export default function ImportAlumniDataPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex items-center gap-3">
           <Link
-            href="/settings/data-management"
+            href="/data-management"
             className="p-2 border border-border/80 rounded-md hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -594,7 +594,7 @@ export default function ImportAlumniDataPage() {
             <Button variant="outline" className="rounded-md" onClick={resetImportFlow}>
               Import Another File
             </Button>
-            <Button className="rounded-md" onClick={() => router.push('/settings/data-management/import-history')}>
+            <Button className="rounded-md" onClick={() => router.push('/data-management/import-history')}>
               View Import History
             </Button>
           </CardFooter>

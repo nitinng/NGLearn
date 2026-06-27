@@ -90,7 +90,7 @@ export default async function ImportHistoryPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex items-center gap-3">
           <Link
-            href="/settings/data-management"
+            href="/data-management"
             className="p-2 border border-border/80 rounded-md hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -202,7 +202,7 @@ export default async function ImportHistoryPage() {
                     <td className="px-5 py-4 text-right">
                       {isCompleted && (role === 'Super Admin' || role === 'Admin') ? (
                         <Link
-                          href={`/settings/data-management/rollback?batch=${batch.id}`}
+                          href={`/data-management/rollback?batch=${batch.id}`}
                           className="inline-flex items-center gap-1.5 text-xs text-red-600 hover:text-red-500 font-semibold bg-red-500/10 hover:bg-red-500/15 px-2.5 py-1.5 rounded-md border border-red-500/20 dark:border-red-500/30 transition-all hover:scale-105"
                         >
                           <RotateCcw className="w-3.5 h-3.5" />

@@ -23,6 +23,7 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import type { AuditLog } from '@/types/audit';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import LoadingView from '@/components/loading-view';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -322,7 +323,7 @@ function RecordHistoryContent() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex items-center gap-3">
           <Link
-            href={emailParam ? '/manage/master-data' : '/settings/data-management'}
+            href={emailParam ? '/manage/master-data' : '/data-management'}
             className="p-2 border border-border/80 rounded-md hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
             title={emailParam ? 'Back to Master Data' : 'Back to Data Management'}
           >
@@ -379,7 +380,12 @@ function RecordHistoryContent() {
       )}
 
       {/* Results Section */}
-      {timeline !== null && (
+      {loading && (
+        <Card className="border border-border/80 rounded-md shadow-lg bg-card/45 backdrop-blur-sm mt-6 overflow-hidden">
+          <LoadingView fullScreen={false} />
+        </Card>
+      )}
+      {!loading && timeline !== null && (
         <Card className="border border-border/80 rounded-md shadow-lg bg-card/45 backdrop-blur-sm">
           <CardHeader className="border-b border-border/60 bg-muted/15 flex flex-row items-center justify-between pb-5">
             <div>

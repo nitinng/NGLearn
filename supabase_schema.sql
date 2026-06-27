@@ -504,3 +504,192 @@ CREATE TRIGGER trg_updated_at_alumni_master
 CREATE TRIGGER trg_updated_at_alumni_profile
     BEFORE UPDATE ON public.alumni_profile
     FOR EACH ROW EXECUTE FUNCTION public.fn_set_updated_at();
+
+
+-- ==========================================
+-- 5.9 Coursera Integration Tables
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS public.coursera_config (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    client_id TEXT NOT NULL,
+    client_secret TEXT NOT NULL,
+    org_id TEXT NOT NULL,
+    test_mode BOOLEAN NOT NULL DEFAULT TRUE,
+    minimum_monthly_hours NUMERIC NOT NULL DEFAULT 20.0,
+    inactive_after_days INTEGER NOT NULL DEFAULT 90,
+    snapshot_frequency TEXT DEFAULT 'monthly',
+    audit_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    total_licenses INTEGER,
+    last_sync_at TIMESTAMPTZ,
+    last_sync_status TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.coursera_config ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "coursera_config_super_admin_all" ON public.coursera_config;
+CREATE POLICY "coursera_config_super_admin_all"
+    ON public.coursera_config FOR ALL
+    TO authenticated
+    USING (public.is_super_admin())
+    WITH CHECK (public.is_super_admin());
+
+CREATE TABLE IF NOT EXISTS public.coursera_activity (
+    id TEXT PRIMARY KEY, -- externalId~contentType~contentId
+    email TEXT NOT NULL REFERENCES public.alumni_master(email) ON DELETE CASCADE,
+    course_id TEXT NOT NULL,
+    course_name TEXT NOT NULL,
+    overall_progress NUMERIC NOT NULL DEFAULT 0, -- 0 to 100
+    approx_total_hours NUMERIC NOT NULL DEFAULT 0,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    membership_state TEXT NOT NULL DEFAULT 'MEMBER',
+    is_alumni BOOLEAN NOT NULL DEFAULT FALSE,
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    last_activity_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.coursera_activity ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "coursera_activity_select_all" ON public.coursera_activity;
+CREATE POLICY "coursera_activity_select_all"
+    ON public.coursera_activity FOR SELECT
+    TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "coursera_activity_write_super_admin" ON public.coursera_activity;
+CREATE POLICY "coursera_activity_write_super_admin"
+    ON public.coursera_activity FOR ALL
+    TO authenticated
+    USING (public.is_super_admin())
+    WITH CHECK (public.is_super_admin());
+
+CREATE TRIGGER trg_updated_at_coursera_config
+    BEFORE UPDATE ON public.coursera_config
+    FOR EACH ROW EXECUTE FUNCTION public.fn_set_updated_at();
+
+CREATE TRIGGER trg_updated_at_coursera_activity
+    BEFORE UPDATE ON public.coursera_activity
+    FOR EACH ROW EXECUTE FUNCTION public.fn_set_updated_at();
+
+
+CREATE TABLE IF NOT EXISTS public.coursera_activity_snapshot (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    snapshot_month DATE NOT NULL,
+    email TEXT NOT NULL REFERENCES public.alumni_master(email) ON DELETE CASCADE,
+    course_id TEXT NOT NULL,
+    course_name TEXT,
+    cumulative_hours NUMERIC NOT NULL DEFAULT 0,
+    overall_progress NUMERIC,
+    completed BOOLEAN,
+    source TEXT CHECK (source IN ('CSV', 'API', 'MANUAL')),
+    snapshot_batch UUID,
+    is_alumni BOOLEAN NOT NULL DEFAULT FALSE,
+    recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(snapshot_month, email, course_id, snapshot_batch)
+);
+
+-- Enable RLS
+ALTER TABLE public.coursera_activity_snapshot ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "coursera_activity_snapshot_select_all" ON public.coursera_activity_snapshot;
+CREATE POLICY "coursera_activity_snapshot_select_all"
+    ON public.coursera_activity_snapshot FOR SELECT
+    TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "coursera_activity_snapshot_write_super_admin" ON public.coursera_activity_snapshot;
+CREATE POLICY "coursera_activity_snapshot_write_super_admin"
+    ON public.coursera_activity_snapshot FOR ALL
+    TO authenticated
+    USING (public.is_super_admin())
+    WITH CHECK (public.is_super_admin());
+
+CREATE INDEX IF NOT EXISTS idx_coursera_activity_snapshot_email ON public.coursera_activity_snapshot(email);
+CREATE INDEX IF NOT EXISTS idx_coursera_activity_snapshot_date ON public.coursera_activity_snapshot(recorded_at);
+CREATE INDEX IF NOT EXISTS idx_coursera_activity_snapshot_month ON public.coursera_activity_snapshot(snapshot_month);
+CREATE INDEX IF NOT EXISTS idx_coursera_activity_snapshot_email_course ON public.coursera_activity_snapshot(email, course_id);
+CREATE INDEX IF NOT EXISTS idx_coursera_activity_snapshot_email_course_date ON public.coursera_activity_snapshot(email, course_id, recorded_at);
+
+
+-- ==========================================
+-- 5.10 Coursera Sync Log & Metrics
+-- ==========================================
+
+CREATE TABLE IF NOT EXISTS public.coursera_sync_log (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    status TEXT NOT NULL CHECK (status IN ('processing', 'completed', 'failed')),
+    records_processed INTEGER NOT NULL DEFAULT 0,
+    records_inserted INTEGER NOT NULL DEFAULT 0,
+    records_updated INTEGER NOT NULL DEFAULT 0,
+    duration_ms BIGINT,
+    error_message TEXT
+);
+
+ALTER TABLE public.coursera_sync_log ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "coursera_sync_log_all"
+    ON public.coursera_sync_log FOR ALL
+    TO authenticated USING (public.is_super_admin()) WITH CHECK (public.is_super_admin());
+
+
+CREATE TABLE IF NOT EXISTS public.coursera_metrics (
+    id INT PRIMARY KEY DEFAULT 1,
+    lifetime_users INT NOT NULL DEFAULT 0,
+    active_users INT NOT NULL DEFAULT 0,
+    active_alumni INT NOT NULL DEFAULT 0,
+    total_learning_hours NUMERIC NOT NULL DEFAULT 0,
+    course_completions INT NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.coursera_metrics ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "coursera_metrics_all"
+    ON public.coursera_metrics FOR ALL
+    TO authenticated USING (true) WITH CHECK (true);
+
+
+CREATE TABLE IF NOT EXISTS public.coursera_monthly_metrics (
+    id TEXT PRIMARY KEY,
+    month_label TEXT NOT NULL,
+    total_learning_hours NUMERIC NOT NULL DEFAULT 0,
+    lifetime_users INT NOT NULL DEFAULT 0,
+    active_users INT NOT NULL DEFAULT 0,
+    active_alumni INT NOT NULL DEFAULT 0,
+    inactive_users INT NOT NULL DEFAULT 0,
+    inactive_alumni INT NOT NULL DEFAULT 0,
+    course_completions INT NOT NULL DEFAULT 0,
+    avg_learning_hours NUMERIC NOT NULL DEFAULT 0,
+    avg_course_completions NUMERIC NOT NULL DEFAULT 0,
+    completion_rate NUMERIC NOT NULL DEFAULT 0,
+    license_utilization NUMERIC NOT NULL DEFAULT 0,
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.coursera_monthly_metrics ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "coursera_monthly_metrics_all"
+    ON public.coursera_monthly_metrics FOR ALL
+    TO authenticated USING (true) WITH CHECK (true);
+
+
+CREATE TABLE IF NOT EXISTS public.coursera_compliance_audit (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    month TEXT NOT NULL,
+    email TEXT NOT NULL,
+    hours NUMERIC NOT NULL DEFAULT 0,
+    is_compliant BOOLEAN NOT NULL DEFAULT FALSE,
+    is_active BOOLEAN NOT NULL DEFAULT FALSE,
+    is_alumni BOOLEAN NOT NULL DEFAULT FALSE,
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(month, email)
+);
+
+ALTER TABLE public.coursera_compliance_audit ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "coursera_compliance_audit_all"
+    ON public.coursera_compliance_audit FOR ALL
+    TO authenticated USING (true) WITH CHECK (true);

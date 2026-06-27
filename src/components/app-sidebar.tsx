@@ -71,7 +71,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     {
       title: "Data Management",
-      url: "/settings/data-management",
+      url: "/data-management",
       icon: DatabaseBackup,
     },
     {
