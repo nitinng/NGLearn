@@ -16,11 +16,13 @@ import {
   HelpCircle,
   FileSpreadsheet,
   User,
-  History
+  History,
+  BookOpen
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useUserContext } from '@/contexts/user-context';
 import type { AlumniMaster } from '@/types/alumni';
+import CourseraAlumniStats from './_components/CourseraAlumniStats';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -588,7 +590,7 @@ export default function MasterDataPage() {
                             Details
                           </Button>
                           <Link 
-                            href={`/settings/data-management/record-history?email=${item.email}`}
+                            href={`/data-management/record-history?email=${item.email}`}
                             className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-white font-bold bg-indigo-500/10 hover:bg-indigo-600 px-3 py-1.5 h-8 rounded-md border border-indigo-500/20 dark:border-indigo-500/30 transition-all hover:scale-[1.03] active:scale-[0.97] shadow-sm hover:shadow-md"
                           >
                             <History className="w-3.5 h-3.5" />
@@ -805,7 +807,7 @@ export default function MasterDataPage() {
 
 
               {/* Administrative Details */}
-              <div className="bg-muted/10 border border-border/40 rounded-md p-5 flex flex-col sm:flex-row justify-between gap-4 text-xs font-semibold text-muted-foreground">
+              <div className="bg-muted/10 border border-border/40 rounded-md p-5 flex flex-col sm:flex-row justify-between gap-4 text-xs font-semibold text-muted-foreground md:col-span-2">
                 <div className="flex items-center gap-2">
                   <span>Donor Program Status:</span>
                   <Badge 
@@ -828,16 +830,20 @@ export default function MasterDataPage() {
                   </span>
                 </div>
               </div>
+
+              {/* Coursera Stats */}
+              <CourseraAlumniStats email={selectedAlumni.email} />
+
             </div>
 
             {/* Modal Footer */}
-            <div className="border-t border-border/60 p-4 bg-muted/40 flex justify-end gap-3">
+            <div className="border-t border-border/60 p-4 bg-muted/40 flex justify-end gap-3 flex-wrap">
               <Button variant="outline" size="sm" onClick={() => setSelectedAlumni(null)} className="rounded-md">
                 Close View
               </Button>
               <Link 
                 href={`/settings/data-management/record-history?email=${selectedAlumni.email}`}
-                className="inline-flex items-center gap-1 text-xs text-white hover:text-white font-bold bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-md transition-all"
+                className="inline-flex items-center gap-1.5 text-xs text-white hover:text-white font-bold bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-md transition-all"
                 onClick={() => setSelectedAlumni(null)}
               >
                 <Eye className="w-3.5 h-3.5" />
