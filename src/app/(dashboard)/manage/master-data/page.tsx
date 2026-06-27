@@ -404,7 +404,7 @@ export default function MasterDataPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-primary/10 to-indigo-500/10 text-primary rounded-xl border border-primary/20 shadow-sm">
+          <div className="p-3 bg-gradient-to-br from-primary/10 to-indigo-500/10 text-primary rounded-md border border-primary/20 shadow-sm">
             <Database className="w-5 h-5" />
           </div>
           <div>
@@ -419,7 +419,7 @@ export default function MasterDataPage() {
           size="sm" 
           onClick={fetchMasterData} 
           disabled={loading}
-          className="gap-2 rounded-xl transition-all"
+          className="gap-2 rounded-md transition-all"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Reload Data
@@ -451,10 +451,10 @@ export default function MasterDataPage() {
                 <SlidersHorizontal className="w-3 h-3" /> Filter By Column
               </label>
               <Select value={filterColumn} onValueChange={handleFilterColumnChange}>
-                <SelectTrigger className="h-9 rounded-xl">
+                <SelectTrigger className="h-9 rounded-md">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectContent className="rounded-md">
                   <SelectItem value="all">All Fields</SelectItem>
                   <SelectItem value="name">Name</SelectItem>
                   <SelectItem value="email">Email ID</SelectItem>
@@ -476,7 +476,7 @@ export default function MasterDataPage() {
                 placeholder="Type to filter master records..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className="h-9 rounded-xl border-border/80"
+                className="h-9 rounded-md border-border/80"
               />
             </div>
 
@@ -486,10 +486,10 @@ export default function MasterDataPage() {
           <div className="w-full sm:w-28 space-y-1">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block">Show Entries</label>
             <Select value={String(pageSize)} onValueChange={handlePageSizeChange}>
-              <SelectTrigger className="h-9 rounded-xl">
+              <SelectTrigger className="h-9 rounded-md">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
+              <SelectContent className="rounded-md">
                 <SelectItem value="10">10 entries</SelectItem>
                 <SelectItem value="25">25 entries</SelectItem>
                 <SelectItem value="50">50 entries</SelectItem>
@@ -563,7 +563,7 @@ export default function MasterDataPage() {
                       <td className="px-5 py-4 text-center">
                         <Badge 
                           variant="outline" 
-                          className={`text-[9px] font-bold px-2.5 py-0.5 rounded-full border shadow-sm ${
+                          className={`text-[9px] font-bold px-2.5 py-0.5 rounded-md border shadow-sm ${
                             item.status === 'Placed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900' :
                             item.status === 'Active' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900' :
                             item.status === 'DropOut' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900' :
@@ -579,14 +579,14 @@ export default function MasterDataPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => setSelectedAlumni(item)}
-                            className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/80 px-3 py-1.5 h-8 rounded-xl border border-border/80 shadow-sm transition-all hover:scale-[1.03] active:scale-[0.97]"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/80 px-3 py-1.5 h-8 rounded-md border border-border/80 shadow-sm transition-all hover:scale-[1.03] active:scale-[0.97]"
                           >
                             <Info className="w-3.5 h-3.5 text-primary" />
                             Details
                           </Button>
                           <Link 
                             href={`/settings/data-management/record-history?email=${item.email}`}
-                            className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-white font-bold bg-indigo-500/10 hover:bg-indigo-600 px-3 py-1.5 h-8 rounded-xl border border-indigo-500/20 dark:border-indigo-500/30 transition-all hover:scale-[1.03] active:scale-[0.97] shadow-sm hover:shadow-md"
+                            className="inline-flex items-center gap-1.5 text-xs text-indigo-600 hover:text-white font-bold bg-indigo-500/10 hover:bg-indigo-600 px-3 py-1.5 h-8 rounded-md border border-indigo-500/20 dark:border-indigo-500/30 transition-all hover:scale-[1.03] active:scale-[0.97] shadow-sm hover:shadow-md"
                           >
                             <History className="w-3.5 h-3.5" />
                             History
@@ -617,7 +617,7 @@ export default function MasterDataPage() {
                   size="sm"
                   onClick={() => handlePageChange(currentPage - 1)}
                   disabled={currentPage === 1}
-                  className="h-8 rounded-xl gap-1 text-xs font-semibold px-3"
+                  className="h-8 rounded-md gap-1 text-xs font-semibold px-3"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Previous
@@ -630,7 +630,7 @@ export default function MasterDataPage() {
                       variant={currentPage === idx + 1 ? 'default' : 'outline'}
                       size="sm"
                       onClick={() => handlePageChange(idx + 1)}
-                      className={`h-8 w-8 rounded-xl font-bold text-xs p-0`}
+                      className={`h-8 w-8 rounded-md font-bold text-xs p-0`}
                     >
                       {idx + 1}
                     </Button>
@@ -642,7 +642,7 @@ export default function MasterDataPage() {
                   size="sm"
                   onClick={() => handlePageChange(currentPage + 1)}
                   disabled={currentPage === totalPages}
-                  className="h-8 rounded-xl gap-1 text-xs font-semibold px-3"
+                  className="h-8 rounded-md gap-1 text-xs font-semibold px-3"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />
@@ -680,7 +680,7 @@ export default function MasterDataPage() {
                 variant="ghost" 
                 size="sm" 
                 onClick={() => setSelectedAlumni(null)}
-                className="h-8 w-8 p-0 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
+                className="h-8 w-8 p-0 rounded-md hover:bg-muted text-muted-foreground hover:text-foreground"
               >
                 ✕
               </Button>
@@ -691,7 +691,7 @@ export default function MasterDataPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 
                 {/* Personal Information */}
-                <div className="space-y-4 bg-muted/20 border border-border/40 rounded-xl p-5">
+                <div className="space-y-4 bg-muted/20 border border-border/40 rounded-md p-5">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 border-b border-border/40 pb-2">
                     <User className="w-3.5 h-3.5" /> Personal Information
                   </h4>
@@ -724,7 +724,7 @@ export default function MasterDataPage() {
                 </div>
 
                 {/* Academic Information */}
-                <div className="space-y-4 bg-muted/20 border border-border/40 rounded-xl p-5">
+                <div className="space-y-4 bg-muted/20 border border-border/40 rounded-md p-5">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 border-b border-border/40 pb-2">
                     <GraduationCap className="w-4 h-4" /> Academic Info
                   </h4>
@@ -748,7 +748,7 @@ export default function MasterDataPage() {
                 </div>
 
                 {/* Professional Status */}
-                <div className="space-y-4 bg-muted/20 border border-border/40 rounded-xl p-5 md:col-span-2 lg:col-span-1">
+                <div className="space-y-4 bg-muted/20 border border-border/40 rounded-md p-5 md:col-span-2 lg:col-span-1">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 border-b border-border/40 pb-2">
                     <Database className="w-3.5 h-3.5" /> Career & Status
                   </h4>
@@ -758,7 +758,7 @@ export default function MasterDataPage() {
                       <div className="mt-1">
                         <Badge 
                           variant="outline" 
-                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border shadow-sm ${
+                          className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md border shadow-sm ${
                             selectedAlumni.status === 'Placed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900' :
                             selectedAlumni.status === 'Active' ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900' :
                             selectedAlumni.status === 'DropOut' ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900' :
@@ -801,12 +801,12 @@ export default function MasterDataPage() {
               </div>
 
               {/* Administrative Details */}
-              <div className="bg-muted/10 border border-border/40 rounded-xl p-5 flex flex-col sm:flex-row justify-between gap-4 text-xs font-semibold text-muted-foreground">
+              <div className="bg-muted/10 border border-border/40 rounded-md p-5 flex flex-col sm:flex-row justify-between gap-4 text-xs font-semibold text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <span>Donor Program Status:</span>
                   <Badge 
                     variant="outline"
-                    className={`font-bold px-2 py-0.5 rounded-full border ${
+                    className={`font-bold px-2 py-0.5 rounded-md border ${
                       selectedAlumni.donor && !['No', 'no', 'false', 'none'].includes(selectedAlumni.donor)
                         ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900' 
                         : 'bg-muted text-muted-foreground border-border'
@@ -828,12 +828,12 @@ export default function MasterDataPage() {
 
             {/* Modal Footer */}
             <div className="border-t border-border/60 p-4 bg-muted/40 flex justify-end gap-3">
-              <Button variant="outline" size="sm" onClick={() => setSelectedAlumni(null)} className="rounded-xl">
+              <Button variant="outline" size="sm" onClick={() => setSelectedAlumni(null)} className="rounded-md">
                 Close View
               </Button>
               <Link 
                 href={`/settings/data-management/record-history?email=${selectedAlumni.email}`}
-                className="inline-flex items-center gap-1 text-xs text-white hover:text-white font-bold bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-xl transition-all"
+                className="inline-flex items-center gap-1 text-xs text-white hover:text-white font-bold bg-indigo-600 hover:bg-indigo-500 px-4 py-2 rounded-md transition-all"
                 onClick={() => setSelectedAlumni(null)}
               >
                 <Eye className="w-3.5 h-3.5" />

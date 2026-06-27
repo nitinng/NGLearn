@@ -57,7 +57,7 @@ export function MiniLoader() {
   };
 
   return (
-    <div className="w-14 h-14 rounded-lg mx-auto overflow-hidden shadow-xl shadow-indigo-600/30 mb-5 transition-transform hover:scale-105 bg-white dark:bg-slate-900 relative">
+    <div className="w-14 h-14 rounded-md mx-auto overflow-hidden shadow-xl shadow-indigo-600/30 mb-5 transition-transform hover:scale-105 bg-white dark:bg-slate-900 relative">
       {/* Spinning Rings */}
       <div className="absolute -inset-1.5 rounded-md border-2 border-slate-100 dark:border-slate-800"></div>
       <div className={`absolute -inset-1.5 rounded-md border-2 border-t-transparent animate-spin transition-colors duration-500 ${slideIndex === 0 ? 'border-rose-500' :

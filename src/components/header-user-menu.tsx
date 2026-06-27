@@ -41,7 +41,7 @@ export function HeaderUserMenu() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-9 gap-2 px-2 rounded-lg">
+                <Button variant="ghost" className="h-9 gap-2 px-2 rounded-md">
                     <Avatar className="h-7 w-7 rounded-md">
                         <AvatarImage src={userAvatar} alt={fullName} />
                         <AvatarFallback className="rounded-md text-xs">{initials}</AvatarFallback>

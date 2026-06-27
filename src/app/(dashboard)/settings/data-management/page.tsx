@@ -116,7 +116,7 @@ export default async function DataManagementPage() {
                       <CardTitle className="text-lg font-semibold tracking-tight text-foreground group-hover:text-primary dark:group-hover:text-white transition-colors duration-300">
                         {link.label}
                       </CardTitle>
-                      <span className="text-[9px] px-2 py-0.5 font-bold rounded-full bg-secondary border border-border text-muted-foreground uppercase tracking-widest">
+                      <span className="text-[9px] px-2 py-0.5 font-bold rounded-md bg-secondary border border-border text-muted-foreground uppercase tracking-widest">
                         {link.badge}
                       </span>
                     </div>

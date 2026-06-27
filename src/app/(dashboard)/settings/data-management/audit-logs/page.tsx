@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  ArrowLeft, 
-  FileSpreadsheet, 
-  Search, 
-  RefreshCw, 
+import {
+  ArrowLeft,
+  FileSpreadsheet,
+  Search,
+  RefreshCw,
   Database,
   SlidersHorizontal,
   Info,
@@ -152,13 +152,13 @@ export default function AuditLogsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex items-center gap-3">
-          <Link 
-            href="/settings/data-management" 
-            className="p-2 border border-border/80 rounded-xl hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
+          <Link
+            href="/settings/data-management"
+            className="p-2 border border-border/80 rounded-md hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -169,12 +169,12 @@ export default function AuditLogsPage() {
             </p>
           </div>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={fetchLogs} 
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={fetchLogs}
           disabled={loading}
-          className="gap-2 rounded-xl transition-all active:scale-95"
+          className="gap-2 rounded-md transition-all active:scale-95"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           Refresh Audit Trail
@@ -196,7 +196,7 @@ export default function AuditLogsPage() {
       )}
 
       {/* Filters panel */}
-      <Card className="border border-border/80 rounded-2xl shadow-sm bg-card/50">
+      <Card className="border border-border/80 rounded-md shadow-sm bg-card/50">
         <CardContent className="pt-5 pb-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Search Record ID / Email</label>
@@ -206,18 +206,18 @@ export default function AuditLogsPage() {
                 placeholder="e.g. name@domain.com"
                 value={searchEmail}
                 onChange={(e) => setSearchEmail(e.target.value)}
-                className="pl-9 rounded-xl h-9"
+                className="pl-9 rounded-md h-9"
               />
             </div>
           </div>
-          
+
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Table Name</label>
             <Select value={filterTable} onValueChange={setFilterTable}>
-              <SelectTrigger className="rounded-xl h-9">
+              <SelectTrigger className="rounded-md h-9">
                 <SelectValue placeholder="All Tables" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
+              <SelectContent className="rounded-md">
                 <SelectItem value="all">All Tables</SelectItem>
                 <SelectItem value="alumni_master">Alumni Master</SelectItem>
                 <SelectItem value="alumni_profile">Alumni Profile</SelectItem>
@@ -228,10 +228,10 @@ export default function AuditLogsPage() {
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Action Type</label>
             <Select value={filterAction} onValueChange={setFilterAction}>
-              <SelectTrigger className="rounded-xl h-9">
+              <SelectTrigger className="rounded-md h-9">
                 <SelectValue placeholder="All Actions" />
               </SelectTrigger>
-              <SelectContent className="rounded-xl">
+              <SelectContent className="rounded-md">
                 <SelectItem value="all">All Actions</SelectItem>
                 <SelectItem value="INSERT">INSERT</SelectItem>
                 <SelectItem value="UPDATE">UPDATE</SelectItem>
@@ -250,7 +250,7 @@ export default function AuditLogsPage() {
                 placeholder="e.g. status, phone"
                 value={filterField}
                 onChange={(e) => setFilterField(e.target.value)}
-                className="pl-9 rounded-xl h-9"
+                className="pl-9 rounded-md h-9"
               />
             </div>
           </div>
@@ -258,7 +258,7 @@ export default function AuditLogsPage() {
       </Card>
 
       {/* Main Table */}
-      <Card className="border border-border/80 rounded-2xl overflow-hidden shadow-md bg-card/45 backdrop-blur-sm">
+      <Card className="border border-border/80 rounded-md overflow-hidden shadow-md bg-card/45 backdrop-blur-sm">
         {loading ? (
           <div className="p-12 text-center text-muted-foreground space-y-2">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto text-primary" />
@@ -312,7 +312,7 @@ export default function AuditLogsPage() {
                         <span>{log.table_name}</span>
                       </td>
                       <td className="px-5 py-3.5 font-mono font-bold text-foreground">
-                        <Badge variant="secondary" className="font-mono px-2 py-0.5 rounded text-[11px] border border-border/60">
+                        <Badge variant="secondary" className="font-mono px-2 py-0.5 rounded-md text-[11px] border border-border/60">
                           {log.field_name}
                         </Badge>
                       </td>
@@ -323,14 +323,13 @@ export default function AuditLogsPage() {
                         {log.new_value !== null ? log.new_value : 'NULL'}
                       </td>
                       <td className="px-5 py-3.5">
-                        <Badge 
+                        <Badge
                           variant="outline"
-                          className={`text-[9px] font-bold px-2 py-0.5 border shadow-sm rounded-full ${
-                            isInsert  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900' :
-                            isDelete  ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900' :
-                            isRestore ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900' :
-                                        'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900'
-                          }`}
+                          className={`text-[9px] font-bold px-2 py-0.5 border shadow-sm rounded-md ${isInsert ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900' :
+                              isDelete ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900' :
+                                isRestore ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900' :
+                                  'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900'
+                            }`}
                         >
                           {log.action_type}
                         </Badge>

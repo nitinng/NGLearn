@@ -3,13 +3,13 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { 
-  ArrowLeft, 
-  UserRoundCog, 
-  Search, 
-  Clock, 
-  RotateCcw, 
-  CheckCircle2, 
+import {
+  ArrowLeft,
+  UserRoundCog,
+  Search,
+  Clock,
+  RotateCcw,
+  CheckCircle2,
   Info,
   Sparkles,
   User,
@@ -317,13 +317,13 @@ function RecordHistoryContent() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex items-center gap-3">
-          <Link 
-            href={emailParam ? '/manage/master-data' : '/settings/data-management'} 
-            className="p-2 border border-border/80 rounded-xl hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
+          <Link
+            href={emailParam ? '/manage/master-data' : '/settings/data-management'}
+            className="p-2 border border-border/80 rounded-md hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
             title={emailParam ? 'Back to Master Data' : 'Back to Data Management'}
           >
             <ArrowLeft className="w-4 h-4" />
@@ -348,26 +348,26 @@ function RecordHistoryContent() {
                   placeholder="Enter alumni email to fetch history..."
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-9 rounded-xl h-10 border-border/80"
+                  className="pl-9 rounded-md h-10 border-border/80"
                   required
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" disabled={loading} className="rounded-xl h-10 flex-1 sm:flex-none">
+                <Button type="submit" disabled={loading} className="rounded-md h-10 flex-1 sm:flex-none">
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     'Search Timeline'
                   )}
                 </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setEmail('aarav.sharma@nirma.edu');
                     setTimeout(() => handleSearch(undefined, 'aarav.sharma@nirma.edu'), 100);
                   }}
-                  className="gap-1 rounded-xl h-10 bg-violet-500/10 text-violet-700 dark:bg-violet-950/20 dark:text-violet-300 border-violet-500/20 dark:border-violet-850 hover:bg-violet-500/15"
+                  className="gap-1 rounded-md h-10 bg-violet-500/10 text-violet-700 dark:bg-violet-950/20 dark:text-violet-300 border-violet-500/20 dark:border-violet-850 hover:bg-violet-500/15"
                 >
                   <Sparkles className="w-4 h-4" />
                   Demo Email
@@ -380,7 +380,7 @@ function RecordHistoryContent() {
 
       {/* Results Section */}
       {timeline !== null && (
-        <Card className="border border-border/80 rounded-2xl shadow-lg bg-card/45 backdrop-blur-sm">
+        <Card className="border border-border/80 rounded-md shadow-lg bg-card/45 backdrop-blur-sm">
           <CardHeader className="border-b border-border/60 bg-muted/15 flex flex-row items-center justify-between pb-5">
             <div>
               <CardTitle className="text-base flex items-center gap-2 font-bold text-foreground">
@@ -392,7 +392,7 @@ function RecordHistoryContent() {
               </CardDescription>
             </div>
             {isDummy && (
-              <Badge variant="outline" className="bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-900 rounded-full font-bold">
+              <Badge variant="outline" className="bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-900 rounded-md font-bold">
                 MOCK DEMO TIMELINE
               </Badge>
             )}
@@ -426,18 +426,18 @@ function RecordHistoryContent() {
 
                   return (
                     <div key={log.id} className="relative group animate-in fade-in-50 duration-500">
-                      <div className={`absolute -left-[41px] top-1.5 w-4 h-4 rounded-full border-2 bg-background transition-all ring-4 ${dotColor} ${ringGlow} group-hover:scale-110`} />
+                      <div className={`absolute -left-[41px] top-1.5 w-4 h-4 rounded-md border-2 bg-background transition-all ring-4 ${dotColor} ${ringGlow} group-hover:scale-110`} />
 
                       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 bg-card/60 p-4 border border-border/50 rounded-2xl hover:border-border transition-all hover:shadow-sm">
                         <div className="space-y-3 flex-1">
-                          
+
                           <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground font-semibold">
-                            <span className="font-mono bg-muted/65 px-2 py-0.5 rounded border border-border/40 flex items-center gap-1">
+                            <span className="font-mono bg-muted/65 px-2 py-0.5 rounded-md border border-border/40 flex items-center gap-1">
                               <Calendar className="w-3.5 h-3.5" />
                               {new Date(log.changed_at).toLocaleString('en-IN')}
                             </span>
                             <span>•</span>
-                            <span className="text-foreground font-bold flex items-center gap-1.5 bg-secondary/80 px-2.5 py-0.5 rounded-full border border-border/60">
+                            <span className="text-foreground font-bold flex items-center gap-1.5 bg-secondary/80 px-2.5 py-0.5 rounded-md border border-border/60">
                               <User className="w-3.5 h-3.5 text-muted-foreground" />
                               {log.changed_by_name} ({log.changed_by_role})
                             </span>
@@ -450,19 +450,18 @@ function RecordHistoryContent() {
                           </div>
 
                           <div className="text-xs font-semibold flex items-center flex-wrap gap-2 text-foreground/80">
-                            <Badge 
-                              variant="outline" 
-                              className={`text-[9px] font-bold px-2 py-0.5 border rounded-full shadow-sm ${
-                                isInsert  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900' :
-                                isDelete  ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900' :
-                                isRestore ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900' :
-                                            'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900'
-                              }`}
+                            <Badge
+                              variant="outline"
+                              className={`text-[9px] font-bold px-2 py-0.5 border rounded-md shadow-sm ${isInsert ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900' :
+                                  isDelete ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900' :
+                                    isRestore ? 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900' :
+                                      'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900'
+                                }`}
                             >
                               {log.action_type}
                             </Badge>
                             <span>modified field</span>
-                            <span className="font-mono font-bold text-foreground bg-muted px-2 py-0.5 rounded border border-border/65 flex items-center gap-1">
+                            <span className="font-mono font-bold text-foreground bg-muted px-2 py-0.5 rounded-md border border-border/65 flex items-center gap-1">
                               <UserRoundCog className="w-3 h-3 text-muted-foreground" />
                               {log.field_name}
                             </span>
@@ -470,16 +469,16 @@ function RecordHistoryContent() {
                             <span className="font-mono text-xs text-muted-foreground underline decoration-dotted">{log.table_name}</span>
                           </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono max-w-2xl bg-card border border-border/60 rounded-xl p-3.5">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono max-w-2xl bg-card border border-border/60 rounded-md p-3.5">
                             <div className="space-y-1 border-r border-border/50 pr-2">
                               <span className="text-[10px] font-bold text-red-500 uppercase tracking-wide block">Previous Value</span>
-                              <div className="text-red-600 line-through truncate font-medium bg-red-500/5 px-2 py-1 rounded border border-red-500/10 min-h-[1.75rem]">
+                              <div className="text-red-600 line-through truncate font-medium bg-red-500/5 px-2 py-1 rounded-md border border-red-500/10 min-h-[1.75rem]">
                                 {log.old_value !== null ? log.old_value : 'NULL'}
                               </div>
                             </div>
                             <div className="space-y-1 pl-1">
                               <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wide block">New Mapped Value</span>
-                              <div className="text-emerald-600 font-bold truncate bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10 min-h-[1.75rem] flex items-center gap-1">
+                              <div className="text-emerald-600 font-bold truncate bg-emerald-500/5 px-2 py-1 rounded-md border border-emerald-500/10 min-h-[1.75rem] flex items-center gap-1">
                                 <span>{log.new_value !== null ? log.new_value : 'NULL'}</span>
                               </div>
                             </div>
@@ -492,7 +491,7 @@ function RecordHistoryContent() {
                             size="sm"
                             onClick={() => handleRollback(log)}
                             disabled={isRollingBack === log.id}
-                            className="text-red-600 hover:text-red-500 hover:bg-red-500/10 border-red-500/20 dark:border-red-500/30 rounded-xl self-start gap-1.5 transition-all hover:scale-105 font-bold text-xs"
+                            className="text-red-600 hover:text-red-500 hover:bg-red-500/10 border-red-500/20 dark:border-red-500/30 rounded-md self-start gap-1.5 transition-all hover:scale-105 font-bold text-xs"
                           >
                             {isRollingBack === log.id ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -517,7 +516,7 @@ function RecordHistoryContent() {
       )}
 
       {/* Help Footer */}
-      <div className="flex items-start gap-3 text-xs text-muted-foreground bg-muted/20 border border-border/80 p-4.5 rounded-2xl">
+      <div className="flex items-start gap-3 text-xs text-muted-foreground bg-muted/20 border border-border/80 p-4.5 rounded-md">
         <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
         <p className="leading-relaxed">
           <strong>How Rollbacks Work:</strong> Reverting to a state replays all preceding audit log modifications up to that point. The change itself creates a new <strong>RESTORE</strong> audit log. User self-reports do not overwrite imports.

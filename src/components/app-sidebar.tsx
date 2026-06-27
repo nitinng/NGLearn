@@ -6,11 +6,11 @@ import {
   LifeBuoy,
   Send,
   LayoutDashboard,
-  Settings,
   GalleryVerticalEnd,
   Users,
   GraduationCap,
   Database,
+  DatabaseBackup,
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
@@ -30,7 +30,7 @@ const data = {
   navSecondary: [
     {
       title: "Documentation",
-      url: "#",
+      url: "/docs",
       icon: BookOpen,
     },
     {
@@ -56,22 +56,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       icon: LayoutDashboard,
       isActive: true,
     },
-    {
-      title: "Components Showcase",
-      url: "/components",
-      icon: BookOpen,
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings,
-      items: [
-        {
-          title: "Data Management",
-          url: "/settings/data-management",
-        },
-      ],
-    },
   ];
 
   const navManage: NavItem[] = [
@@ -84,6 +68,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Alumni Network",
       url: "/manage/alumni-network",
       icon: GraduationCap,
+    },
+    {
+      title: "Data Management",
+      url: "/settings/data-management",
+      icon: DatabaseBackup,
     },
     {
       title: "Master Data",
@@ -101,13 +90,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link 
+              <Link
                 href="/"
                 onClick={() => {
                   if (isMobile) setOpenMobile(false)
                 }}
               >
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
                   <GalleryVerticalEnd className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">

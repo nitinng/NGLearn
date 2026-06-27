@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  FileUp, 
-  Settings2, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle, 
-  Loader2, 
-  ArrowLeft, 
-  Save, 
-  Eye, 
+import {
+  FileUp,
+  Settings2,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  ArrowLeft,
+  Save,
+  Eye,
   Info,
   Database,
   ArrowRight,
@@ -152,7 +152,7 @@ const DUMMY_PREVIEW: ImportPreviewResult = {
 
 export default function ImportAlumniDataPage() {
   const router = useRouter();
-  
+
   // Mapping state
   const [mapping, setMapping] = useState<GharColumnMap>({});
   const [showMapping, setShowMapping] = useState(false);
@@ -238,7 +238,7 @@ export default function ImportAlumniDataPage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const res = await fetch('/api/alumni/import/preview', {
         method: 'POST',
         body: formData
@@ -262,15 +262,15 @@ export default function ImportAlumniDataPage() {
       setIsImporting(true);
       setImportStep('Uploading file to storage...');
       setImportProgress(30);
-      
+
       setTimeout(() => {
         setImportStep('Parsing rows & validating mappings...');
         setImportProgress(60);
-        
+
         setTimeout(() => {
           setImportStep('Processing records & triggers...');
           setImportProgress(90);
-          
+
           setTimeout(() => {
             setImportProgress(100);
             setIsImporting(false);
@@ -306,7 +306,7 @@ export default function ImportAlumniDataPage() {
         body: uploadForm
       });
       const uploadData = await uploadRes.json();
-      
+
       if (!uploadRes.ok) {
         throw new Error(uploadData.error || 'File upload failed');
       }
@@ -353,13 +353,13 @@ export default function ImportAlumniDataPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex items-center gap-3">
-          <Link 
-            href="/settings/data-management" 
-            className="p-2 border border-border/80 rounded-xl hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
+          <Link
+            href="/settings/data-management"
+            className="p-2 border border-border/80 rounded-md hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -370,22 +370,22 @@ export default function ImportAlumniDataPage() {
             </p>
           </div>
         </div>
-        
+
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="gap-2 rounded-xl"
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 rounded-md"
             onClick={() => setShowMapping(!showMapping)}
           >
             <Settings2 className="w-4 h-4" />
             {showMapping ? 'Hide Mapping Config' : 'Configure Column Map'}
           </Button>
           {!previewResult && (
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="gap-2 rounded-xl bg-gradient-to-r from-violet-500/10 via-indigo-500/10 to-blue-500/10 hover:from-violet-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 transition-all hover:scale-105"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="gap-2 rounded-md bg-gradient-to-r from-violet-500/10 via-indigo-500/10 to-blue-500/10 hover:from-violet-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 transition-all hover:scale-105"
               onClick={handleLoadDummy}
             >
               <Sparkles className="w-4 h-4" />
@@ -397,7 +397,7 @@ export default function ImportAlumniDataPage() {
 
       {/* Mapping Configuration Panel */}
       {showMapping && (
-        <Card className="border-indigo-500/30 bg-indigo-500/5 shadow-lg rounded-2xl animate-in slide-in-from-top-4 duration-300">
+        <Card className="border-indigo-500/30 bg-indigo-500/5 shadow-lg rounded-md animate-in slide-in-from-top-4 duration-300">
           <form onSubmit={handleSaveMapping}>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2 text-indigo-700 dark:text-indigo-300">
@@ -410,7 +410,7 @@ export default function ImportAlumniDataPage() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {MAP_FIELDS.map((field) => (
-                <div key={field.key} className="space-y-1.5 bg-card/40 border border-border/50 p-3 rounded-xl hover:border-indigo-500/35 transition-colors">
+                <div key={field.key} className="space-y-1.5 bg-card/40 border border-border/50 p-3 rounded-md hover:border-indigo-500/35 transition-colors">
                   <label className="text-[11px] font-bold text-muted-foreground flex items-center gap-1.5 uppercase tracking-wider">
                     {field.label}
                     {field.required && (
@@ -421,17 +421,17 @@ export default function ImportAlumniDataPage() {
                     placeholder={`e.g. ${field.label}`}
                     value={(mapping as any)[field.key] || ''}
                     onChange={(e) => handleMappingChange(field.key, e.target.value)}
-                    className="h-8 text-xs rounded-lg"
+                    className="h-8 text-xs rounded-md"
                     required={field.required}
                   />
                 </div>
               ))}
             </CardContent>
             <CardFooter className="border-t border-border/60 pt-4 flex justify-end gap-2">
-              <Button type="button" variant="ghost" size="sm" className="rounded-xl" onClick={() => setShowMapping(false)}>
+              <Button type="button" variant="ghost" size="sm" className="rounded-md" onClick={() => setShowMapping(false)}>
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="gap-2 rounded-xl" disabled={isSavingMapping}>
+              <Button type="submit" size="sm" className="gap-2 rounded-md" disabled={isSavingMapping}>
                 {isSavingMapping ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
@@ -446,12 +446,12 @@ export default function ImportAlumniDataPage() {
 
       {/* File Dropzone */}
       {!previewResult && !isImporting && (
-        <div className="border-2 border-dashed border-border/80 rounded-2xl p-14 text-center bg-card/30 hover:bg-card/70 hover:border-primary/40 transition-all duration-300 relative overflow-hidden group">
+        <div className="border-2 border-dashed border-border/80 rounded-md p-14 text-center bg-card/30 hover:bg-card/70 hover:border-primary/40 transition-all duration-300 relative overflow-hidden group">
           {/* Subtle Ambient Background Light */}
           <div className="absolute -inset-10 bg-radial-gradient from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
           <div className="max-w-md mx-auto space-y-6 flex flex-col items-center relative z-10">
-            <div className="p-4.5 bg-primary/5 text-primary rounded-full group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-sm border border-primary/10">
+            <div className="p-4.5 bg-primary/5 text-primary rounded-md group-hover:scale-110 group-hover:rotate-6 transition-all duration-300 shadow-sm border border-primary/10">
               <FileUp className="w-8 h-8" />
             </div>
             <div className="space-y-1">
@@ -460,7 +460,7 @@ export default function ImportAlumniDataPage() {
                 Drag and drop your spreadsheet here or click browse. Supports CSV or Microsoft Excel (XLSX).
               </p>
             </div>
-            
+
             <div className="relative pt-2 w-full">
               <input
                 type="file"
@@ -470,13 +470,13 @@ export default function ImportAlumniDataPage() {
                 onChange={handleFileChange}
               />
               <div className="flex gap-2 justify-center">
-                <Button asChild variant="outline" className="rounded-xl hover:scale-105 transition-transform">
+                <Button asChild variant="outline" className="rounded-md hover:scale-105 transition-transform">
                   <label htmlFor="file-upload" className="cursor-pointer">
                     Browse File
                   </label>
                 </Button>
                 {file && (
-                  <Button onClick={handleGeneratePreview} disabled={isPreviewing} className="rounded-xl hover:scale-105 transition-transform">
+                  <Button onClick={handleGeneratePreview} disabled={isPreviewing} className="rounded-md hover:scale-105 transition-transform">
                     {isPreviewing ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -489,7 +489,7 @@ export default function ImportAlumniDataPage() {
                 )}
               </div>
               {file && (
-                <div className="mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3.5 py-2 rounded-xl border border-emerald-500/20 animate-in zoom-in-95 duration-200">
+                <div className="mt-4 inline-flex items-center gap-2 text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-3.5 py-2 rounded-md border border-emerald-500/20 animate-in zoom-in-95 duration-200">
                   <Sheet className="w-3.5 h-3.5 text-emerald-600" />
                   <span>{file.name} ({Math.round(file.size / 1024)} KB)</span>
                 </div>
@@ -501,14 +501,14 @@ export default function ImportAlumniDataPage() {
 
       {/* Import Progress Loader */}
       {isImporting && (
-        <Card className="p-8 text-center space-y-6 border border-indigo-500/20 bg-indigo-500/5 rounded-2xl shadow-md">
+        <Card className="p-8 text-center space-y-6 border border-indigo-500/20 bg-indigo-500/5 rounded-md shadow-md">
           <div className="flex flex-col items-center space-y-2">
             <Loader2 className="w-9 h-9 animate-spin text-primary" />
             <p className="font-bold text-lg text-foreground">{importStep}</p>
             <p className="text-xs text-muted-foreground">Database triggers and audit log pipelines are executing. Please wait.</p>
           </div>
           <div className="max-w-md mx-auto space-y-2">
-            <Progress value={importProgress} className="h-2.5 rounded-full" />
+            <Progress value={importProgress} className="h-2.5 rounded-md" />
             <p className="text-right text-xs font-bold font-mono text-muted-foreground">{importProgress}%</p>
           </div>
         </Card>
@@ -516,19 +516,19 @@ export default function ImportAlumniDataPage() {
 
       {/* Import Result Screen */}
       {importResult && (
-        <Card className="border border-border/80 rounded-2xl overflow-hidden shadow-lg animate-in zoom-in-98 duration-300">
+        <Card className="border border-border/80 rounded-md overflow-hidden shadow-lg animate-in zoom-in-98 duration-300">
           <CardHeader className="border-b border-border/60 bg-muted/20 pb-5">
             <CardTitle className="flex items-center gap-2.5">
               {importResult.status === 'completed' ? (
                 <>
-                  <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-600">
+                  <div className="p-1.5 bg-emerald-500/10 rounded-md text-emerald-600">
                     <CheckCircle2 className="w-6 h-6 animate-bounce" />
                   </div>
                   <span className="text-xl font-bold tracking-tight">Import Processing Completed</span>
                 </>
               ) : (
                 <>
-                  <div className="p-1.5 bg-red-500/10 rounded-lg text-red-600">
+                  <div className="p-1.5 bg-red-500/10 rounded-md text-red-600">
                     <XCircle className="w-6 h-6" />
                   </div>
                   <span className="text-xl font-bold tracking-tight">Import Processing Failed</span>
@@ -542,19 +542,19 @@ export default function ImportAlumniDataPage() {
           <CardContent className="py-8 space-y-8">
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-card border border-border/60 hover:shadow-sm transition-shadow">
+              <div className="p-4 rounded-md bg-card border border-border/60 hover:shadow-sm transition-shadow">
                 <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Total Processed</p>
                 <p className="text-3xl font-extrabold tracking-tight mt-1">{importResult.records_processed ?? 0}</p>
               </div>
-              <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/15 hover:shadow-sm transition-shadow">
+              <div className="p-4 rounded-md bg-emerald-500/5 border border-emerald-500/15 hover:shadow-sm transition-shadow">
                 <p className="text-[10px] text-emerald-600 dark:text-emerald-400 uppercase font-bold tracking-wider">Created (New)</p>
                 <p className="text-3xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400 mt-1">{importResult.records_created ?? 0}</p>
               </div>
-              <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/15 hover:shadow-sm transition-shadow">
+              <div className="p-4 rounded-md bg-blue-500/5 border border-blue-500/15 hover:shadow-sm transition-shadow">
                 <p className="text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold tracking-wider">Updated</p>
                 <p className="text-3xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 mt-1">{importResult.records_updated ?? 0}</p>
               </div>
-              <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/15 hover:shadow-sm transition-shadow">
+              <div className="p-4 rounded-md bg-red-500/5 border border-red-500/15 hover:shadow-sm transition-shadow">
                 <p className="text-[10px] text-red-600 dark:text-red-400 uppercase font-bold tracking-wider">Failed Rows</p>
                 <p className="text-3xl font-extrabold tracking-tight text-red-600 dark:text-red-400 mt-1">{importResult.records_failed ?? 0}</p>
               </div>
@@ -567,7 +567,7 @@ export default function ImportAlumniDataPage() {
                   <AlertCircle className="w-4 h-4" />
                   Skipped / Failed Row Logs
                 </h3>
-                <div className="border border-border/80 rounded-xl overflow-hidden text-xs font-mono bg-card">
+                <div className="border border-border/80 rounded-md overflow-hidden text-xs font-mono bg-card">
                   <div className="max-h-60 overflow-y-auto">
                     <table className="w-full text-left border-collapse">
                       <thead className="bg-muted sticky top-0 border-b">
@@ -591,10 +591,10 @@ export default function ImportAlumniDataPage() {
             )}
           </CardContent>
           <CardFooter className="border-t border-border/60 bg-muted/10 justify-end gap-2 pt-4 pb-4">
-            <Button variant="outline" className="rounded-xl" onClick={resetImportFlow}>
+            <Button variant="outline" className="rounded-md" onClick={resetImportFlow}>
               Import Another File
             </Button>
-            <Button className="rounded-xl" onClick={() => router.push('/settings/data-management/import-history')}>
+            <Button className="rounded-md" onClick={() => router.push('/settings/data-management/import-history')}>
               View Import History
             </Button>
           </CardFooter>
@@ -603,13 +603,13 @@ export default function ImportAlumniDataPage() {
 
       {/* Preview Table */}
       {previewResult && !isImporting && !importResult && (
-        <Card className="border border-border/80 rounded-2xl overflow-hidden shadow-lg animate-in fade-in duration-300">
+        <Card className="border border-border/80 rounded-md overflow-hidden shadow-lg animate-in fade-in duration-300">
           <CardHeader className="border-b border-border/60 bg-muted/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5">
             <div>
               <div className="flex items-center gap-2">
                 <CardTitle className="text-lg font-bold tracking-tight">Import Preview & Verification</CardTitle>
                 {isDummyMode && (
-                  <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 rounded-full font-bold">
+                  <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900 rounded-md font-bold">
                     MOCK DUMMY PREVIEW
                   </Badge>
                 )}
@@ -619,14 +619,14 @@ export default function ImportAlumniDataPage() {
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" className="rounded-xl" onClick={resetImportFlow}>
+              <Button variant="ghost" size="sm" className="rounded-md" onClick={resetImportFlow}>
                 Cancel File
               </Button>
-              <Button 
-                size="sm" 
-                onClick={handleProceedImport} 
+              <Button
+                size="sm"
+                onClick={handleProceedImport}
                 disabled={previewResult.valid_rows === 0}
-                className="gap-1.5 rounded-xl hover:scale-105 transition-transform"
+                className="gap-1.5 rounded-md hover:scale-105 transition-transform"
               >
                 <Database className="w-4 h-4" />
                 Commit Mapped Data ({previewResult.valid_rows} Valid Rows)
@@ -670,13 +670,12 @@ export default function ImportAlumniDataPage() {
                   {previewResult.preview.map((row: ParsedImportRow, idx: number) => {
                     const isValid = row._valid;
                     return (
-                      <tr 
-                        key={idx} 
-                        className={`border-b border-border/40 transition-colors duration-150 ${
-                          isValid 
-                            ? 'hover:bg-emerald-500/5 bg-emerald-500/1 border-l-[3px] border-l-emerald-500' 
+                      <tr
+                        key={idx}
+                        className={`border-b border-border/40 transition-colors duration-150 ${isValid
+                            ? 'hover:bg-emerald-500/5 bg-emerald-500/1 border-l-[3px] border-l-emerald-500'
                             : 'hover:bg-red-500/5 bg-red-500/1 border-l-[3px] border-l-red-500'
-                        }`}
+                          }`}
                       >
                         <td className="px-4 py-3 text-center font-mono text-muted-foreground">{idx + 1}</td>
                         <td className="px-4 py-3 text-center">

@@ -93,7 +93,7 @@ export default function ComponentsShowcasePage() {
   const [progress, setProgress] = useState(60);
 
   return (
-    <div className="flex flex-1 flex-col gap-10 p-4 md:p-8 max-w-7xl mx-auto w-full pb-20">
+    <div className="flex flex-1 flex-col gap-10 p-4 md:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Components Showcase</h1>
         <p className="text-muted-foreground text-lg">
@@ -408,11 +408,11 @@ export default function ComponentsShowcasePage() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbLink href="/components">Components</BreadcrumbLink>
+                  <BreadcrumbLink href="/docs">Docs</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Breadcrumb</BreadcrumbPage>
+                  <BreadcrumbPage>Components Showcase</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>

@@ -55,11 +55,10 @@ export function DevRoleToggle() {
         <Button
           variant="ghost"
           size="sm"
-          className={`h-9 px-2.5 rounded-lg border flex items-center gap-1.5 transition-all duration-200 ${
-            activeOverride
+          className={`h-9 px-2.5 rounde-md border flex items-center gap-1.5 transition-all duration-200 ${activeOverride
               ? "border-amber-300 bg-amber-50/50 text-amber-700 hover:bg-amber-50 hover:text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-400 animate-pulse-subtle"
               : "border-slate-200 hover:bg-slate-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
-          }`}
+            }`}
         >
           <Fingerprint className={`h-4.5 w-4.5 ${activeOverride ? "text-amber-500" : "text-muted-foreground"}`} />
           <span className="text-xs font-bold tracking-tight hidden md:inline-block">
@@ -72,7 +71,7 @@ export function DevRoleToggle() {
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52 rounded-xl border bg-card p-1 shadow-xl">
+      <DropdownMenuContent align="end" className="w-52 rounded-md border bg-card p-1 shadow-xl">
         <DropdownMenuLabel className="px-2 py-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider">
           Testing Role Switcher
         </DropdownMenuLabel>

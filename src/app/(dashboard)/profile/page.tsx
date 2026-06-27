@@ -109,7 +109,7 @@ export default function ProfilePage() {
 
         // 2. Fetch user profile data from Supabase Auth
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         let metadata: any = {};
         let userEmail = "";
         let isUserAlumni = true;
@@ -193,7 +193,7 @@ export default function ProfilePage() {
         education,
         course,
         isAlumni,
-        
+
         // Match Supabase user metadata standardized keys
         full_name: name,
         is_alumni: isAlumni,
@@ -312,7 +312,7 @@ export default function ProfilePage() {
             Update your professional information and customize how your profile looks on the network.
           </p>
         </div>
-        <div className="flex items-center gap-2 mt-4 md:mt-0 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/60 px-3 py-1.5 rounded-lg text-xs font-medium">
+        <div className="flex items-center gap-2 mt-4 md:mt-0 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-900/60 px-3 py-1.5 rounded-md text-xs font-medium">
           <Sparkles className="h-3.5 w-3.5" />
           <span>Local Mock Database Active</span>
         </div>
@@ -347,7 +347,7 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={triggerFileInput}
-                    className="absolute -bottom-1 -right-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-2 shadow-lg transition-transform hover:scale-105"
+                    className="absolute -bottom-1 -right-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md p-2 shadow-lg transition-transform hover:scale-105"
                     title="Change Avatar"
                   >
                     <Camera className="h-4 w-4" />
@@ -663,13 +663,13 @@ export default function ProfilePage() {
                         <Badge
                           key={skill}
                           variant="secondary"
-                          className="py-1 px-2.5 rounded-full text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 flex items-center gap-1.5 group transition-all"
+                          className="py-1 px-2.5 rounded-md text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 flex items-center gap-1.5 group transition-all"
                         >
                           {skill}
                           <button
                             type="button"
                             onClick={() => handleRemoveSkill(skill)}
-                            className="text-muted-foreground group-hover:text-red-500 rounded-full hover:bg-slate-300/40 dark:hover:bg-zinc-700/40 p-0.5"
+                            className="text-muted-foreground group-hover:text-red-500 rounded-md hover:bg-slate-300/40 dark:hover:bg-zinc-700/40 p-0.5"
                             title={`Remove ${skill}`}
                           >
                             <X className="h-3 w-3" />
@@ -741,7 +741,7 @@ export default function ProfilePage() {
             >
               {isSaving ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                  <div className="animate-spin rounded-md h-4 w-4 border-2 border-white border-t-transparent" />
                   Saving...
                 </>
               ) : (
@@ -813,12 +813,12 @@ export default function ProfilePage() {
                     key={theme.id}
                     type="button"
                     onClick={() => setSelectedTheme(theme.id)}
-                    className={`flex items-center gap-2 p-2 rounded-lg border text-left text-xs font-medium transition-all group ${selectedTheme === theme.id
+                    className={`flex items-center gap-2 p-2 rounded-md border text-left text-xs font-medium transition-all group ${selectedTheme === theme.id
                       ? "border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-300 shadow-sm"
                       : "border-slate-100 hover:border-slate-300 dark:border-zinc-800 dark:hover:border-zinc-700 text-slate-600 dark:text-zinc-400"
                       }`}
                   >
-                    <span className={`h-4 w-4 rounded-full ${theme.class} border border-white/20`} />
+                    <span className={`h-4 w-4 rounded-md ${theme.class} border border-white/20`} />
                     <span className="truncate">{theme.name}</span>
                   </button>
                 ))}
@@ -827,12 +827,12 @@ export default function ProfilePage() {
           </Card>
 
           {/* Premium Profile Showcase Card */}
-          <div className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-lg bg-white dark:bg-zinc-950 transition-all hover:shadow-xl duration-300">
+          <div className="group relative overflow-hidden rounded-md border border-slate-200 dark:border-zinc-800 shadow-lg bg-white dark:bg-zinc-950 transition-all hover:shadow-xl duration-300">
 
             {/* 1. Header Gradient Banner */}
             <div className={`h-32 w-full transition-all duration-500 relative ${currentTheme.class}`}>
               <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" />
-              <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border border-white/10 shadow-sm">
+              <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-md text-white text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md border border-white/10 shadow-sm">
                 Live Preview
               </div>
             </div>
@@ -910,7 +910,7 @@ export default function ProfilePage() {
                       {skills.map((skill) => (
                         <span
                           key={skill}
-                          className="text-[10px] bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-zinc-300 font-medium px-2 py-0.5 rounded border border-slate-100 dark:border-zinc-800/80"
+                          className="text-[10px] bg-slate-50 dark:bg-zinc-800/50 text-slate-600 dark:text-zinc-300 font-medium px-2 py-0.5 rounded-md border border-slate-100 dark:border-zinc-800/80"
                         >
                           {skill}
                         </span>
@@ -930,7 +930,7 @@ export default function ProfilePage() {
                         href={github}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-2 rounded-full border border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-400 transition-colors"
+                        className="p-2 rounded-md border border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-400 transition-colors"
                         title="GitHub Profile"
                       >
                         <Github className="h-4 w-4" />
@@ -941,7 +941,7 @@ export default function ProfilePage() {
                         href={linkedin}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-2 rounded-full border border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-400 transition-colors"
+                        className="p-2 rounded-md border border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-900 text-slate-600 dark:text-zinc-400 transition-colors"
                         title="LinkedIn Profile"
                       >
                         <Linkedin className="h-4 w-4" />

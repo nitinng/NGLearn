@@ -1,10 +1,10 @@
 "use client"
 
 import React, { useMemo } from "react"
-import { 
-  Users, 
-  Layers, 
-  Activity, 
+import {
+  Users,
+  Layers,
+  Activity,
   Info,
   CheckCircle2
 } from "lucide-react"
@@ -32,11 +32,11 @@ export function DashboardStats({ initialUsers, error }: DashboardStatsProps) {
         const metadata = u.user_metadata || {}
         const email = u.email || ""
         const isSuper = SUPER_ADMINS.includes(email.toLowerCase())
-        
+
         const appRole = (isSuper ? "Super Admin" : (metadata.role || "Viewer")) as UserRole
         const appTeam = (metadata.team || "None") as UserTeam
         const isUserAlumni = metadata.is_alumni !== false
-        
+
         return {
           ...u,
           name: metadata.full_name || metadata.name || "Unknown User",
@@ -55,7 +55,7 @@ export function DashboardStats({ initialUsers, error }: DashboardStatsProps) {
     const total = users.length
     const activated = users.filter(u => u.lastSignInDate !== null).length
     const withTeam = users.filter(u => u.appTeam !== "None").length
-    
+
     // Active in last 7 days
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
@@ -78,7 +78,7 @@ export function DashboardStats({ initialUsers, error }: DashboardStatsProps) {
 
   if (error) {
     return (
-      <Card className="border-red-200 dark:border-red-950/50 bg-red-50/50 dark:bg-red-950/10 p-6 rounded-xl">
+      <Card className="border-red-200 dark:border-red-950/50 bg-red-50/50 dark:bg-red-950/10 p-6 rounded-md">
         <div className="flex gap-3 items-start text-red-700 dark:text-red-400">
           <Info className="h-5 w-5 mt-0.5 flex-shrink-0" />
           <div>
@@ -103,7 +103,7 @@ export function DashboardStats({ initialUsers, error }: DashboardStatsProps) {
             <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Total Alumni
             </CardTitle>
-            <div className="h-8 w-8 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-500 border border-indigo-100 dark:border-indigo-900/30">
+            <div className="h-8 w-8 rounded-md bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center text-indigo-500 border border-indigo-100 dark:border-indigo-900/30">
               <Users className="h-4.5 w-4.5" />
             </div>
           </CardHeader>
@@ -121,7 +121,7 @@ export function DashboardStats({ initialUsers, error }: DashboardStatsProps) {
             <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Activation Rate
             </CardTitle>
-            <div className="h-8 w-8 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-500 border border-emerald-100 dark:border-emerald-900/30">
+            <div className="h-8 w-8 rounded-md bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-500 border border-emerald-100 dark:border-emerald-900/30">
               <CheckCircle2 className="h-4.5 w-4.5" />
             </div>
           </CardHeader>
@@ -143,7 +143,7 @@ export function DashboardStats({ initialUsers, error }: DashboardStatsProps) {
             <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Team Coverage
             </CardTitle>
-            <div className="h-8 w-8 rounded-full bg-pink-50 dark:bg-pink-950/40 flex items-center justify-center text-pink-500 border border-pink-100 dark:border-pink-900/30">
+            <div className="h-8 w-8 rounded-md bg-pink-50 dark:bg-pink-950/40 flex items-center justify-center text-pink-500 border border-pink-100 dark:border-pink-900/30">
               <Layers className="h-4.5 w-4.5" />
             </div>
           </CardHeader>
@@ -163,7 +163,7 @@ export function DashboardStats({ initialUsers, error }: DashboardStatsProps) {
             <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Active Recently
             </CardTitle>
-            <div className="h-8 w-8 rounded-full bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-500 border border-amber-100 dark:border-amber-900/30">
+            <div className="h-8 w-8 rounded-md bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-500 border border-amber-100 dark:border-amber-900/30">
               <Activity className="h-4.5 w-4.5" />
             </div>
           </CardHeader>

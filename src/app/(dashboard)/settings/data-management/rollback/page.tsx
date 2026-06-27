@@ -2,15 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
-  ArrowLeft, 
-  RotateCcw, 
-  Trash2, 
-  Clock, 
-  User, 
-  Info, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  ArrowLeft,
+  RotateCcw,
+  Trash2,
+  Clock,
+  User,
+  Info,
+  CheckCircle2,
+  XCircle,
   AlertTriangle,
   Loader2,
   Calendar,
@@ -196,13 +196,13 @@ export default function RollbackCenterPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-2 duration-300">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-5">
         <div className="flex items-center gap-3">
-          <Link 
-            href="/settings/data-management" 
-            className="p-2 border border-border/80 rounded-xl hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
+          <Link
+            href="/settings/data-management"
+            className="p-2 border border-border/80 rounded-md hover:bg-muted transition-all text-muted-foreground hover:text-foreground hover:scale-105"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -230,7 +230,7 @@ export default function RollbackCenterPage() {
       )}
 
       {/* Batch Rollback Section */}
-      <Card className="border border-border/85 rounded-2xl overflow-hidden shadow-md bg-card/50">
+      <Card className="border border-border/85 rounded-md overflow-hidden shadow-md bg-card/50">
         <CardHeader className="border-b border-border/60 bg-muted/20 pb-5">
           <CardTitle className="text-lg flex items-center gap-2 font-bold">
             <Trash2 className="w-4.5 h-4.5 text-red-500" />
@@ -258,7 +258,7 @@ export default function RollbackCenterPage() {
                   const isProcessing = actionInProgress === batch.id;
                   const isBatchRolledBack = batch.status === 'rolled_back';
 
-                  let borderAccent = isBatchRolledBack 
+                  let borderAccent = isBatchRolledBack
                     ? 'border-l-[4px] border-l-amber-500 hover:bg-amber-500/5'
                     : 'border-l-[4px] border-l-emerald-500 hover:bg-emerald-500/5';
 
@@ -281,13 +281,12 @@ export default function RollbackCenterPage() {
                         {batch.records_updated}
                       </td>
                       <td className="px-5 py-4">
-                        <Badge 
-                          variant="outline" 
-                          className={`text-[9px] font-bold px-2 py-0.5 rounded-full border shadow-sm ${
-                            isBatchRolledBack 
-                              ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800' 
+                        <Badge
+                          variant="outline"
+                          className={`text-[9px] font-bold px-2 py-0.5 rounded-md border shadow-sm ${isBatchRolledBack
+                              ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800'
                               : 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800'
-                          }`}
+                            }`}
                         >
                           {batch.status.toUpperCase()}
                         </Badge>
@@ -298,7 +297,7 @@ export default function RollbackCenterPage() {
                           size="sm"
                           onClick={() => handleBatchRollback(batch.id, batch.file_name)}
                           disabled={isProcessing || isBatchRolledBack}
-                          className="h-8 text-xs gap-1.5 rounded-xl transition-all hover:scale-105"
+                          className="h-8 text-xs gap-1.5 rounded-md transition-all hover:scale-105"
                         >
                           {isProcessing ? (
                             <Loader2 className="w-3 h-3 animate-spin" />
@@ -325,7 +324,7 @@ export default function RollbackCenterPage() {
       </Card>
 
       {/* Record Rollback Section */}
-      <Card className="border border-border/80 rounded-2xl shadow-md bg-card/50 overflow-hidden">
+      <Card className="border border-border/80 rounded-md shadow-md bg-card/50 overflow-hidden">
         <CardHeader className="border-b border-border/60 bg-muted/20 pb-5">
           <CardTitle className="text-lg flex items-center gap-2 font-bold">
             <Clock className="w-4.5 h-4.5 text-indigo-500" />
@@ -346,7 +345,7 @@ export default function RollbackCenterPage() {
                 placeholder="e.g. name@domain.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="rounded-xl h-9"
+                className="rounded-md h-9"
                 required
               />
             </div>
@@ -357,10 +356,10 @@ export default function RollbackCenterPage() {
                 Table Name
               </label>
               <Select value={tableName} onValueChange={(val: any) => setTableName(val)}>
-                <SelectTrigger className="rounded-xl h-9">
+                <SelectTrigger className="rounded-md h-9">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="rounded-xl">
+                <SelectContent className="rounded-md">
                   <SelectItem value="alumni_master">Alumni Master (Email PK)</SelectItem>
                   <SelectItem value="alumni_profile">Alumni Profile (UUID PK)</SelectItem>
                 </SelectContent>
@@ -377,20 +376,20 @@ export default function RollbackCenterPage() {
                   type="date"
                   value={targetDate}
                   onChange={(e) => setTargetDate(e.target.value)}
-                  className="rounded-xl h-9 px-2 text-xs"
+                  className="rounded-md h-9 px-2 text-xs"
                   required
                 />
                 <Input
                   type="time"
                   value={targetTime}
                   onChange={(e) => setTargetTime(e.target.value)}
-                  className="rounded-xl h-9 px-2 text-xs"
+                  className="rounded-md h-9 px-2 text-xs"
                   required
                 />
               </div>
             </div>
 
-            <Button type="submit" disabled={isRecordRollingBack} className="gap-1.5 rounded-xl h-9 transition-all hover:scale-105 font-bold text-xs">
+            <Button type="submit" disabled={isRecordRollingBack} className="gap-1.5 rounded-md h-9 transition-all hover:scale-105 font-bold text-xs">
               {isRecordRollingBack ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
