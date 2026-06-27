@@ -2,11 +2,14 @@
 
 import React, { createContext, useContext } from "react";
 
+import type { UserRole } from "@/lib/roles";
+
 export type User = {
     id: string;
     name: string;
     email: string;
     avatar: string;
+    role?: UserRole;
 };
 
 const UserContext = createContext<User | null>(null);

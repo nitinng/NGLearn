@@ -8,6 +8,7 @@ import {
 import { cookies } from "next/headers"
 import { createClient } from "@/lib/supabase/server"
 import { UserProvider } from "@/contexts/user-context"
+import { getUserRole } from "@/lib/roles"
 
 export default async function DashboardLayout({
     children,
@@ -24,6 +25,7 @@ export default async function DashboardLayout({
     const displayName = userMetadata.full_name || userMetadata.name || "User"
     const displayEmail = user?.email || "user@example.com"
     const displayAvatar = userMetadata.avatar_url || userMetadata.picture || ""
+    const activeRole = await getUserRole(user)
 
     return (
         <UserProvider user={{
@@ -31,13 +33,14 @@ export default async function DashboardLayout({
             name: displayName,
             email: displayEmail,
             avatar: displayAvatar,
+            role: activeRole,
         }}>
-            <div className="[--header-height:calc(--spacing(14))]">
-                <SidebarProvider className="flex flex-col">
+            <div className="[--header-height:calc(--spacing(14))] min-h-svh w-full flex flex-col overflow-hidden bg-background">
+                <SidebarProvider className="flex flex-col flex-1 h-full w-full overflow-hidden">
                     <SiteHeader />
-                    <div className="flex flex-1">
+                    <div className="flex flex-1 min-h-0 w-full overflow-hidden">
                         <AppSidebar />
-                        <SidebarInset>
+                        <SidebarInset className="flex-1 min-w-0 w-full overflow-y-auto bg-background">
                             {children}
                         </SidebarInset>
                     </div>

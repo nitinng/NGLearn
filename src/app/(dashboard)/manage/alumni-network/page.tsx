@@ -1,9 +1,9 @@
 import React from 'react';
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { UsersTable } from "./users-table";
+import { UsersTable } from "../users/users-table";
 
-export default async function ManageUsersPage() {
+export default async function AlumniNetworkPage() {
   const supabase = createAdminClient();
   const { data: { users }, error } = await supabase.auth.admin.listUsers();
 
@@ -16,9 +16,9 @@ export default async function ManageUsersPage() {
   if (error) {
     return (
       <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Manage Users</h1>
+        <h1 className="text-2xl font-bold mb-4">Alumni Network</h1>
         <div className="bg-red-50 text-red-600 p-4 rounded-md">
-          Failed to load users. Ensure the service role key is correct and your project is properly configured.
+          Failed to load network members. Ensure the service role key is correct.
           <br />
           <span className="text-sm opacity-80">{error.message}</span>
         </div>
@@ -26,10 +26,13 @@ export default async function ManageUsersPage() {
     );
   }
 
-  const filteredUsers = (users || []).filter(user => {
+  // Filter for Team: Alumni Network and Role: Member
+  const alumniUsers = (users || []).filter(user => {
     const isSuperUser = user.email && ["nitin@navgurukul.org", "nitinsudarshan@gmail.com"].includes(user.email.toLowerCase());
     const role = isSuperUser ? "Super Admin" : (user.user_metadata?.role || "Member");
-    return role !== "Member";
+    const team = user.user_metadata?.team || "Alumni Network";
+    
+    return role === "Member" && team === "Alumni Network";
   });
 
   return (
@@ -37,15 +40,15 @@ export default async function ManageUsersPage() {
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 dark:from-white dark:via-indigo-300 dark:to-white bg-clip-text text-transparent">
-            Users & Roles
+            Alumni Network
           </h1>
           <p className="text-muted-foreground mt-1 text-sm font-medium">
-            Allocate Teams and Roles for your application users to enforce proper access control.
+            Manage your external Alumni Network members (Team: Alumni Network, Role: Member).
           </p>
         </div>
       </div>
 
-      <UsersTable initialUsers={filteredUsers} isAdmin={!!isAdmin} />
+      <UsersTable initialUsers={alumniUsers} isAdmin={!!isAdmin} />
     </div>
   );
 }

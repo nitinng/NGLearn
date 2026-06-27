@@ -9,6 +9,7 @@ import {
   Settings,
   GalleryVerticalEnd,
   Users,
+  GraduationCap,
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
@@ -71,6 +72,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Users",
       url: "/manage/users",
       icon: Users,
+    },
+    {
+      title: "Alumni Network",
+      url: "/manage/alumni-network",
+      icon: GraduationCap,
     },
   ];
 

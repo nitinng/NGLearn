@@ -2,9 +2,9 @@ import { auth } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 
-export type UserRole = "Super Admin" | "Admin" | "Manager" | "Operator" | "Analyst" | "Viewer" | "Program" | "Operations" | "Volunteer";
+export type UserRole = "Super Admin" | "Admin" | "Manager" | "Operator" | "Analyst" | "Viewer" | "Member" | "Program" | "Operations" | "Volunteer";
 
-export type UserTeam = "CEO's Office" | "Alumni Growth" | "Pay-Forward" | "None";
+export type UserTeam = "CEO's Office" | "Alumni Growth" | "Pay-Forward" | "Alumni Network" | "None";
 
 export type VolunteerType =
     | "external_individual"
@@ -41,9 +41,7 @@ async function getSupabaseUserEmail() {
  */
 export const checkRole = async (role: UserRole) => {
     const email = await getSupabaseUserEmail();
-    if (email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase())) {
-        return true; // Super Admins pass all checks
-    }
+    const isSuperAdmin = email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
 
     const { sessionClaims, userId } = await auth();
     const claimRole = (sessionClaims?.metadata?.role || (sessionClaims as any)?.role) as UserRole | undefined;
@@ -53,7 +51,7 @@ export const checkRole = async (role: UserRole) => {
     const cookieStore = await cookies();
     const devRole = cookieStore.get('dev-role-override')?.value as UserRole;
     if (devRole) {
-        if (userId === process.env.MASTER_USER_ID || claimRole === "Admin" || claimRole === "Super Admin") {
+        if (isSuperAdmin || userId === process.env.MASTER_USER_ID || claimRole === "Admin" || claimRole === "Super Admin") {
             return devRole === role;
         } else if (
             ["Program", "Operations"].includes(claimRole as string)
@@ -63,6 +61,10 @@ export const checkRole = async (role: UserRole) => {
                 return devRole === role;
             }
         }
+    }
+
+    if (isSuperAdmin) {
+        return true; // Super Admins pass all checks
     }
 
     // Master User Omnipresence Check
@@ -85,9 +87,7 @@ export const checkRole = async (role: UserRole) => {
  */
 export const getUserRole = async (freshUser?: any): Promise<UserRole> => {
     const email = freshUser?.email || await getSupabaseUserEmail();
-    if (email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase())) {
-        return "Super Admin";
-    }
+    const isSuperAdmin = email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase());
 
     const { sessionClaims, userId } = await auth();
     const claimRole = (freshUser?.app_metadata?.role || sessionClaims?.metadata?.role || (sessionClaims as any)?.role) as UserRole | undefined;
@@ -97,7 +97,7 @@ export const getUserRole = async (freshUser?: any): Promise<UserRole> => {
     const cookieStore = await cookies();
     const devRole = cookieStore.get('dev-role-override')?.value as UserRole;
     if (devRole) {
-        if (userId === process.env.MASTER_USER_ID || claimRole === "Admin" || claimRole === "Super Admin") {
+        if (isSuperAdmin || userId === process.env.MASTER_USER_ID || claimRole === "Admin" || claimRole === "Super Admin") {
             return devRole;
         } else if (
             ["Program", "Operations"].includes(claimRole as string)
@@ -107,6 +107,10 @@ export const getUserRole = async (freshUser?: any): Promise<UserRole> => {
                 return devRole;
             }
         }
+    }
+
+    if (isSuperAdmin) {
+        return "Super Admin";
     }
 
     // Master User Override

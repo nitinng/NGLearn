@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useSidebar } from "@/components/ui/sidebar"
 import { ModeToggle } from "@/components/mode-toggle"
+import { DevRoleToggle } from "@/components/dev-role-toggle"
 import dynamic from "next/dynamic"
 
 const HeaderUserMenu = dynamic(
@@ -60,6 +61,7 @@ export function SiteHeader({
           </BreadcrumbList>
         </Breadcrumb>
         <div className="ml-auto flex items-center gap-2">
+          <DevRoleToggle />
           <ModeToggle />
           <HeaderUserMenu />
         </div>

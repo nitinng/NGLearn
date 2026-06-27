@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { UserRole, UserTeam } from "@/lib/roles";
+import { useUserContext } from "@/contexts/user-context";
 import { updateUserRoleAndTeam } from "./actions";
 import {
   Table,
@@ -63,10 +64,16 @@ function formatRelativeTime(dateString?: string | null) {
 }
 
 export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
+  const loggedInUser = useUserContext();
+  const [mounted, setMounted] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [role, setRole] = useState<UserRole>("Viewer");
   const [team, setTeam] = useState<UserTeam>("None");
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleEditClick = (user: any) => {
     setSelectedUser(user);
@@ -112,6 +119,8 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
         return "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-900/50 px-2.5 py-0.5";
       case "Viewer":
         return "bg-slate-50 text-slate-700 border border-slate-200 dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800 px-2.5 py-0.5";
+      case "Member":
+        return "bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/30 dark:text-sky-400 dark:border-sky-900/50 px-2.5 py-0.5";
       default:
         return "bg-secondary text-secondary-foreground px-2.5 py-0.5";
     }
@@ -126,6 +135,8 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
         return "bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/30 dark:text-blue-400 dark:border-blue-900/50 px-2.5 py-0.5";
       case "Pay-Forward":
         return "bg-pink-50 text-pink-700 border border-pink-200 dark:bg-pink-950/30 dark:text-pink-400 dark:border-pink-900/50 px-2.5 py-0.5";
+      case "Alumni Network":
+        return "bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/30 dark:text-teal-400 dark:border-teal-900/50 px-2.5 py-0.5";
       default:
         return "";
     }
@@ -134,8 +145,8 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
   const isHardcodedSuper = selectedUser && ["nitin@navgurukul.org", "nitinsudarshan@gmail.com"].includes((selectedUser.email || "").toLowerCase());
 
   return (
-    <div className="w-full">
-      <div className="rounded-xl border bg-card/60 backdrop-blur-md p-1 sm:p-2 shadow-sm">
+    <div className="w-full max-w-full overflow-hidden">
+      <div className="rounded-xl border bg-card/60 backdrop-blur-md p-1 sm:p-2 shadow-sm overflow-x-auto w-full max-w-full">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -190,7 +201,16 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm font-medium">
-                      {lastSignIn}
+                      {loggedInUser && loggedInUser.id === user.id ? (
+                        <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          Active Now
+                        </span>
+                      ) : mounted ? (
+                        lastSignIn
+                      ) : (
+                        "Loading..."
+                      )}
                     </TableCell>
                     {isAdmin && (
                       <TableCell className="text-right">
@@ -276,6 +296,7 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
                       <SelectItem value="Operator" className="rounded-lg">Operator</SelectItem>
                       <SelectItem value="Analyst" className="rounded-lg">Analyst</SelectItem>
                       <SelectItem value="Viewer" className="rounded-lg">Viewer</SelectItem>
+                      <SelectItem value="Member" className="rounded-lg">Member</SelectItem>
                     </>
                   )}
                 </SelectContent>
@@ -300,6 +321,7 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
                   <SelectItem value="CEO's Office" className="rounded-lg">CEO's Office</SelectItem>
                   <SelectItem value="Alumni Growth" className="rounded-lg">Alumni Growth</SelectItem>
                   <SelectItem value="Pay-Forward" className="rounded-lg">Pay-Forward</SelectItem>
+                  <SelectItem value="Alumni Network" className="rounded-lg">Alumni Network</SelectItem>
                 </SelectContent>
               </Select>
             </div>
