@@ -26,6 +26,9 @@ interface Props {
   trend: TrendPoint[];
   selectedMonth: string;
   availableMonths: string[];
+  availableMonthLabels?: Record<string, string>;
+  basePath?: string;
+  queryParam?: string;
   generatedAt: string;
 }
 
@@ -96,7 +99,7 @@ function ChartTooltip({ active, payload, label }: any) {
 const DIST_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'];
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function CourseraDashboardClient({ metrics, trend, selectedMonth, availableMonths, generatedAt }: Props) {
+export default function CourseraDashboardClient({ metrics, trend, selectedMonth, availableMonths, availableMonthLabels, basePath, queryParam, generatedAt }: Props) {
   const router = useRouter();
 
   const m = metrics;
@@ -104,8 +107,14 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
   const firstImportMonth = availableMonths[availableMonths.length - 1];
   const isSecondMonth = availableMonths.length >= 2 && selectedMonth === availableMonths[availableMonths.length - 2];
 
-  const getLabel = (monthStr: string) => 
-    monthStr === firstImportMonth ? `Lifetime till ${formatMonth(monthStr)}` : formatMonth(monthStr);
+  const getLabel = (monthStr: string) => {
+    if (availableMonthLabels && availableMonthLabels[monthStr]) return availableMonthLabels[monthStr];
+    return monthStr === firstImportMonth ? `Lifetime till ${formatMonth(monthStr)}` : formatMonth(monthStr);
+  };
+  const getShortLabel = (monthStr: string) => {
+    if (availableMonthLabels && availableMonthLabels[monthStr]) return availableMonthLabels[monthStr];
+    return formatMonthShort(monthStr);
+  };
 
   // Distribution chart data
   const hoursDistData = Object.entries(m.hours_distribution ?? {}).map(([k, v]) => ({ name: k, value: v as number }));
@@ -113,7 +122,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
 
   const trendWithLabel = trend
     .filter(t => t.month !== firstImportMonth)
-    .map(t => ({ ...t, label: formatMonthShort(t.month) }));
+    .map(t => ({ ...t, label: getShortLabel(t.month) }));
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -142,14 +151,18 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
           {availableMonths.map(month => (
             <button
               key={month}
-              onClick={() => router.push(`/data-management/coursera?month=${month}`)}
+              onClick={() => {
+                const path = basePath ?? '/data-management/coursera';
+                const param = queryParam ?? 'month';
+                router.push(`${path}?${param}=${month}`);
+              }}
               className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
                 month === selectedMonth
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'border-border/80 hover:bg-accent'
               }`}
             >
-              {month === firstImportMonth ? `Lifetime till ${formatMonthShort(month)}` : formatMonth(month)}
+              {getShortLabel(month)}
             </button>
           ))}
         </div>

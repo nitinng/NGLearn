@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 
-export type UserRole = "Super Admin" | "Admin" | "Manager" | "Operator" | "Analyst" | "Viewer" | "Member" | "Program" | "Operations" | "Volunteer";
+export type UserRole = "Super Admin" | "Admin" | "Manager" | "Operator" | "Analyst" | "Viewer" | "Member" | "Program" | "Operations" | "Volunteer" | "PNC";
 
 export type UserTeam = "CEO's Office" | "Alumni Growth" | "Pay-Forward" | "Alumni Network" | "None";
 

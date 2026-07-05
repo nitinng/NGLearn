@@ -11,6 +11,7 @@ import {
   GraduationCap,
   Database,
   DatabaseBackup,
+  Trophy,
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
@@ -81,6 +82,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  const navContests: NavItem[] = [
+    {
+      title: "All Contests",
+      url: "/contests",
+      icon: Trophy,
+    },
+  ];
+
   return (
     <Sidebar
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
@@ -112,6 +121,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navGeneral} />
+        <NavMain items={navContests} label="Contests" />
         <NavMain items={navManage} label="Manage" />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>

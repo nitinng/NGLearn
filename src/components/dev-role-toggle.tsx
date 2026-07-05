@@ -18,6 +18,7 @@ const ROLES = [
   { label: "Original Role", value: "" },
   { label: "Super Admin", value: "Super Admin" },
   { label: "Admin", value: "Admin" },
+  { label: "PNC", value: "PNC" },
   { label: "Manager", value: "Manager" },
   { label: "Operator", value: "Operator" },
   { label: "Analyst", value: "Analyst" },

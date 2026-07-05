@@ -170,6 +170,8 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
         return "bg-slate-50 text-slate-700 border border-slate-200 dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800 px-2.5 py-0.5";
       case "Member":
         return "bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/30 dark:text-sky-400 dark:border-sky-900/50 px-2.5 py-0.5";
+      case "PNC":
+        return "bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200 dark:bg-fuchsia-950/30 dark:text-fuchsia-400 dark:border-fuchsia-900/50 px-2.5 py-0.5";
       default:
         return "bg-secondary text-secondary-foreground px-2.5 py-0.5";
     }
@@ -427,6 +429,7 @@ export function UsersTable({ initialUsers, isAdmin }: UsersTableProps) {
                   ) : (
                     <>
                       <SelectItem value="Admin" className="rounded-lg">Admin</SelectItem>
+                      <SelectItem value="PNC" className="rounded-lg">PNC</SelectItem>
                       <SelectItem value="Manager" className="rounded-lg">Manager</SelectItem>
                       <SelectItem value="Operator" className="rounded-lg">Operator</SelectItem>
                       <SelectItem value="Analyst" className="rounded-lg">Analyst</SelectItem>
