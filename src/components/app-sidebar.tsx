@@ -12,6 +12,12 @@ import {
   Database,
   DatabaseBackup,
   Trophy,
+  Briefcase,
+  CalendarClock,
+  HeartHandshake,
+  BarChart,
+  Settings,
+  TrendingUp,
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
@@ -90,6 +96,49 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+  const navCrm: NavItem[] = [
+    {
+      title: "Alumni Growth",
+      url: "#",
+      icon: TrendingUp,
+      items: [
+        {
+          title: "Workspace",
+          url: "/crm/alumni-growth/workspace",
+        },
+        {
+          title: "Follow-ups",
+          url: "/crm/alumni-growth/follow-ups",
+        },
+      ],
+    },
+    {
+      title: "Pay Forward",
+      url: "#",
+      icon: HeartHandshake,
+      items: [
+        {
+          title: "Workspace",
+          url: "/crm/pay-forward/workspace",
+        },
+        {
+          title: "Follow-ups",
+          url: "/crm/pay-forward/follow-ups",
+        },
+      ],
+    },
+    {
+      title: "Reports",
+      url: "/crm/reports",
+      icon: BarChart,
+    },
+    {
+      title: "Settings",
+      url: "/crm/settings",
+      icon: Settings,
+    },
+  ];
+
   return (
     <Sidebar
       className="top-(--header-height) h-[calc(100svh-var(--header-height))]!"
@@ -121,6 +170,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navGeneral} />
+        <NavMain items={navCrm} label="CRM" />
         <NavMain items={navContests} label="Contests" />
         <NavMain items={navManage} label="Manage" />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
