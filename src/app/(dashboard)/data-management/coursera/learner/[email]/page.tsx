@@ -10,7 +10,7 @@ interface PageProps {
 
 export default async function LearnerDetailPage({ params }: PageProps) {
   const role = await getUserRole();
-  if (role !== 'Super Admin' && role !== 'Admin') redirect('/');
+  if (role !== 'Admin') redirect('/');
 
   const { email: encodedEmail } = await params;
   const email = decodeURIComponent(encodedEmail).trim().toLowerCase();

@@ -142,3 +142,15 @@ export async function createUserList(name: string, members: { email: string; nam
   revalidatePath('/contests/coursera/user-list');
   return listData;
 }
+
+export async function getImportLogs() {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from('contest_coursera_import_log')
+    .select(`*, sub_contests(name)`)
+    .order('imported_at', { ascending: false })
+    .limit(50);
+
+  if (error) throw new Error(error.message);
+  return data;
+}

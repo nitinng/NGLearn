@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import CourseraAlumniStats from "@/app/(dashboard)/manage/master-data/_components/CourseraAlumniStats";
+
 
 interface AlumniDetailsModuleProps {
   selectedAlumni: any;
@@ -254,7 +254,7 @@ export default function AlumniDetailsModule({
           </div>
 
           {/* Coursera Stats */}
-          <CourseraAlumniStats email={selectedAlumni.email} />
+
         </div>
 
         {/* Modal Footer */}

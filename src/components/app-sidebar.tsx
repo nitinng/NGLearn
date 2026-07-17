@@ -21,7 +21,6 @@ import {
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import {
   Sidebar,
   SidebarContent,
@@ -32,29 +31,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import Link from "next/link"
+import { useUserContext } from "@/contexts/user-context"
 
-const data = {
-  navSecondary: [
-    {
-      title: "Documentation",
-      url: "/docs",
-      icon: BookOpen,
-    },
-    {
-      title: "Support",
-      url: "#",
-      icon: LifeBuoy,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: Send,
-    },
-  ],
-}
+const data = {}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { setOpenMobile, isMobile } = useSidebar()
+  const user = useUserContext()
 
   const navGeneral: NavItem[] = [
     {
@@ -65,26 +48,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
+
   const navManage: NavItem[] = [
     {
-      title: "Users",
-      url: "/manage/users",
-      icon: Users,
+      title: "Published Reports",
+      url: "/published-reports",
+      icon: BookOpen,
     },
     {
-      title: "Alumni Network",
-      url: "/manage/alumni-network",
-      icon: GraduationCap,
-    },
-    {
-      title: "Data Management",
-      url: "/data-management",
-      icon: DatabaseBackup,
-    },
-    {
-      title: "Master Data",
-      url: "/manage/master-data",
-      icon: Database,
+      title: "Settings",
+      url: "/settings",
+      icon: Settings,
     },
   ];
 
@@ -96,48 +70,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ];
 
-  const navCrm: NavItem[] = [
-    {
-      title: "Alumni Growth",
-      url: "#",
-      icon: TrendingUp,
-      items: [
-        {
-          title: "Workspace",
-          url: "/crm/alumni-growth/workspace",
-        },
-        {
-          title: "Follow-ups",
-          url: "/crm/alumni-growth/follow-ups",
-        },
-      ],
-    },
-    {
-      title: "Pay Forward",
-      url: "#",
-      icon: HeartHandshake,
-      items: [
-        {
-          title: "Workspace",
-          url: "/crm/pay-forward/workspace",
-        },
-        {
-          title: "Follow-ups",
-          url: "/crm/pay-forward/follow-ups",
-        },
-      ],
-    },
-    {
-      title: "Reports",
-      url: "/crm/reports",
-      icon: BarChart,
-    },
-    {
-      title: "Settings",
-      url: "/crm/settings",
-      icon: Settings,
-    },
-  ];
 
   return (
     <Sidebar
@@ -158,9 +90,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <GalleryVerticalEnd className="size-4" />
                 </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-semibold">NGConnect</span>
+                  <span className="font-semibold">NGLearn</span>
                   <span className="truncate text-xs text-muted-foreground">
-                    Admin Workspace
+                    {user?.role ? `${user.role} Workspace` : "Workspace"}
                   </span>
                 </div>
               </Link>
@@ -169,11 +101,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navGeneral} />
-        <NavMain items={navCrm} label="CRM" />
-        <NavMain items={navContests} label="Contests" />
-        <NavMain items={navManage} label="Manage" />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={[...navGeneral, ...navContests, ...navManage]} />
       </SidebarContent>
     </Sidebar>
   )

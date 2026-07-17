@@ -108,13 +108,13 @@ ON CONFLICT (name) DO NOTHING;
 -- ==========================================
 -- 5. Alumni Data Management Tables
 -- ==========================================
--- Run order: helper functions → import_batches → alumni_master
---            → alumni_profile → import_batch_records → audit_log
+-- Run order: helper functions â†’ import_batches â†’ alumni_master
+--            â†’ alumni_profile â†’ import_batch_records â†’ audit_log
 -- ==========================================
 
 
 -- ==========================================
--- 5.0 Helper Functions (must be defined first — policies reference them)
+-- 5.0 Helper Functions (must be defined first â€” policies reference them)
 -- ==========================================
 
 -- Returns TRUE if the calling user is a Super Admin
@@ -123,9 +123,9 @@ RETURNS boolean
 LANGUAGE sql STABLE SECURITY DEFINER
 AS $$
   SELECT (
-    auth.jwt() ->> 'email' IN ('nitin@navgurukul.org', 'nitinsudarshan@gmail.com')
+    auth.jwt() ->> 'email' = 'nitin@navgurukul.org'
     OR
-    (auth.jwt() -> 'app_metadata' ->> 'role') = 'super_admin'
+    (auth.jwt() -> 'app_metadata' ->> 'role') = 'Admin'
   )
 $$;
 
@@ -180,7 +180,7 @@ CREATE POLICY "import_batches_select_internal"
     ON public.import_batches FOR SELECT TO authenticated
     USING (
         public.is_super_admin()
-        OR (auth.jwt() -> 'app_metadata' ->> 'role') IN ('Manager', 'Operator', 'Admin')
+        OR (auth.jwt() -> 'app_metadata' ->> 'role') = 'Admin'
     );
 
 DROP POLICY IF EXISTS "import_batches_write_super_admin" ON public.import_batches;
@@ -350,7 +350,7 @@ CREATE POLICY "import_batch_records_select_internal"
     ON public.import_batch_records FOR SELECT TO authenticated
     USING (
         public.is_super_admin()
-        OR (auth.jwt() -> 'app_metadata' ->> 'role') IN ('Manager', 'Operator', 'Admin')
+        OR (auth.jwt() -> 'app_metadata' ->> 'role') = 'Admin'
     );
 
 DROP POLICY IF EXISTS "import_batch_records_write_super_admin" ON public.import_batch_records;
@@ -367,7 +367,7 @@ CREATE INDEX IF NOT EXISTS idx_ibr_alumni_email ON public.import_batch_records(a
 -- 5.5 audit_log
 -- ==========================================
 -- record_id is TEXT to support both email PKs (alumni_master)
--- and UUID PKs (all other tables). APPEND-ONLY — no UPDATE/DELETE policies.
+-- and UUID PKs (all other tables). APPEND-ONLY â€” no UPDATE/DELETE policies.
 -- ==========================================
 CREATE TABLE IF NOT EXISTS public.audit_log (
     id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -393,7 +393,7 @@ CREATE POLICY "audit_log_select_internal"
     TO authenticated
     USING (
         public.is_super_admin()
-        OR (auth.jwt() -> 'app_metadata' ->> 'role') IN ('Manager', 'Operator', 'Admin')
+        OR (auth.jwt() -> 'app_metadata' ->> 'role') = 'Admin'
     );
 
 CREATE INDEX IF NOT EXISTS idx_audit_record_id   ON public.audit_log(record_id);
@@ -520,6 +520,8 @@ CREATE TABLE IF NOT EXISTS public.coursera_config (
     inactive_after_days INTEGER NOT NULL DEFAULT 90,
     snapshot_frequency TEXT DEFAULT 'monthly',
     audit_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    allow_global_data_view BOOLEAN NOT NULL DEFAULT TRUE,
+    allow_global_activity_logs_view BOOLEAN NOT NULL DEFAULT TRUE,
     total_licenses INTEGER,
     last_sync_at TIMESTAMPTZ,
     last_sync_status TEXT,
@@ -536,6 +538,94 @@ CREATE POLICY "coursera_config_super_admin_all"
     TO authenticated
     USING (public.is_super_admin())
     WITH CHECK (public.is_super_admin());
+
+CREATE TABLE IF NOT EXISTS public.coursera_snapshots (
+  id bigserial not null,
+  snapshot_month date not null,
+  email text not null,
+  name text null,
+  course_id text not null,
+  course_name text null,
+  course_slug text null,
+  university text null,
+  course_type text null,
+  program_name text null,
+  enrollment_time timestamp with time zone null,
+  last_activity_time timestamp with time zone null,
+  overall_progress numeric not null default 0,
+  cumulative_learning_hours numeric not null default 0,
+  estimated_course_hours numeric null,
+  completed boolean not null default false,
+  removed_from_program boolean not null default false,
+  completion_time timestamp with time zone null,
+  course_grade numeric null,
+  certificate_url text null,
+  imported_at timestamp with time zone null default now(),
+  constraint coursera_snapshots_pkey primary key (id),
+  constraint coursera_snapshots_snapshot_month_email_course_id_key unique (snapshot_month, email, course_id)
+) TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS idx_snap_month on public.coursera_snapshots using btree (snapshot_month) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS idx_snap_email on public.coursera_snapshots using btree (email) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS idx_snap_email_course on public.coursera_snapshots using btree (email, course_id) TABLESPACE pg_default;
+
+CREATE TABLE IF NOT EXISTS public.coursera_learner_month (
+  id bigserial not null,
+  month date not null,
+  email text not null,
+  name text null,
+  monthly_hours numeric not null default 0,
+  cumulative_hours numeric not null default 0,
+  courses_enrolled integer null default 0,
+  courses_active integer null default 0,
+  courses_completed integer null default 0,
+  new_completions integer null default 0,
+  avg_progress numeric null default 0,
+  is_active boolean null default false,
+  is_compliant boolean null default false,
+  days_since_activity integer null,
+  constraint coursera_learner_month_pkey primary key (id),
+  constraint coursera_learner_month_month_email_key unique (month, email)
+) TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS idx_lm_month on public.coursera_learner_month using btree (month) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS idx_lm_email on public.coursera_learner_month using btree (email) TABLESPACE pg_default;
+
+CREATE TABLE IF NOT EXISTS public.coursera_computed_metrics (
+  id bigserial not null,
+  month date not null,
+  metrics jsonb not null,
+  generated_at timestamp with time zone null default now(),
+  generated_by text null,
+  constraint coursera_computed_metrics_pkey primary key (id),
+  constraint coursera_computed_metrics_month_key unique (month)
+) TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS idx_cm_month on public.coursera_computed_metrics using btree (month) TABLESPACE pg_default;
+
+CREATE TABLE IF NOT EXISTS public.coursera_import_log (
+    id BIGSERIAL PRIMARY KEY,
+    snapshot_month DATE NOT NULL,
+    filename TEXT,
+    file_size_bytes BIGINT,
+    rows_imported INTEGER,
+    learners_affected INTEGER,
+    action TEXT NOT NULL, -- 'import', 'rollback', 'recalculate'
+    status TEXT NOT NULL, -- 'success', 'error'
+    error_message TEXT,
+    duration_ms BIGINT,
+    imported_by TEXT,
+    imported_at TIMESTAMPTZ DEFAULT NOW()
+) TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS idx_il_month ON public.coursera_import_log using btree (snapshot_month) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS idx_il_action ON public.coursera_import_log using btree (action) TABLESPACE pg_default;
+CREATE INDEX IF NOT EXISTS idx_il_status ON public.coursera_import_log using btree (status) TABLESPACE pg_default;
+
+ALTER TABLE public.coursera_snapshots DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coursera_learner_month DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coursera_computed_metrics DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coursera_import_log DISABLE ROW LEVEL SECURITY;
 
 CREATE TABLE IF NOT EXISTS public.coursera_activity (
     id TEXT PRIMARY KEY, -- externalId~contentType~contentId
@@ -693,3 +783,81 @@ ALTER TABLE public.coursera_compliance_audit ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "coursera_compliance_audit_all"
     ON public.coursera_compliance_audit FOR ALL
     TO authenticated USING (true) WITH CHECK (true);
+
+-- ==============================================================================
+-- TEAM AUTO-GROUPING TRIGGER
+-- ==============================================================================
+
+-- Function to sync the group_name for all members based on their team's current size
+CREATE OR REPLACE FUNCTION public.sync_ng_members_groups()
+RETURNS trigger AS $$
+BEGIN
+  -- Prevent infinite recursion caused by updating the same table
+  IF pg_trigger_depth() > 1 THEN
+    RETURN NULL;
+  END IF;
+
+  WITH team_counts AS (
+    SELECT team, count(*) as c
+    FROM public.ng_members
+    WHERE team IS NOT NULL
+    GROUP BY team
+  ),
+  team_groups AS (
+    SELECT team,
+           CASE 
+             WHEN c > 30 THEN '1'
+             WHEN c >= 11 AND c <= 30 THEN '2'
+             ELSE '3'
+           END as new_group
+    FROM team_counts
+  )
+  UPDATE public.ng_members m
+  SET group_name = tg.new_group
+  FROM team_groups tg
+  WHERE m.team = tg.team AND (m.group_name IS DISTINCT FROM tg.new_group);
+
+  -- For members with no team, set group to null
+  UPDATE public.ng_members
+  SET group_name = NULL
+  WHERE team IS NULL AND group_name IS NOT NULL;
+
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Drop trigger if exists
+DROP TRIGGER IF EXISTS trigger_sync_ng_members_groups ON public.ng_members;
+
+-- Create the statement-level trigger
+CREATE TRIGGER trigger_sync_ng_members_groups
+AFTER INSERT OR UPDATE OF team OR DELETE ON public.ng_members
+FOR EACH STATEMENT
+EXECUTE FUNCTION public.sync_ng_members_groups();
+
+
+
+-- ==========================================
+-- Published Reports
+-- ==========================================
+
+
+CREATE TABLE public.published_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    report_type TEXT NOT NULL,
+    payload JSONB NOT NULL,
+    created_by TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.published_reports ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access to published_reports"
+ON public.published_reports FOR SELECT TO public USING (true);
+
+CREATE POLICY "Allow authenticated users to insert published_reports"
+ON public.published_reports FOR INSERT TO authenticated WITH CHECK (true);
+
+CREATE POLICY "Allow authenticated users to delete published_reports"
+ON public.published_reports FOR DELETE TO authenticated USING (true);

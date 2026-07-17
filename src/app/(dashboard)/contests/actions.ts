@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 
 async function verifyAdminAccess() {
   const role = await getUserRole();
-  if (role !== "Super Admin" && role !== "Admin" && role !== "PNC") {
+  if (role !== "Admin" && role !== "PNC") {
     throw new Error("Unauthorized: Only admins and PNCs can perform this action.");
   }
 }
@@ -60,54 +60,6 @@ export async function deleteContestSeries(id: string) {
   return { success: true };
 }
 
-// -----------------------------------------------------------------------------
-// User Lists
-// -----------------------------------------------------------------------------
-
-export async function createUserList(data: { name: string; description?: string }) {
-  await verifyAdminAccess();
-  const supabase = createAdminClient();
-
-  const { data: result, error } = await supabase
-    .from("contest_user_lists")
-    .insert([data])
-    .select()
-    .single();
-
-  if (error) return { error: error.message };
-  revalidatePath("/contests");
-  return { data: result };
-}
-
-export async function updateUserList(id: string, data: { name: string; description?: string }) {
-  await verifyAdminAccess();
-  const supabase = createAdminClient();
-
-  const { data: result, error } = await supabase
-    .from("contest_user_lists")
-    .update(data)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) return { error: error.message };
-  revalidatePath("/contests");
-  return { data: result };
-}
-
-export async function deleteUserList(id: string) {
-  await verifyAdminAccess();
-  const supabase = createAdminClient();
-
-  const { error } = await supabase
-    .from("contest_user_lists")
-    .delete()
-    .eq("id", id);
-
-  if (error) return { error: error.message };
-  revalidatePath("/contests");
-  return { success: true };
-}
 
 // -----------------------------------------------------------------------------
 // Sub-Contests
@@ -116,7 +68,6 @@ export async function deleteUserList(id: string) {
 export async function createSubContest(data: {
   series_id: string;
   name: string;
-  user_list_id?: string | null;
   start_date?: string | null;
   end_date?: string | null;
 }) {
@@ -136,7 +87,6 @@ export async function createSubContest(data: {
 
 export async function updateSubContest(id: string, data: {
   name?: string;
-  user_list_id?: string | null;
   start_date?: string | null;
   end_date?: string | null;
 }) {

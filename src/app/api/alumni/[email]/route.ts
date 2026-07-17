@@ -48,11 +48,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const role = await getUserRole();
-  const isSuperAdmin = role === 'Super Admin' || role === 'Admin';
+  const isAdmin = role === 'Admin';
   const isMember = role === 'Member';
 
   // Members can only edit their own profile
-  if (!isSuperAdmin && !(isMember && user.email === decodedEmail)) {
+  if (!isAdmin && !(isMember && user.email === decodedEmail)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NGConnect",
-  description: "The NGConnect application platform.",
+  title: "NGLearn",
+  description: "The NGLearn application platform.",
 };
 
 import { ThemeProvider } from "@/components/theme-provider"

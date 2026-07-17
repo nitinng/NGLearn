@@ -7,7 +7,7 @@ import { SeriesCard } from "./series-card";
 export default async function ContestsPage() {
   const supabase = createAdminClient();
   const role = await getUserRole();
-  const isAdmin = role === 'Super Admin' || role === 'Admin' || role === 'PNC';
+  const isAdmin = role === 'Admin' || role === 'PNC';
 
   // Fetch all series with their nested sub-contests
   const { data: seriesList, error } = await supabase
@@ -77,7 +77,7 @@ export default async function ContestsPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-4">
                 {series.map((s) => {
                   const subContests = s.sub_contests || [];
                   subContests.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());

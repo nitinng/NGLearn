@@ -4,21 +4,31 @@ import { getUserRole } from "@/lib/roles"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { DashboardStats } from "@/components/dashboard-stats"
 import { DashboardCharts } from "@/components/dashboard-charts"
-import { CourseraStats } from "@/components/coursera-stats"
-import { CourseraCharts } from "@/components/coursera-charts"
+import CourseraDashboardClient from "./data-management/coursera/_components/CourseraDashboardClient"
+import { computeMetricsBlob } from "@/lib/coursera-metrics"
 
-export default async function DashboardPage() {
+interface SearchParams { month?: string }
+
+export default async function DashboardPage(props: { searchParams?: Promise<SearchParams> }) {
+  const searchParams = props.searchParams ? await props.searchParams : undefined;
+  const monthParam = searchParams?.month;
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
   const activeRole = await getUserRole(user)
-  const isExcludedRole = activeRole === "Viewer" || activeRole === "Member"
+  const isExcludedRole = activeRole === "Member"
 
   let users: any[] = []
   let alumniData: any[] = []
-  let courseraMetrics: any = null
-  let courseraMonthlyMetrics: any[] = []
+  let targetMonth: string | null = null;
+  let metricsRow: any = null;
+  let trend: any[] = [];
+  let monthsList: any[] = [];
   let errorMsg: string | null = null
+  let allowGlobalDataView = true;
+  let memberMetrics: any = null;
+  let memberTrend: any[] = [];
 
   if (!isExcludedRole) {
     try {
@@ -33,41 +43,170 @@ export default async function DashboardPage() {
       const { data: alumni, error: alumniError } = await adminSupabase
         .from('alumni_master')
         .select('status, campus, course, gender')
-        .limit(5000) // Just to be safe with large datasets
+        .limit(5000)
       
       if (!alumniError) {
         alumniData = alumni || []
       }
 
-      // Fetch Coursera computed metrics
-      const { data: computedMetrics } = await adminSupabase
+      // 1. Get all available months for the tab selector
+      const { data: mList } = await adminSupabase
         .from('coursera_computed_metrics')
-        .select('*')
-        .order('month', { ascending: true })
+        .select('month')
+        .order('month', { ascending: false });
+      
+      monthsList = mList ?? [];
+      targetMonth = monthParam ?? monthsList?.[0]?.month ?? null;
 
-      if (computedMetrics && computedMetrics.length > 0) {
-        // The most recent month's data will act as overall metrics
-        const latest = computedMetrics[computedMetrics.length - 1].metrics
-        courseraMetrics = {
-          total_learning_hours: latest.total_lifetime_hours || 0,
-          course_completions: latest.total_courses_completed || 0,
-          active_users: latest.active_learners || 0,
-          lifetime_users: latest.total_learners || 0,
-          active_alumni: 0 // Not separately tracked in the json, or default to 0
+      // 2. Fetch metrics blob for selected month
+      const { data: mRow } = targetMonth
+        ? await adminSupabase
+            .from('coursera_computed_metrics')
+            .select('month, metrics, generated_at, generated_by')
+            .eq('month', targetMonth)
+            .single()
+        : { data: null };
+      metricsRow = mRow;
+
+      // 3. Fetch last 6 months for trend charts
+      const { data: trendRaw } = await adminSupabase
+        .from('coursera_computed_metrics')
+        .select('month, metrics')
+        .order('month', { ascending: false })
+        .limit(6);
+
+      trend = (trendRaw ?? []).reverse().map(r => ({
+        month: r.month,
+        active_learners: r.metrics?.active_learners ?? 0,
+        monthly_hours: r.metrics?.monthly_hours ?? 0,
+        monthly_completions: r.metrics?.monthly_completions ?? 0,
+        license_utilization_pct: r.metrics?.license_utilization_pct ?? null,
+      }));
+
+      // 4. Check Global View Config
+      try {
+        const { data: cfg } = await adminSupabase.from('coursera_config').select('allow_global_data_view').limit(1).single();
+        if (cfg && cfg.allow_global_data_view !== undefined) {
+          allowGlobalDataView = cfg.allow_global_data_view;
+        }
+      } catch (e) {
+        // Fallback if column missing
+      }
+
+      // 5. Dynamic Member Metrics
+      const { data: members } = await adminSupabase.from('ng_members').select('email, alt_email, full_name');
+      const allMemberEmails = members?.flatMap((m: any) => [m.email?.toLowerCase(), m.alt_email?.toLowerCase()].filter(Boolean)) || [];
+
+      if (targetMonth && allMemberEmails.length > 0) {
+        const currentD = new Date(targetMonth);
+        currentD.setUTCMonth(currentD.getUTCMonth() - 1);
+        const prevMonth = currentD.toISOString().substring(0, 7) + '-01';
+
+        const { data: learnerRecords } = await adminSupabase
+          .from('coursera_learner_month')
+          .select('*')
+          .eq('month', targetMonth)
+          .in('email', allMemberEmails);
+        
+        const { data: prevLearnerRecords } = await adminSupabase
+          .from('coursera_learner_month')
+          .select('email, monthly_hours, new_completions, is_active')
+          .eq('month', prevMonth)
+          .in('email', allMemberEmails);
+
+        const recordsMap = new Map();
+        (learnerRecords ?? []).forEach(r => recordsMap.set(r.email.toLowerCase(), r));
+
+        const collapsedRecords = (members ?? []).map((m: any) => {
+          const email = m.email.toLowerCase();
+          const altEmail = m.alt_email?.toLowerCase();
+          const sMain = recordsMap.get(email);
+          const sAlt = altEmail ? recordsMap.get(altEmail) : null;
+          
+          let days = null;
+          if (sMain?.days_since_activity != null && sAlt?.days_since_activity != null) {
+            days = Math.min(sMain.days_since_activity, sAlt.days_since_activity);
+          } else {
+            days = sMain?.days_since_activity ?? sAlt?.days_since_activity ?? null;
+          }
+
+          return {
+            email: email,
+            name: m.full_name || null,
+            month: targetMonth,
+            is_active: sMain?.is_active || sAlt?.is_active || false,
+            is_compliant: sMain?.is_compliant || sAlt?.is_compliant || false,
+            is_alumni: false,
+            courses_enrolled: (sMain?.courses_enrolled || 0) + (sAlt?.courses_enrolled || 0),
+            courses_completed: (sMain?.courses_completed || 0) + (sAlt?.courses_completed || 0),
+            monthly_hours: (sMain?.monthly_hours || 0) + (sAlt?.monthly_hours || 0),
+            new_completions: (sMain?.new_completions || 0) + (sAlt?.new_completions || 0),
+            cumulative_learning_hours: (sMain?.cumulative_learning_hours || 0) + (sAlt?.cumulative_learning_hours || 0),
+            estimated_course_hours: (sMain?.estimated_course_hours || 0) + (sAlt?.estimated_course_hours || 0),
+            days_since_activity: days
+          };
+        });
+
+        const prevRecordsMap = new Map();
+        (prevLearnerRecords ?? []).forEach(r => prevRecordsMap.set(r.email.toLowerCase(), r));
+        const collapsedPrevRecords = (members ?? []).map((m: any) => {
+          const email = m.email.toLowerCase();
+          const altEmail = m.alt_email?.toLowerCase();
+          const sMain = prevRecordsMap.get(email);
+          const sAlt = altEmail ? prevRecordsMap.get(altEmail) : null;
+          return {
+             email,
+             is_active: sMain?.is_active || sAlt?.is_active || false,
+             monthly_hours: (sMain?.monthly_hours || 0) + (sAlt?.monthly_hours || 0),
+             new_completions: (sMain?.new_completions || 0) + (sAlt?.new_completions || 0)
+          };
+        });
+
+        if (collapsedRecords.length > 0) {
+          memberMetrics = computeMetricsBlob(
+            collapsedRecords,
+            collapsedPrevRecords,
+            metricsRow?.metrics?.config?.total_licenses || 2000,
+            metricsRow?.metrics?.config?.minimum_monthly_hours || 20
+          );
         }
 
-        // Map to monthly format, excluding March 2026 since it has no prior month delta
-        courseraMonthlyMetrics = computedMetrics
-          .filter((row: any) => !row.month.startsWith('2026-03'))
-          .map((row: any) => {
-            const date = new Date(row.month)
-            return {
-              month_label: `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`,
-              total_learning_hours: row.metrics.monthly_hours || 0,
-              course_completions: row.metrics.monthly_completions || 0,
-              active_users: row.metrics.active_learners || 0
-            }
-          })
+        const { data: memberTrendRaw } = await adminSupabase
+          .from('coursera_learner_month')
+          .select('month, is_active, monthly_hours, new_completions, email')
+          .in('month', trend.map(t => t.month))
+          .in('email', allMemberEmails);
+
+        if (memberTrendRaw) {
+           const trendMap = new Map();
+           trend.forEach(t => trendMap.set(t.month, { month: t.month, active_members: new Set(), monthly_hours: 0, monthly_completions: 0, license_utilization_pct: null }));
+           
+           const emailToMember = new Map();
+           members?.forEach((m: any) => {
+             emailToMember.set(m.email.toLowerCase(), m.email.toLowerCase());
+             if (m.alt_email) emailToMember.set(m.alt_email.toLowerCase(), m.email.toLowerCase());
+           });
+
+           memberTrendRaw.forEach((r: any) => {
+             const tm = trendMap.get(r.month);
+             const memberKey = emailToMember.get(r.email.toLowerCase());
+             if (tm && memberKey) {
+               if (r.is_active) tm.active_members.add(memberKey);
+               tm.monthly_hours += (r.monthly_hours || 0);
+               tm.monthly_completions += (r.new_completions || 0);
+             }
+           });
+           memberTrend = trend.map(t => {
+             const tm = trendMap.get(t.month);
+             return {
+               month: tm.month,
+               active_learners: tm.active_members.size,
+               monthly_hours: tm.monthly_hours,
+               monthly_completions: tm.monthly_completions,
+               license_utilization_pct: null
+             };
+           });
+        }
       }
     } catch (e: any) {
       errorMsg = e.message || "Failed to retrieve user statistics."
@@ -79,16 +218,33 @@ export default async function DashboardPage() {
       <DashboardGreeting />
       {!isExcludedRole && (
         <div className="flex flex-col gap-6">
-          <DashboardStats initialUsers={users} error={errorMsg} />
           {alumniData.length > 0 && <DashboardCharts data={alumniData} />}
           
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-zinc-800">
-            <CourseraStats metrics={courseraMetrics} />
-            {courseraMonthlyMetrics.length > 0 && <CourseraCharts metrics={courseraMonthlyMetrics} />}
+          <div className="mt-8 border-t border-slate-200 dark:border-zinc-800">
+            {metricsRow ? (
+              <div className="-mx-4 md:-mx-6 lg:-mx-8 -mb-20">
+                <CourseraDashboardClient
+                  metrics={metricsRow.metrics}
+                  trend={trend}
+                  memberMetrics={memberMetrics}
+                  memberTrend={memberTrend}
+                  allowGlobalView={allowGlobalDataView}
+                  selectedMonth={targetMonth!}
+                  availableMonths={monthsList.map(m => m.month)}
+                  generatedAt={metricsRow.generated_at}
+                  basePath="/"
+                />
+              </div>
+            ) : (
+              <div className="mt-8 flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center bg-card/60 backdrop-blur-sm rounded-xl border border-border/80">
+                <p className="text-muted-foreground text-sm">No Coursera data imported yet.</p>
+              </div>
+            )}
           </div>
         </div>
       )}
     </div>
   )
 }
+
 

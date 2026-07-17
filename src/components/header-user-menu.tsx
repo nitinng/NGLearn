@@ -1,6 +1,6 @@
 "use client";
 
-import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from "lucide-react";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -65,17 +65,6 @@ export function HeaderUserMenu() {
                         </div>
                     </div>
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => router.push("/profile")}>
-                        <BadgeCheck className="mr-2 h-4 w-4" />
-                        Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/notifications")}>
-                        <Bell className="mr-2 h-4 w-4" />
-                        Notifications
-                    </DropdownMenuItem>
-                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()}>
                     <LogOut className="mr-2 h-4 w-4" />

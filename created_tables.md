@@ -1,6 +1,6 @@
 # Created Tables Log
 
-This file documents all the tables created in the Supabase database for the NGConnect project.
+This file documents all the tables created in the Supabase database for the NGLearn project.
 
 ## 1. `ng_campuses`
 Stores the campus locations and their current operational status.

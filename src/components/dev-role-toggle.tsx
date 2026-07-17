@@ -16,13 +16,8 @@ import { Badge } from "@/components/ui/badge";
 
 const ROLES = [
   { label: "Original Role", value: "" },
-  { label: "Super Admin", value: "Super Admin" },
   { label: "Admin", value: "Admin" },
   { label: "PNC", value: "PNC" },
-  { label: "Manager", value: "Manager" },
-  { label: "Operator", value: "Operator" },
-  { label: "Analyst", value: "Analyst" },
-  { label: "Viewer", value: "Viewer" },
   { label: "Member", value: "Member" },
 ];
 
@@ -49,6 +44,7 @@ export function DevRoleToggle() {
   };
 
   if (!user) return null;
+  if (user.role !== 'Admin' && !activeOverride) return null;
 
   return (
     <DropdownMenu>

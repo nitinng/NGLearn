@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
   }
 
   const role = await getUserRole();
-  if (role !== 'Super Admin' && role !== 'Admin') {
+  if (role !== 'Admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

@@ -1,5 +1,7 @@
 'use client';
 
+import { useState } from 'react';
+
 import { useRouter } from 'next/navigation';
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell,
@@ -30,16 +32,24 @@ interface Props {
   basePath?: string;
   queryParam?: string;
   generatedAt: string;
+  memberMetrics?: Metrics | null;
+  memberTrend?: TrendPoint[];
+  allowGlobalView?: boolean;
+  importHref?: string;
+  activityHref?: string;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function formatMonth(dateStr: string) {
-  return new Date(dateStr + 'T12:00:00Z').toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const dt = new Date(dateStr + 'T12:00:00Z').toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return `Lifetime till ${dt}`;
 }
 function formatMonthShort(dateStr: string) {
-  return new Date(dateStr + 'T12:00:00Z').toLocaleString('en-US', { month: 'short', year: '2-digit' });
+  const dt = new Date(dateStr + 'T12:00:00Z').toLocaleString('en-US', { month: 'short', year: '2-digit' });
+  return `Lifetime till ${dt}`;
 }
-function fmt(n: number, decimals = 0) {
+function fmt(n: number | null | undefined, decimals = 0) {
+  if (n == null) return '0';
   return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 function delta(n: number) {
@@ -57,7 +67,7 @@ function KpiCard({
   accent: string; deltaVal?: number;
 }) {
   return (
-    <div className={`rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow`}>
+    <div className={`rounded-lg border border-border/80 bg-card/60 backdrop-blur-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow`}>
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
         <div className={`p-2 rounded-lg ${accent}`}>
@@ -99,10 +109,15 @@ function ChartTooltip({ active, payload, label }: any) {
 const DIST_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'];
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function CourseraDashboardClient({ metrics, trend, selectedMonth, availableMonths, availableMonthLabels, basePath, queryParam, generatedAt }: Props) {
+export default function CourseraDashboardClient({ metrics, trend, selectedMonth, availableMonths, availableMonthLabels, basePath, queryParam, generatedAt, memberMetrics, memberTrend, allowGlobalView = true, importHref = "/data-management/import-coursera", activityHref = "/settings/activity-logs" }: Props) {
   const router = useRouter();
 
-  const m = metrics;
+  const [viewMode, setViewMode] = useState<'global' | 'member'>(allowGlobalView ? 'global' : 'member');
+
+  const activeMetrics = (viewMode === 'global' ? metrics : memberMetrics) || metrics;
+  const activeTrend = (viewMode === 'global' ? trend : memberTrend) || trend;
+
+  const m = activeMetrics;
 
   const firstImportMonth = availableMonths[availableMonths.length - 1];
   const isSecondMonth = availableMonths.length >= 2 && selectedMonth === availableMonths[availableMonths.length - 2];
@@ -120,7 +135,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
   const hoursDistData = Object.entries(m.hours_distribution ?? {}).map(([k, v]) => ({ name: k, value: v as number }));
   const progressDistData = Object.entries(m.progress_distribution ?? {}).map(([k, v]) => ({ name: k, value: v as number }));
 
-  const trendWithLabel = trend
+  const trendWithLabel = activeTrend
     .filter(t => t.month !== firstImportMonth)
     .map(t => ({ ...t, label: getShortLabel(t.month) }));
 
@@ -136,10 +151,26 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/data-management/coursera/activity-logs" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
+          {allowGlobalView && (
+            <div className="flex bg-muted p-1 rounded-lg border border-border/60">
+              <button 
+                onClick={() => setViewMode('global')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${viewMode === 'global' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Global
+              </button>
+              <button 
+                onClick={() => setViewMode('member')}
+                className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${viewMode === 'member' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                Member
+              </button>
+            </div>
+          )}
+          <Link href={activityHref} className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors ml-2">
             Activity Logs
           </Link>
-          <Link href="/data-management/import-coursera" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
+          <Link href={importHref} className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
             Import Reports
           </Link>
         </div>
@@ -156,7 +187,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
                 const param = queryParam ?? 'month';
                 router.push(`${path}?${param}=${month}`);
               }}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium border transition-all ${
                 month === selectedMonth
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'border-border/80 hover:bg-accent'
@@ -186,9 +217,9 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Total Learners" value={fmt(m.total_learners)} icon={Users}
           accent="bg-indigo-500/10 text-indigo-500" />
-        <KpiCard label="Active This Month" value={fmt(m.active_learners)} icon={Activity}
+        <KpiCard label="Active This Period" value={fmt(m.active_learners)} icon={Activity}
           accent="bg-emerald-500/10 text-emerald-500" deltaVal={isSecondMonth ? undefined : m.mom_active_learners} />
-        <KpiCard label="Monthly Hours" value={`${fmt(m.monthly_hours, 1)}h`} icon={Clock}
+        <KpiCard label="Period Hours" value={`${fmt(m.monthly_hours ?? m.period_hours ?? 0, 1)}h`} icon={Clock}
           accent="bg-blue-500/10 text-blue-500"
           sub={`${fmt(m.avg_hours_per_active_learner, 1)}h avg per active`}
           deltaVal={isSecondMonth ? undefined : m.mom_monthly_hours} />
@@ -199,16 +230,16 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
       {/* Row 2: Compliance + License KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Compliant Learners" value={fmt(m.compliant_learners)}
-          sub={`≥${m.config?.minimum_monthly_hours}h/mo`} icon={Shield}
+          sub={`≥${m.config?.minimum_monthly_hours}h target`} icon={Shield}
           accent="bg-teal-500/10 text-teal-500" />
-        <KpiCard label="Inactive This Month" value={fmt(m.inactive_learners)} icon={UserX}
+        <KpiCard label="Inactive This Period" value={fmt(m.inactive_learners)} icon={UserX}
           accent="bg-rose-500/10 text-rose-500" />
-        <KpiCard label="Monthly Completions" value={fmt(m.monthly_completions)} icon={CheckSquare}
+        <KpiCard label="Period Completions" value={fmt(m.monthly_completions ?? m.period_completions ?? 0)} icon={CheckSquare}
           accent="bg-amber-500/10 text-amber-500" deltaVal={isSecondMonth ? undefined : m.mom_completions} />
         <KpiCard
           label="License Usage"
-          value={m.license_utilization_pct !== null ? `${fmt(m.license_utilization_pct, 1)}%` : '—'}
-          sub={m.total_licenses > 0 ? `${fmt(m.licenses_active)} / ${fmt(m.total_licenses)} licenses` : 'No license count set'}
+          value={m.license_utilization_pct != null ? `${fmt(m.license_utilization_pct, 1)}%` : '—'}
+          sub={(m.total_licenses ?? 0) > 0 ? `${fmt(m.licenses_active ?? 0)} / ${fmt(m.total_licenses ?? 0)} licenses` : 'No license count set'}
           icon={Zap}
           accent="bg-cyan-500/10 text-cyan-500"
         />
@@ -217,7 +248,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
       {/* Row 3: Trend Charts */}
       {trendWithLabel.length > 1 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5">
+          <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-sm p-5">
             <h3 className="text-sm font-semibold mb-4">Monthly Learning Hours</h3>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={trendWithLabel} barSize={28}>
@@ -229,7 +260,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5">
+          <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-sm p-5">
             <h3 className="text-sm font-semibold mb-4">Active Learners</h3>
             <ResponsiveContainer width="100%" height={200}>
               <LineChart data={trendWithLabel}>
@@ -246,7 +277,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
 
       {/* Row 4: Distribution Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5">
+        <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-sm p-5">
           <h3 className="text-sm font-semibold mb-4">Hours Distribution This Month</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={hoursDistData} barSize={32}>

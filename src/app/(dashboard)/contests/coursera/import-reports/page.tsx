@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Upload, FileSpreadsheet, Download, RotateCcw, RefreshCw, ChevronDown, CheckCircle2, XCircle, AlertTriangle, Clock } from 'lucide-react';
-import { getSubContests } from '@/app/actions/contests';
+import { getSubContests, getImportLogs } from '@/app/actions/contests';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 interface SubContest {
@@ -19,6 +19,7 @@ interface ImportLogRow {
   rows_imported: number | null;
   learners_affected: number | null;
   action: string;
+  import_type: string | null;  // 'contest_start' | 'contest_end'
   status: string;
   duration_ms: number | null;
   imported_by: string | null;
@@ -52,9 +53,10 @@ export default function ImportCourseraPage() {
   const [availableContests, setAvailableContests] = useState<SubContest[]>([]);
   const [importLog, setImportLog] = useState<ImportLogRow[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
-  const [activeTab, setActiveTab] = useState<'all' | 'import' | 'rollback' | 'recalculate'>('import');
+  const [activeTab, setActiveTab] = useState<'all' | 'import' | 'rollback'>('import');
 
   const [selectedSubContest, setSelectedSubContest] = useState('');
+  const [importType, setImportType] = useState<'contest_start' | 'contest_end'>('contest_start');
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -63,7 +65,6 @@ export default function ImportCourseraPage() {
 
   const [confirmRollback, setConfirmRollback] = useState<ImportLogRow | null>(null);
   const [rollbackLoading, setRollbackLoading] = useState(false);
-  const [recalcLoading, setRecalcLoading] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -79,15 +80,8 @@ export default function ImportCourseraPage() {
         name: c.contest_series?.name ? `${c.contest_series.name} - ${c.name}` : c.name
       })));
 
-      // Fetch import log with joined sub_contest name
-      const { data: logRes } = await supabase
-        .from('contest_coursera_import_log')
-        .select(`
-          *,
-          sub_contests(name)
-        `)
-        .order('imported_at', { ascending: false })
-        .limit(50);
+      // Fetch import log with joined sub_contest name via server action
+      const logRes = await getImportLogs();
         
       if (logRes) {
         setImportLog(logRes.map((r: any) => ({
@@ -133,7 +127,8 @@ export default function ImportCourseraPage() {
     const { data: { user } } = await supabase.auth.getUser();
     const fd = new FormData();
     fd.append('file', file);
-    fd.append('subContestId', selectedSubContest); // Changed from snapshotMonth
+    fd.append('subContestId', selectedSubContest);
+    fd.append('importType', importType);
     if (user?.email) fd.append('uploadedBy', user.email);
 
     try {
@@ -145,6 +140,7 @@ export default function ImportCourseraPage() {
         setUploadResult(json);
         setFile(null);
         setSelectedSubContest('');
+        setImportType('contest_start');
         await fetchData();
       }
     } catch {
@@ -176,26 +172,6 @@ export default function ImportCourseraPage() {
     } finally {
       setRollbackLoading(false);
       setConfirmRollback(null);
-    }
-  };
-
-  // ── Recalculate ────────────────────────────────────────────────────────────
-  const handleRecalculate = async (row: ImportLogRow) => {
-    setRecalcLoading(row.sub_contest_id);
-    const { data: { user } } = await supabase.auth.getUser();
-    try {
-      const res = await fetch('/api/contests/recalculate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subContestId: row.sub_contest_id, requestedBy: user?.email }),
-      });
-      const json = await res.json();
-      if (!res.ok) alert(json.error ?? 'Recalculate failed');
-      else await fetchData();
-    } catch {
-      alert('Network error during recalculate.');
-    } finally {
-      setRecalcLoading(null);
     }
   };
 
@@ -254,6 +230,28 @@ export default function ImportCourseraPage() {
           <p className="text-xs text-muted-foreground">Select the specific contest event this import applies to.</p>
         </div>
 
+        {/* Import Type selector */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-foreground/80">Import Type</label>
+          <div className="flex gap-3">
+            {([['contest_start', 'Contest Start', 'This is the baseline snapshot taken at the beginning of the contest period.'], ['contest_end', 'Contest End', 'This is the final snapshot. Delta is computed against the start snapshot.']] as const).map(([val, label, desc]) => (
+              <button
+                key={val}
+                type="button"
+                onClick={() => setImportType(val)}
+                className={`flex-1 text-left p-3 rounded-lg border-2 transition-all duration-200 ${
+                  importType === val
+                    ? 'border-primary bg-primary/5 text-foreground'
+                    : 'border-border/60 bg-card/40 text-muted-foreground hover:border-primary/40'
+                }`}
+              >
+                <p className="text-sm font-semibold">{label}</p>
+                <p className="text-xs mt-0.5 leading-relaxed">{desc}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Drop zone */}
         <div
           onDragOver={e => { e.preventDefault(); setDragging(true); }}
@@ -310,7 +308,7 @@ export default function ImportCourseraPage() {
           {uploading ? (
             <><RefreshCw className="w-4 h-4 animate-spin" /> Processing…</>
           ) : (
-            <><Upload className="w-4 h-4" /> Upload and Process</>
+            <><Upload className="w-4 h-4" /> Upload as {importType === 'contest_start' ? 'Contest Start' : 'Contest End'}</>
           )}
         </button>
       </div>
@@ -320,10 +318,10 @@ export default function ImportCourseraPage() {
         <div className="px-6 py-4 border-b border-border/60 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Import History</h2>
           <div className="flex bg-muted/50 p-1 rounded-lg">
-            {(['import', 'rollback', 'recalculate', 'all'] as const).map(tab => (
+            {['all', 'import', 'rollback'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => setActiveTab(tab as any)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-colors ${
                   activeTab === tab ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}
@@ -343,6 +341,7 @@ export default function ImportCourseraPage() {
               <thead>
                 <tr className="border-b border-border/60 bg-muted/30">
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Contest</th>
+                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Type</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">File</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Rows</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Learners</th>
@@ -356,6 +355,17 @@ export default function ImportCourseraPage() {
                   return (
                     <tr key={`${row.id}-${idx}`} className="border-b border-border/40 last:border-0 hover:bg-accent/20 transition-colors">
                       <td className="px-4 py-3 font-medium">{row.sub_contest_name}</td>
+                      <td className="px-4 py-3">
+                        {row.import_type ? (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            row.import_type === 'contest_start'
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                              : 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                          }`}>
+                            {row.import_type === 'contest_start' ? 'Start' : 'End'}
+                          </span>
+                        ) : <span className="text-muted-foreground/50 text-xs">—</span>}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground max-w-[160px] truncate">{row.filename ?? '—'}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{formatRows(row.rows_imported)}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{formatRows(row.learners_affected)}</td>
@@ -388,14 +398,6 @@ export default function ImportCourseraPage() {
                       <td className="px-4 py-3">
                         {row.action === 'import' && row.status === 'success' && (
                           <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleRecalculate(row)}
-                              disabled={recalcLoading === row.sub_contest_id}
-                              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border border-border/80 hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              <RefreshCw className={`w-3 h-3 ${recalcLoading === row.sub_contest_id ? 'animate-spin' : ''}`} />
-                              Recalculate
-                            </button>
                             <button
                               onClick={() => setConfirmRollback(row)}
                               className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"

@@ -1,13 +1,21 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import { ArrowRight, ChevronDown, ExternalLink } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ExternalLink, Globe } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { toast } from "sonner";
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return "N/A";
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
 
 export function SeriesCard({ series, subContests }: { series: any; subContests: any[] }) {
-  const [expanded, setExpanded] = useState(false);
-  const mainLink = subContests.length > 0 ? `/contests/coursera?contest=${subContests[0].id}` : `/contests/coursera`;
 
   const getAccent = (name: string) => {
     const colors = ["bg-blue-500", "bg-emerald-500", "bg-rose-500", "bg-purple-500", "bg-orange-500"];
@@ -21,66 +29,69 @@ export function SeriesCard({ series, subContests }: { series: any; subContests: 
 
   return (
     <Card
-      onClick={() => setExpanded(!expanded)}
-      className="group flex flex-row overflow-hidden border-border bg-card rounded-md cursor-pointer hover:shadow-md transition-shadow"
+      className="group flex flex-row overflow-hidden border-border bg-card rounded-md transition-shadow"
     >
       {/* Accent Block */}
       <div className={`w-2 shrink-0 ${accentClass}`} />
       
-      <div className="flex flex-col flex-1 p-5 gap-4">
-        <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col flex-1">
+        <div className="flex items-center justify-between p-4 gap-4">
           <div className="flex flex-col min-w-0 flex-1">
-            <h3 className="text-xl font-bold tracking-tight text-foreground truncate">
+            <h3 className="text-lg font-bold tracking-tight text-foreground truncate">
               {series.name}
             </h3>
-            {series.description && (
-              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                {series.description}
-              </p>
-            )}
           </div>
         </div>
 
-        <div className="flex items-center gap-4 mt-auto">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium bg-muted/50 px-3 py-1.5 rounded-md">
-            <span>{subContests.length} Sub-Contests</span>
-            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} />
-          </div>
-          <Link
-            href={mainLink}
-            onClick={(e) => e.stopPropagation()}
-            className="text-sm font-semibold text-primary flex items-center gap-1 hover:underline ml-auto"
-          >
-            Go to Dashboard <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-
-        {expanded && (
-          <div className="mt-4 border border-border rounded-md overflow-hidden animate-in slide-in-from-top-2">
+        <div className="px-4 pb-4 border-t border-border/50 pt-4">
+          <div className="border border-border rounded-md overflow-hidden">
             <table className="w-full text-sm text-left">
               <thead className="bg-muted/50 text-muted-foreground text-xs uppercase">
                 <tr>
                   <th className="px-4 py-2 font-medium">Contest Name</th>
+                  <th className="px-4 py-2 font-medium">Start Date</th>
+                  <th className="px-4 py-2 font-medium">End Date</th>
                   <th className="px-4 py-2 font-medium text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {subContests.length === 0 ? (
                   <tr>
-                    <td colSpan={2} className="px-4 py-4 text-center text-muted-foreground italic">No contests active</td>
+                    <td colSpan={4} className="px-4 py-4 text-center text-muted-foreground italic">No contests active</td>
                   </tr>
                 ) : (
                   subContests.map((sc: any) => (
                     <tr key={sc.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 font-medium text-foreground">{sc.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatDate(sc.start_date)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatDate(sc.end_date)}</td>
                       <td className="px-4 py-3 text-right">
-                        <Link
-                          href={`/contests/coursera?contest=${sc.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-primary hover:underline text-xs font-semibold"
-                        >
-                          View <ExternalLink className="w-3 h-3" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toast.success("Publish functionality coming soon!");
+                            }}
+                            className="h-8 gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-900/50 dark:hover:bg-emerald-900/20"
+                          >
+                            <Globe className="w-3.5 h-3.5" /> Publish
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            asChild
+                            className="h-8 gap-1.5"
+                          >
+                            <Link
+                              href={`/contests/coursera?contest=${sc.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              View <ExternalLink className="w-3.5 h-3.5" />
+                            </Link>
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -88,7 +99,7 @@ export function SeriesCard({ series, subContests }: { series: any; subContests: 
               </tbody>
             </table>
           </div>
-        )}
+        </div>
       </div>
     </Card>
   );

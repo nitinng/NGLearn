@@ -1,0 +1,187 @@
+﻿{
+    "logs":  [
+                 {
+                     "id":  1,
+                     "sub_contest_id":  "f98e59ef-1d59-4df9-b730-80d6004c8e71",
+                     "filename":  "LearnerActivity uhss-ngf - CourseraEnterpriseExport 2026-07-16 17-18-01 UTC.xlsx",
+                     "file_size_bytes":  5175999,
+                     "rows_imported":  15132,
+                     "learners_affected":  2238,
+                     "action":  "import",
+                     "status":  "success",
+                     "error_message":  null,
+                     "duration_ms":  16617,
+                     "imported_by":  "nitin@navgurukul.org",
+                     "imported_at":  "2026-07-17T07:26:07.030119+00:00",
+                     "import_type":  "contest_start",
+                     "sub_contests":  {
+                                          "name":  "Contest 1"
+                                      }
+                 },
+                 {
+                     "id":  2,
+                     "sub_contest_id":  "f98e59ef-1d59-4df9-b730-80d6004c8e71",
+                     "filename":  "LearnerActivity uhss-ngf - CourseraEnterpriseExport 2026-07-16 17-18-01 UTC.xlsx",
+                     "file_size_bytes":  5175999,
+                     "rows_imported":  15132,
+                     "learners_affected":  2238,
+                     "action":  "import",
+                     "status":  "success",
+                     "error_message":  null,
+                     "duration_ms":  15110,
+                     "imported_by":  "nitin@navgurukul.org",
+                     "imported_at":  "2026-07-17T07:31:21.165618+00:00",
+                     "import_type":  "contest_end",
+                     "sub_contests":  {
+                                          "name":  "Contest 1"
+                                      }
+                 }
+             ],
+    "logsErr":  null,
+    "metrics":  [
+                    {
+                        "id":  1,
+                        "sub_contest_id":  "f98e59ef-1d59-4df9-b730-80d6004c8e71",
+                        "metrics":  {
+                                        "config":  {
+                                                       "minimum_monthly_hours":  20
+                                                   },
+                                        "generated_at":  "2026-07-17T07:31:20.871Z",
+                                        "period_hours":  13851.900000000045,
+                                        "total_learners":  2238,
+                                        "active_learners":  1235,
+                                        "inactive_learners":  1003,
+                                        "compliant_learners":  199,
+                                        "period_completions":  1473,
+                                        "total_lifetime_hours":  57472.879999999954,
+                                        "overall_completion_rate":  39.16864922019561,
+                                        "avg_hours_per_active_learner":  11.216113360323924,
+                                        "top_learners_by_period_hours":  [
+                                                                             {
+                                                                                 "name":  "Kranti Dagdu Waghmare",
+                                                                                 "email":  "krantiwaghmare@navgurukul.org",
+                                                                                 "period_hours":  215.67000000000002,
+                                                                                 "cumulative_hours":  215.67000000000002
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Santhosh",
+                                                                                 "email":  "kindsanthosh15798@gmail.com",
+                                                                                 "period_hours":  201.28999999999996,
+                                                                                 "cumulative_hours":  201.28999999999996
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Manpreet Kaur EA",
+                                                                                 "email":  "kaurmanpreet7201@gmail.com",
+                                                                                 "period_hours":  193.57,
+                                                                                 "cumulative_hours":  193.57
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Sudiksha Yadav",
+                                                                                 "email":  "sudiksha5773@gmail.com",
+                                                                                 "period_hours":  183.27000000000004,
+                                                                                 "cumulative_hours":  183.27000000000004
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Neelam Verma",
+                                                                                 "email":  "neelamverma24@navgurukul.org",
+                                                                                 "period_hours":  134.55,
+                                                                                 "cumulative_hours":  134.55
+                                                                             },
+                                                                             {
+                                                                                 "name":  "kashish kumari",
+                                                                                 "email":  "kashishkumari23@navgurukul.org",
+                                                                                 "period_hours":  124.68,
+                                                                                 "cumulative_hours":  124.68
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Meena Kumari",
+                                                                                 "email":  "meenakumari23@navgurukul.org",
+                                                                                 "period_hours":  117.17,
+                                                                                 "cumulative_hours":  117.17
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Sushma Bai",
+                                                                                 "email":  "sushmabai23@navgurukul.org",
+                                                                                 "period_hours":  111.56000000000002,
+                                                                                 "cumulative_hours":  111.56000000000002
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Rakhi Tirkey",
+                                                                                 "email":  "rakhitirkey25@navgurukul.org",
+                                                                                 "period_hours":  107.7,
+                                                                                 "cumulative_hours":  107.7
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Manjubanjara",
+                                                                                 "email":  "manjubanjara25@navgurukul.org",
+                                                                                 "period_hours":  103.59000000000002,
+                                                                                 "cumulative_hours":  103.59000000000002
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Dipinti Sidar",
+                                                                                 "email":  "dipinti23@navgurukul.org",
+                                                                                 "period_hours":  99.63000000000001,
+                                                                                 "cumulative_hours":  99.63000000000001
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Pooja yadav",
+                                                                                 "email":  "poojayadav23@navgurukul.org",
+                                                                                 "period_hours":  97.46999999999998,
+                                                                                 "cumulative_hours":  97.46999999999998
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Rekha yadav",
+                                                                                 "email":  "rekhayadav23@navgurukul.org",
+                                                                                 "period_hours":  94.57999999999998,
+                                                                                 "cumulative_hours":  94.57999999999998
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Naurita singh",
+                                                                                 "email":  "nauritasingh25@navgurukul.org",
+                                                                                 "period_hours":  93.3,
+                                                                                 "cumulative_hours":  93.3
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Khileshwari manikpuri",
+                                                                                 "email":  "khileshwarimanikpuri24@navgurukul.org",
+                                                                                 "period_hours":  90.28,
+                                                                                 "cumulative_hours":  90.28
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Nisha Chouhan",
+                                                                                 "email":  "nishaa23@navgurukul.org",
+                                                                                 "period_hours":  89.36999999999998,
+                                                                                 "cumulative_hours":  89.36999999999998
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Savesh Pradhan",
+                                                                                 "email":  "saveshpradhan25@navgurukul.org",
+                                                                                 "period_hours":  86.5,
+                                                                                 "cumulative_hours":  86.5
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Nikita Verma",
+                                                                                 "email":  "nikitaverma@navgurukul.org",
+                                                                                 "period_hours":  83.63,
+                                                                                 "cumulative_hours":  83.63
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Shweta Negi EA",
+                                                                                 "email":  "shwetanegi0066@gmail.com",
+                                                                                 "period_hours":  83.30000000000001,
+                                                                                 "cumulative_hours":  83.30000000000001
+                                                                             },
+                                                                             {
+                                                                                 "name":  "Roochi Patel",
+                                                                                 "email":  "roochipatel25@navgurukul.org",
+                                                                                 "period_hours":  80.71000000000001,
+                                                                                 "cumulative_hours":  80.71000000000001
+                                                                             }
+                                                                         ]
+                                    },
+                        "generated_at":  "2026-07-17T07:31:20.871+00:00",
+                        "generated_by":  "nitin@navgurukul.org"
+                    }
+                ],
+    "metricsErr":  null
+}

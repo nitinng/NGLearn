@@ -147,6 +147,7 @@ CREATE TABLE IF NOT EXISTS contest_coursera_import_log (
   rows_imported     INTEGER,
   learners_affected INTEGER,
   action            TEXT    NOT NULL DEFAULT 'import',  -- 'import' | 'rollback' | 'recalculate'
+  import_type       TEXT,   -- 'contest_start' | 'contest_end' (only for action='import')
   status            TEXT    NOT NULL DEFAULT 'success', -- 'success' | 'error' | 'pending'
   error_message     TEXT,
   duration_ms       INTEGER,

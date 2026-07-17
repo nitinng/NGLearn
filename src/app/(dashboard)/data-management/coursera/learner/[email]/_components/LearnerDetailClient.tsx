@@ -37,7 +37,8 @@ interface Props {
 }
 
 function formatMonthShort(dateStr: string) {
-  return new Date(dateStr + 'T12:00:00Z').toLocaleString('en-US', { month: 'short', year: '2-digit' });
+  const dt = new Date(dateStr + 'T12:00:00Z').toLocaleString('en-US', { month: 'short', year: '2-digit' });
+  return `Lifetime till ${dt}`;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,7 +59,8 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 function formatMonth(dateStr: string) {
-  return new Date(dateStr + 'T12:00:00Z').toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  const dt = new Date(dateStr + 'T12:00:00Z').toLocaleString('en-US', { month: 'long', year: 'numeric' });
+  return `Lifetime till ${dt}`;
 }
 
 export default function LearnerDetailClient({ monthlyHistory, courses }: Props) {

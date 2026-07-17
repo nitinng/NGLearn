@@ -97,7 +97,7 @@ const LoadingView = ({ fullScreen = true }: { fullScreen?: boolean }) => {
       <div className="flex flex-col items-center gap-8">
         <LoadingSpinner size="md" />
         <div className="text-center space-y-2">
-          {/* <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">NGConnect</h3> */}
+          {/* <h3 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">NGLearn</h3> */}
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Loading...</p>
         </div>
       </div>

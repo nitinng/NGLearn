@@ -43,7 +43,7 @@ export function LoginForm() {
               Welcome
             </h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1.5 text-xs font-medium px-4">
-              Access NGConnect with your account
+              Access NGLearn with your account
             </p>
           </header>
 

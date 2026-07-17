@@ -1,78 +1,138 @@
-import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect } from 'next/navigation';
 import { getUserRole } from '@/lib/roles';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { getSubContests } from '@/app/actions/contests';
 
 interface SearchParams {
-  month?: string;
+  contest?: string;
   search?: string;
   status?: string;
   page?: string;
+  limit?: string;
 }
 
-const PAGE_SIZE = 50;
-
-function formatMonth(dateStr: string) {
-  return new Date(dateStr + 'T12:00:00Z').toLocaleString('en-US', { month: 'long', year: 'numeric' });
-}
-
-export default async function ActivityLogsPage({
+export default async function ContestActivityLogsPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
 }) {
   const role = await getUserRole();
-  if (role !== 'Super Admin' && role !== 'Admin') redirect('/');
+  if (role === 'Member') redirect('/');
 
-  const { month: monthParam, search = '', status = 'all', page: pageParam } = await searchParams;
+  const { contest: contestParam, search = '', status = 'all', page: pageParam, limit: limitParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? '1', 10));
-  const offset = (page - 1) * PAGE_SIZE;
+  const pageSize = parseInt(limitParam ?? '10', 10);
+  const offset = (page - 1) * pageSize;
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
-  // Get available months for the selector
-  const { data: monthsList } = await supabase
-    .from('coursera_computed_metrics')
-    .select('month')
-    .order('month', { ascending: false });
+  // Get all sub-contests for the dropdown
+  const subContests = await getSubContests();
+  const contestLabels = subContests.reduce((acc, sc: any) => {
+    acc[sc.id] = sc.contest_series?.name ? `${sc.contest_series.name} - ${sc.name}` : sc.name;
+    return acc;
+  }, {} as Record<string, string>);
 
-  const selectedMonth = monthParam ?? monthsList?.[0]?.month ?? null;
+  const selectedContest = contestParam ?? subContests?.[0]?.id ?? null;
 
-  // Build query
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = supabase
-    .from('coursera_learner_month')
-    .select('*', { count: 'exact' });
+  // 1. Fetch all ng_members
+  const { data: members } = await supabase.from('ng_members').select('email, alt_email, full_name, team, group_name');
 
-  if (selectedMonth) {
-    query = query.eq('month', selectedMonth);
+  // 2. Fetch all stats for this contest (paginated)
+  let allLearnerStats: any[] = [];
+  if (selectedContest) {
+    let from = 0;
+    const step = 1000;
+    while (true) {
+      const { data } = await supabase
+        .from('contest_coursera_learner_stats')
+        .select('*')
+        .eq('sub_contest_id', selectedContest)
+        .range(from, from + step - 1);
+      if (!data || data.length === 0) break;
+      allLearnerStats.push(...data);
+      if (data.length < step) break;
+      from += step;
+    }
   }
 
+  // 3. Join them in memory (show official and alt separately)
+  const statsMap = new Map<string, any>();
+  for (const s of allLearnerStats ?? []) {
+    statsMap.set(s.email.toLowerCase().trim(), s);
+  }
+
+  let enrichedStats: any[] = [];
+  for (const m of (members ?? [])) {
+    const email = m.email.toLowerCase().trim();
+    const sMain = statsMap.get(email);
+    
+    enrichedStats.push({
+      email: email,
+      is_alt: false,
+      name: m.full_name || (sMain ? sMain.name : null),
+      period_hours: sMain ? Number(sMain.period_hours) : 0,
+      cumulative_hours: sMain ? Number(sMain.cumulative_hours) : 0,
+      courses_enrolled: sMain ? Number(sMain.courses_enrolled) : 0,
+      courses_completed: sMain ? Number(sMain.courses_completed) : 0,
+      new_completions: sMain ? Number(sMain.new_completions) : 0,
+      is_active: sMain ? sMain.is_active : false,
+      is_compliant: sMain ? sMain.is_compliant : false,
+      days_since_activity: sMain ? sMain.days_since_activity : null,
+      team: m.team ?? null,
+      group_name: m.group_name ?? null,
+    });
+    
+    if (m.alt_email) {
+      const altEmail = m.alt_email.toLowerCase().trim();
+      const sAlt = statsMap.get(altEmail);
+      enrichedStats.push({
+        email: altEmail,
+        is_alt: true,
+        name: m.full_name || (sAlt ? sAlt.name : null),
+        period_hours: sAlt ? Number(sAlt.period_hours) : 0,
+        cumulative_hours: sAlt ? Number(sAlt.cumulative_hours) : 0,
+        courses_enrolled: sAlt ? Number(sAlt.courses_enrolled) : 0,
+        courses_completed: sAlt ? Number(sAlt.courses_completed) : 0,
+        new_completions: sAlt ? Number(sAlt.new_completions) : 0,
+        is_active: sAlt ? sAlt.is_active : false,
+        is_compliant: sAlt ? sAlt.is_compliant : false,
+        days_since_activity: sAlt ? sAlt.days_since_activity : null,
+        team: m.team ?? null,
+        group_name: m.group_name ?? null,
+      });
+    }
+  }
+
+  // 4. Apply Filters
   if (search) {
-    query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`);
+    const term = search.toLowerCase();
+    enrichedStats = enrichedStats.filter(s => 
+      s.email.toLowerCase().includes(term) || 
+      (s.name && s.name.toLowerCase().includes(term))
+    );
   }
 
-  // Status filter mapping
   switch (status) {
-    case 'active':         query = query.eq('is_active', true); break;
-    case 'inactive':       query = query.eq('is_active', false); break;
-    case 'below_target':   query = query.eq('is_active', true).eq('is_compliant', false); break;
-    case 'no_activity_30': query = query.gte('days_since_activity', 30); break;
-    case 'no_activity_90': query = query.gte('days_since_activity', 90); break;
+    case 'active':       enrichedStats = enrichedStats.filter(s => s.is_active); break;
+    case 'inactive':     enrichedStats = enrichedStats.filter(s => !s.is_active); break;
+    case 'below_target': enrichedStats = enrichedStats.filter(s => s.is_active && !s.is_compliant); break;
   }
 
-  query = query
-    .order('monthly_hours', { ascending: false })
-    .range(offset, offset + PAGE_SIZE - 1);
+  // 5. Sort by period_hours descending
+  enrichedStats.sort((a, b) => b.period_hours - a.period_hours);
 
-  const { data: learners, count } = await query;
-  const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE);
+  // 6. Paginate
+  const count = enrichedStats.length;
+  const totalPages = Math.ceil(count / pageSize);
+  const learners = enrichedStats.slice(offset, offset + pageSize);
 
   // Build URL with updated params
   function buildUrl(overrides: Partial<SearchParams>) {
     const params = new URLSearchParams();
-    const merged = { month: selectedMonth ?? '', search, status, page: String(page), ...overrides };
+    const merged = { contest: selectedContest ?? '', search, status, page: String(page), limit: String(pageSize), ...overrides };
     Object.entries(merged).forEach(([k, v]) => { if (v) params.set(k, v); });
     return `/contests/coursera/activity-logs?${params.toString()}`;
   }
@@ -84,39 +144,41 @@ export default async function ActivityLogsPage({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Link href="/contests/coursera" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href={`/contests/coursera${selectedContest ? `?contest=${selectedContest}` : ''}`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               ← Dashboard
             </Link>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Activity Logs</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Contest Activity Logs</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {selectedMonth ? formatMonth(selectedMonth) : 'All months'} · {(count ?? 0).toLocaleString()} learners
+            {selectedContest ? contestLabels[selectedContest] ?? 'Contest' : 'All contests'} · {(count ?? 0).toLocaleString()} members
           </p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
-        {/* Month — uses form submit to avoid onChange in Server Component */}
+        {/* Contest selector */}
         <form method="get" action="/contests/coursera/activity-logs" className="flex gap-2 items-center">
           {search && <input type="hidden" name="search" value={search} />}
           {status !== 'all' && <input type="hidden" name="status" value={status} />}
+          <input type="hidden" name="limit" value={pageSize} />
           <select
-            name="month"
-            defaultValue={selectedMonth ?? ''}
+            name="contest"
+            defaultValue={selectedContest ?? ''}
             className="bg-background border border-border/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
           >
-            {(monthsList ?? []).map(m => (
-              <option key={m.month} value={m.month}>{formatMonth(m.month)}</option>
+            {subContests.map((sc: any) => (
+              <option key={sc.id} value={sc.id}>{contestLabels[sc.id]}</option>
             ))}
           </select>
           <button type="submit" className="px-3 py-2 rounded-lg border border-border/80 text-sm hover:bg-accent transition-colors">Filter</button>
         </form>
 
         {/* Search */}
-        <form action={buildUrl({ page: '1' }).split('?')[0]} method="get" className="flex gap-2">
-          {selectedMonth && <input type="hidden" name="month" value={selectedMonth} />}
+        <form action="/contests/coursera/activity-logs" method="get" className="flex gap-2">
+          {selectedContest && <input type="hidden" name="contest" value={selectedContest} />}
           {status !== 'all' && <input type="hidden" name="status" value={status} />}
+          <input type="hidden" name="limit" value={pageSize} />
           <input
             name="search"
             defaultValue={search}
@@ -138,13 +200,11 @@ export default async function ActivityLogsPage({
             { value: 'active', label: 'Active' },
             { value: 'inactive', label: 'Inactive' },
             { value: 'below_target', label: 'Below Target' },
-            { value: 'no_activity_30', label: 'No Activity 30d' },
-            { value: 'no_activity_90', label: 'No Activity 90d' },
           ].map(opt => (
             <Link
               key={opt.value}
               href={buildUrl({ status: opt.value, page: '1' })}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+              className={`px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
                 status === opt.value
                   ? 'bg-primary text-primary-foreground border-primary'
                   : 'border-border/80 hover:bg-accent'
@@ -157,9 +217,9 @@ export default async function ActivityLogsPage({
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm overflow-hidden">
-        {!selectedMonth ? (
-          <div className="p-8 text-center text-muted-foreground text-sm">No data imported yet.</div>
+      <div className="rounded-lg border border-border/80 bg-card/60 backdrop-blur-sm overflow-hidden">
+        {!selectedContest ? (
+          <div className="p-8 text-center text-muted-foreground text-sm">Select a contest to view activity logs.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -167,7 +227,7 @@ export default async function ActivityLogsPage({
                 <tr className="border-b border-border/60 bg-muted/30">
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Monthly h</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Period h</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Cumulative h</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Courses</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Completed</th>
@@ -178,26 +238,28 @@ export default async function ActivityLogsPage({
               </thead>
               <tbody>
                 {(learners ?? []).length === 0 ? (
-                  <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No learners match your filters.</td></tr>
+                  <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No members match your filters.</td></tr>
                 ) : (
                   (learners ?? []).map((l: {
-                    email: string; name: string | null;
-                    monthly_hours: number; cumulative_hours: number;
+                    email: string; name: string | null; is_alt: boolean;
+                    period_hours: number; cumulative_hours: number;
                     courses_enrolled: number; courses_completed: number;
                     is_active: boolean; is_compliant: boolean; days_since_activity: number | null;
                   }) => (
                     <tr key={l.email} className="border-b border-border/40 last:border-0 hover:bg-accent/20 transition-colors">
                       <td className="px-4 py-3">
-                        <Link
-                          href={`/contests/coursera/learner/${encodeURIComponent(l.email)}`}
-                          className="font-medium hover:text-primary transition-colors"
-                        >
-                          {l.name ?? '—'}
-                        </Link>
+                        <span className="font-medium">{l.name ?? '—'}</span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{l.email}</td>
-                      <td className="px-4 py-3 text-right tabular-nums font-medium">{l.monthly_hours.toFixed(1)}</td>
-                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{l.cumulative_hours.toFixed(1)}</td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs flex items-center gap-2">
+                        {l.email}
+                        {l.is_alt && (
+                          <span className="text-[10px] uppercase bg-secondary/80 text-muted-foreground px-1.5 py-0.5 rounded-md border border-border/60">
+                            Alt
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right tabular-nums font-medium">{Number(l.period_hours).toFixed(1)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{Number(l.cumulative_hours).toFixed(1)}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{l.courses_enrolled}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{l.courses_completed}</td>
                       <td className="px-4 py-3 text-center">
@@ -219,11 +281,31 @@ export default async function ActivityLogsPage({
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages} · {(count ?? 0).toLocaleString()} total
-          </p>
+      {((totalPages > 1) || (count ?? 0) > 0) && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <p className="text-sm text-muted-foreground">
+              Page {page} of {Math.max(1, totalPages)} · {(count ?? 0).toLocaleString()} total
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows per page:</span>
+              <div className="flex items-center gap-1">
+                {[10, 25, 50, 100].map(size => (
+                  <Link
+                    key={size}
+                    href={buildUrl({ limit: String(size), page: '1' })}
+                    className={`px-2 py-1 text-xs border rounded-lg transition-colors ${
+                      pageSize === size
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background hover:bg-accent border-border/80'
+                    }`}
+                  >
+                    {size}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
           <div className="flex gap-2">
             {page > 1 && (
               <Link href={buildUrl({ page: String(page - 1) })} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border/80 text-sm hover:bg-accent transition-colors">
