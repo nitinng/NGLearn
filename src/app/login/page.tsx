@@ -1,6 +1,8 @@
 import { LoginForm } from "@/components/login-form"
 import { Toaster } from "@/components/ui/sonner"
 
+export const dynamic = 'force-dynamic';
+
 export default function LoginPage() {
   return (
     <div className="min-h-screen w-full bg-slate-50 dark:bg-zinc-950 flex flex-col items-center relative overflow-hidden font-sans selection:bg-primary/20 selection:text-primary">
