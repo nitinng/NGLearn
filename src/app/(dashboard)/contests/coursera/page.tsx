@@ -5,6 +5,8 @@ import { getUserRole } from '@/lib/roles';
 import ContestDashboardClient from './_components/ContestDashboardClient';
 import { getSubContests } from '@/app/actions/contests';
 
+export const dynamic = 'force-dynamic';
+
 interface SearchParams { contest?: string }
 
 export default async function CourseraDashboardPage({

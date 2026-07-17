@@ -4,6 +4,8 @@ import { getUserRole } from "@/lib/roles"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { DashboardStats } from "@/components/dashboard-stats"
 import { DashboardCharts } from "@/components/dashboard-charts"
+
+export const dynamic = 'force-dynamic';
 import CourseraDashboardClient from "./data-management/coursera/_components/CourseraDashboardClient"
 import { computeMetricsBlob } from "@/lib/coursera-metrics"
 

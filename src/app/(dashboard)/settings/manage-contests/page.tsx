@@ -3,6 +3,8 @@ import { getUserRole } from '@/lib/roles';
 import { ManageContests } from '@/app/(dashboard)/contests/manage-contests';
 import { redirect } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ManageContestsSettingsPage() {
   const supabase = createAdminClient();
   const role = await getUserRole();

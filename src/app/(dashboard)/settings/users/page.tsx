@@ -4,6 +4,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { UsersTable } from '../_components/UsersTable';
 import { Shield } from 'lucide-react';
 import Link from 'next/link';
+
+export const dynamic = 'force-dynamic';
 import { auth } from '@/lib/auth';
 
 export default async function UsersPage() {

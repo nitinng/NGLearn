@@ -4,6 +4,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getUserRole } from '@/lib/roles';
 import { SeriesCard } from "./series-card";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ContestsPage() {
   const supabase = createAdminClient();
   const role = await getUserRole();

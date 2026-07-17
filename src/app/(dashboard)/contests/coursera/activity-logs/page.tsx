@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSubContests } from '@/app/actions/contests';
 
+export const dynamic = 'force-dynamic';
+
 interface SearchParams {
   contest?: string;
   search?: string;
