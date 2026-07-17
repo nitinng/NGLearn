@@ -31,7 +31,29 @@ export default async function ContestsPage() {
     console.error("Error fetching contests:", error);
   }
 
-  const series = seriesList || [];
+  // Fetch published reports to check if any contest is already published
+  const { data: publishedReports } = await supabase
+    .from('published_reports')
+    .select('id, payload')
+    .eq('report_type', 'coursera_contest');
+
+  const publishedMap = new Map<string, string>();
+  for (const pr of publishedReports || []) {
+    const contestId = pr.payload?.selectedContestId;
+    if (contestId) {
+      publishedMap.set(contestId, pr.id);
+    }
+  }
+
+  const series = (seriesList || []).map(s => {
+    return {
+      ...s,
+      sub_contests: (s.sub_contests || []).map((sc: any) => ({
+        ...sc,
+        publishedReportId: publishedMap.get(sc.id) || null
+      }))
+    };
+  });
 
   return (
     <div className="min-h-screen bg-background/50 relative overflow-hidden">

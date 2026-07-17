@@ -67,17 +67,33 @@ export function SeriesCard({ series, subContests }: { series: any; subContests: 
                       <td className="px-4 py-3 text-muted-foreground">{formatDate(sc.end_date)}</td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toast.success("Publish functionality coming soon!");
-                            }}
-                            className="h-8 gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-900/50 dark:hover:bg-emerald-900/20"
-                          >
-                            <Globe className="w-3.5 h-3.5" /> Publish
-                          </Button>
+                          {sc.publishedReportId ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              asChild
+                              className="h-8 gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-blue-900/50 dark:hover:bg-blue-900/20"
+                            >
+                              <Link
+                                href={`/p/${sc.publishedReportId}`}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Globe className="w-3.5 h-3.5" /> Published
+                              </Link>
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toast.success("Publish functionality coming soon!");
+                              }}
+                              className="h-8 gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:border-emerald-900/50 dark:hover:bg-emerald-900/20"
+                            >
+                              <Globe className="w-3.5 h-3.5" /> Publish
+                            </Button>
+                          )}
                           <Button
                             variant="secondary"
                             size="sm"
