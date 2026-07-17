@@ -219,7 +219,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
           accent="bg-indigo-500/10 text-indigo-500" />
         <KpiCard label="Active This Period" value={fmt(m.active_learners)} icon={Activity}
           accent="bg-emerald-500/10 text-emerald-500" deltaVal={isSecondMonth ? undefined : m.mom_active_learners} />
-        <KpiCard label="Period Hours" value={`${fmt(m.monthly_hours ?? m.period_hours ?? 0, 1)}h`} icon={Clock}
+        <KpiCard label="Learning Hours" value={`${fmt(m.monthly_hours ?? m.period_hours ?? 0, 1)}h`} icon={Clock}
           accent="bg-blue-500/10 text-blue-500"
           sub={`${fmt(m.avg_hours_per_active_learner, 1)}h avg per active`}
           deltaVal={isSecondMonth ? undefined : m.mom_monthly_hours} />

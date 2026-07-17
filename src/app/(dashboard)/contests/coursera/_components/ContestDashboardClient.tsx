@@ -139,7 +139,7 @@ function LeaderboardTable({ stats, showGroup = false, showTeam = true, limit }: 
   return (
     <div className="flex flex-col">
       <div className="px-5 py-3 border-b border-border/60 bg-muted/10 flex justify-between items-center">
-        <span className="text-xs text-muted-foreground font-medium">Sorted by {rankingMode === 'hours' ? 'Period Hours' : 'Certifications'}</span>
+        <span className="text-xs text-muted-foreground font-medium">Sorted by {rankingMode === 'hours' ? 'Learning Hours' : 'Certifications'}</span>
         <RankToggle mode={rankingMode} setMode={setRankingMode} />
       </div>
       <div className="overflow-x-auto">
@@ -150,7 +150,7 @@ function LeaderboardTable({ stats, showGroup = false, showTeam = true, limit }: 
               <th className="text-left px-3 py-3 font-medium text-muted-foreground">Learner</th>
               {showGroup && <th className="text-left px-3 py-3 font-medium text-muted-foreground">Group</th>}
               {showTeam && <th className="text-left px-3 py-3 font-medium text-muted-foreground">Team</th>}
-              <th className="text-right px-3 py-3 font-medium text-muted-foreground">Period Hours</th>
+              <th className="text-right px-3 py-3 font-medium text-muted-foreground">Learning Hours</th>
               <th className="text-right px-3 py-3 font-medium text-muted-foreground">Certifications</th>
               <th className="text-center px-3 py-3 font-medium text-muted-foreground">Active</th>
             </tr>
@@ -377,7 +377,7 @@ function TeamMVPsCard({ stats, teams }: { stats: LearnerStat[]; teams: string[] 
               <th className="text-left px-3 py-3 font-medium text-muted-foreground">MVP</th>
               <th className="text-left px-3 py-3 font-medium text-muted-foreground">Team</th>
               <th className="text-left px-3 py-3 font-medium text-muted-foreground">Group</th>
-              <th className="text-right px-3 py-3 font-medium text-muted-foreground">Period Hours</th>
+              <th className="text-right px-3 py-3 font-medium text-muted-foreground">Learning Hours</th>
               <th className="text-right px-3 py-3 font-medium text-muted-foreground">Certifications</th>
             </tr>
           </thead>
@@ -418,7 +418,7 @@ function AllTabContent({ stats, groups, teams }: { stats: LearnerStat[]; groups:
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Total Members" value={fmt(kpis.total)} icon={Users} accent="bg-indigo-500/10 text-indigo-500" />
         <KpiCard label="Active Members" value={fmt(kpis.active)} icon={Activity} accent="bg-emerald-500/10 text-emerald-500" sub={`${fmt(kpis.total > 0 ? (kpis.active / kpis.total) * 100 : 0)}% active`} />
-        <KpiCard label="Total Period Hours" value={`${fmt(kpis.hours, 1)}h`} icon={Clock} accent="bg-blue-500/10 text-blue-500" sub={`${fmt(kpis.avgHours, 1)}h avg per active`} />
+        <KpiCard label="Total Learning hours" value={`${fmt(kpis.hours, 1)}h`} icon={Clock} accent="bg-blue-500/10 text-blue-500" sub={`${fmt(kpis.avgHours, 1)}h avg per active`} />
         <KpiCard label="Certifications completed" value={fmt(kpis.completions)} icon={CheckSquare} accent="bg-amber-500/10 text-amber-500" />
       </div>
 
@@ -477,7 +477,7 @@ function GroupTabContent({ groupName, stats, teams }: { groupName: string; stats
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Members" value={fmt(kpis.total)} icon={Users} accent="bg-indigo-500/10 text-indigo-500" />
         <KpiCard label="Active" value={fmt(kpis.active)} icon={Activity} accent="bg-emerald-500/10 text-emerald-500" sub={`${fmt(kpis.total > 0 ? (kpis.active / kpis.total) * 100 : 0)}% active`} />
-        <KpiCard label="Period Hours" value={`${fmt(kpis.hours, 1)}h`} icon={Clock} accent="bg-blue-500/10 text-blue-500" sub={`${fmt(kpis.avgHours, 1)}h avg per active`} />
+        <KpiCard label="Learning Hours" value={`${fmt(kpis.hours, 1)}h`} icon={Clock} accent="bg-blue-500/10 text-blue-500" sub={`${fmt(kpis.avgHours, 1)}h avg per active`} />
         <KpiCard label="Certifications completed" value={fmt(kpis.completions)} icon={CheckSquare} accent="bg-amber-500/10 text-amber-500" />
       </div>
 
@@ -567,7 +567,7 @@ function TeamsTabContent({ stats, teams }: { stats: LearnerStat[]; teams: string
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <KpiCard label="Members" value={fmt(kpis.total)} icon={Users} accent="bg-indigo-500/10 text-indigo-500" />
             <KpiCard label="Active" value={fmt(kpis.active)} icon={Activity} accent="bg-emerald-500/10 text-emerald-500" sub={`${fmt(kpis.total > 0 ? (kpis.active / kpis.total) * 100 : 0)}% active`} />
-            <KpiCard label="Period Hours" value={`${fmt(kpis.hours, 1)}h`} icon={Clock} accent="bg-blue-500/10 text-blue-500" sub={`${fmt(kpis.avgHours, 1)}h avg per active`} />
+            <KpiCard label="Learning Hours" value={`${fmt(kpis.hours, 1)}h`} icon={Clock} accent="bg-blue-500/10 text-blue-500" sub={`${fmt(kpis.avgHours, 1)}h avg per active`} />
             <KpiCard label="Certifications completed" value={fmt(kpis.completions)} icon={CheckSquare} accent="bg-amber-500/10 text-amber-500" />
           </div>
 

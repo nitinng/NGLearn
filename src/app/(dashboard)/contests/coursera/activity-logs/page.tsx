@@ -229,7 +229,7 @@ export default async function ContestActivityLogsPage({
                 <tr className="border-b border-border/60 bg-muted/30">
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Period h</th>
+                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Learning h</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Cumulative h</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Courses</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Completed</th>
