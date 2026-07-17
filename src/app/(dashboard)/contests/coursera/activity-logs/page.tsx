@@ -234,13 +234,12 @@ export default async function ContestActivityLogsPage({
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Courses</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Completed</th>
                   <th className="text-center px-4 py-3 font-medium text-muted-foreground">Active</th>
-                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Compliant</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Days Inactive</th>
                 </tr>
               </thead>
               <tbody>
                 {(learners ?? []).length === 0 ? (
-                  <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No members match your filters.</td></tr>
+                  <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No members match your filters.</td></tr>
                 ) : (
                   (learners ?? []).map((l: {
                     email: string; name: string | null; is_alt: boolean;
@@ -266,9 +265,6 @@ export default async function ContestActivityLogsPage({
                       <td className="px-4 py-3 text-right tabular-nums">{l.courses_completed}</td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-block w-2 h-2 rounded-full ${l.is_active ? 'bg-emerald-500' : 'bg-rose-400'}`} />
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-block w-2 h-2 rounded-full ${l.is_compliant ? 'bg-emerald-500' : 'bg-amber-400'}`} />
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
                         {l.days_since_activity !== null ? l.days_since_activity : '—'}

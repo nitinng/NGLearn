@@ -153,12 +153,11 @@ function LeaderboardTable({ stats, showGroup = false, showTeam = true, limit }: 
               <th className="text-right px-3 py-3 font-medium text-muted-foreground">Period Hours</th>
               <th className="text-right px-3 py-3 font-medium text-muted-foreground">Certifications</th>
               <th className="text-center px-3 py-3 font-medium text-muted-foreground">Active</th>
-              <th className="text-center px-3 py-3 font-medium text-muted-foreground">Compliant</th>
             </tr>
           </thead>
           <tbody>
             {display.length === 0 ? (
-              <tr><td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">No learners found.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No learners found.</td></tr>
             ) : display.map((l, i) => (
               <tr key={l.email} className="border-b border-border/40 last:border-0 hover:bg-accent/20 transition-colors">
                 <td className="px-3 py-3 text-center"><RankBadge rank={i + 1} /></td>
@@ -171,9 +170,6 @@ function LeaderboardTable({ stats, showGroup = false, showTeam = true, limit }: 
                 <td className="px-3 py-3 text-right tabular-nums font-semibold text-amber-600 dark:text-amber-400">{l.new_completions}</td>
                 <td className="px-3 py-3 text-center">
                   <span className={`inline-block w-2.5 h-2.5 rounded-full ${l.is_active ? 'bg-emerald-500' : 'bg-rose-400'}`} />
-                </td>
-                <td className="px-3 py-3 text-center">
-                  <span className={`inline-block w-2.5 h-2.5 rounded-full ${l.is_compliant ? 'bg-emerald-500' : 'bg-amber-400'}`} />
                 </td>
               </tr>
             ))}
@@ -513,7 +509,6 @@ function GroupTabContent({ groupName, stats, teams }: { groupName: string; stats
                   <th className="text-right px-3 py-3 font-medium text-muted-foreground">Certs</th>
                   <th className="text-right px-3 py-3 font-medium text-muted-foreground">Active</th>
                   <th className="text-right px-3 py-3 font-medium text-muted-foreground">% Active</th>
-                  <th className="text-right px-3 py-3 font-medium text-muted-foreground">Compliant</th>
                 </tr>
               </thead>
               <tbody>
@@ -526,7 +521,6 @@ function GroupTabContent({ groupName, stats, teams }: { groupName: string; stats
                     <td className="px-3 py-3 text-right tabular-nums font-semibold text-amber-600 dark:text-amber-400">{t.completions}</td>
                     <td className="px-3 py-3 text-right tabular-nums">{t.active}</td>
                     <td className="px-3 py-3 text-right tabular-nums text-muted-foreground">{fmt(t.total > 0 ? (t.active / t.total) * 100 : 0, 1)}%</td>
-                    <td className="px-3 py-3 text-right tabular-nums">{t.compliant}</td>
                   </tr>
                 ))}
               </tbody>
