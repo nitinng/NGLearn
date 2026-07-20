@@ -622,8 +622,13 @@ export default function ContestDashboardClient(props: Props) {
       const payload = { ...props, isPublicView: true };
       
       const id = await publishContestReport(title, payload);
-      toast.success('Report published successfully!');
-      router.push('/published-reports');
+      toast.success('Report published successfully!', {
+        action: {
+          label: 'View Report',
+          onClick: () => window.open(`/p/${id}`, '_blank'),
+        },
+      });
+      router.push(`/p/${id}`);
     } catch (error) {
       toast.error('Failed to publish report.');
       console.error(error);
@@ -643,7 +648,12 @@ export default function ContestDashboardClient(props: Props) {
       const payload = { ...props, isPublicView: true };
       
       await republishContestReport(existingReportId, title, payload);
-      toast.success('Report republished successfully!');
+      toast.success('Report republished successfully!', {
+        action: {
+          label: 'View Report',
+          onClick: () => window.open(`/p/${existingReportId}`, '_blank'),
+        },
+      });
     } catch (error) {
       toast.error('Failed to republish report.');
       console.error(error);

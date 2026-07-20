@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { revalidatePath } from 'next/cache';
 
 export async function DELETE(request: NextRequest) {
   const supabase = createAdminClient();
@@ -62,6 +63,9 @@ export async function DELETE(request: NextRequest) {
     status: 'success',
     imported_by: requestedBy ?? null,
   });
+
+  revalidatePath('/contests/coursera');
+  revalidatePath('/contests');
 
   return NextResponse.json({ success: true, message: `Rollback complete for contest` });
 }

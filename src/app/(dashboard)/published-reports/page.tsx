@@ -1,8 +1,9 @@
 import { getPublishedReports } from '@/app/actions/reports';
 import { Card } from '@/components/ui/card';
 import Link from 'next/link';
-import { ExternalLink, Copy } from 'lucide-react';
+import { ExternalLink } from 'lucide-react';
 import CopyLinkButton from './_components/CopyLinkButton';
+import DeleteReportButton from './_components/DeleteReportButton';
 
 export default async function PublishedReportsPage() {
   const reports = await getPublishedReports();
@@ -15,7 +16,7 @@ export default async function PublishedReportsPage() {
             Published Reports
           </h1>
           <p className="text-muted-foreground mt-1 text-sm font-medium">
-            Manage and share static snapshots of your contest analytics.
+            Manage, share, or delete static snapshots of your contest analytics.
           </p>
         </div>
 
@@ -40,7 +41,7 @@ export default async function PublishedReportsPage() {
                   </p>
                 </div>
                 
-                <div className="mt-auto flex items-center gap-3 pt-4 border-t border-border/50">
+                <div className="mt-auto flex items-center gap-2 pt-4 border-t border-border/50">
                   <Link 
                     href={`/p/${report.id}`} 
                     target="_blank"
@@ -49,6 +50,7 @@ export default async function PublishedReportsPage() {
                     View <ExternalLink className="w-4 h-4" />
                   </Link>
                   <CopyLinkButton linkId={report.id} />
+                  <DeleteReportButton linkId={report.id} title={report.title} />
                 </div>
               </Card>
             ))}
@@ -58,3 +60,4 @@ export default async function PublishedReportsPage() {
     </div>
   );
 }
+
