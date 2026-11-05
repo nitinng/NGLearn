@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCohortActor } from '@/lib/cohorts/guard';
 import { isProgram, PROGRAMS } from '@/lib/cohorts/constants';
-import { listActivity, listSnapshots } from '@/lib/cohorts/data';
+import { listActivity, listSnapshots, safeLoad } from '@/lib/cohorts/data';
+import { LoadError } from '../_components/LoadError';
 import { COHORT_EDIT_ROLES } from '@/lib/roles';
 import { ProgramSwitcher } from '../_components/ProgramSwitcher';
 import { SnapshotUploader } from '../_components/SnapshotUploader';
@@ -37,7 +38,9 @@ export default async function SnapshotsPage(props: { searchParams: Promise<{ pro
   const sp = await props.searchParams;
   const program = isProgram(sp.program) ? sp.program : PROGRAMS[0];
   const canEdit = COHORT_EDIT_ROLES.includes(actor.role);
-  const [snapshots, activity] = await Promise.all([listSnapshots(program), listActivity(40)]);
+  const loaded = await safeLoad(() => Promise.all([listSnapshots(program), listActivity(40)]));
+  if (loaded.error !== null) return <LoadError message={loaded.error} />;
+  const [snapshots, activity] = loaded.data;
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4 pb-20 md:p-6 lg:p-8">

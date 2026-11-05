@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getCohortActor } from '@/lib/cohorts/guard';
-import { buildCohortReport } from '@/lib/cohorts/data';
+import { buildCohortReport, safeLoad } from '@/lib/cohorts/data';
+import { LoadError } from '../_components/LoadError';
 import { COHORT_EDIT_ROLES } from '@/lib/roles';
 import { cn } from '@/lib/utils';
 import { CohortFormDialog } from '../_components/CohortFormDialog';
@@ -26,7 +27,9 @@ export default async function CohortPage(props: {
   const tab = sp.tab === 'members' ? 'members' : 'report';
   const canEdit = COHORT_EDIT_ROLES.includes(actor.role);
 
-  const bundle = await buildCohortReport(id, { startId: sp.start, endId: sp.end, withTrend: tab === 'report' });
+  const loaded = await safeLoad(() => buildCohortReport(id, { startId: sp.start, endId: sp.end, withTrend: tab === 'report' }));
+  if (loaded.error !== null) return <LoadError message={loaded.error} />;
+  const bundle = loaded.data;
   if (!bundle) notFound();
   const { cohort, members } = bundle;
 

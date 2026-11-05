@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { ArrowRight, Users } from 'lucide-react';
 import { DashboardGreeting } from '@/components/dashboard-greeting';
 import { getCohortActor } from '@/lib/cohorts/guard';
-import { listCohorts, listSnapshots } from '@/lib/cohorts/data';
+import { listCohorts, listSnapshots, safeLoad } from '@/lib/cohorts/data';
+import { LoadError } from './cohorts/_components/LoadError';
 import { PROGRAMS } from '@/lib/cohorts/constants';
 import { fmtDate, fmtNum } from './cohorts/_components/format';
 
@@ -22,12 +23,23 @@ export default async function DashboardPage() {
     );
   }
 
-  const programs = await Promise.all(
-    PROGRAMS.map(async p => {
-      const [cohorts, snapshots] = await Promise.all([listCohorts(p), listSnapshots(p)]);
-      return { program: p, cohorts: cohorts.filter(c => !c.archived), latest: snapshots[0] ?? null };
-    }),
+  const loaded = await safeLoad(() =>
+    Promise.all(
+      PROGRAMS.map(async p => {
+        const [cohorts, snapshots] = await Promise.all([listCohorts(p), listSnapshots(p)]);
+        return { program: p, cohorts: cohorts.filter(c => !c.archived), latest: snapshots[0] ?? null };
+      }),
+    ),
   );
+  if (loaded.error !== null) {
+    return (
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-4 md:p-6 lg:p-8">
+        <DashboardGreeting />
+        <LoadError message={loaded.error} />
+      </div>
+    );
+  }
+  const programs = loaded.data;
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-4 pb-20 md:p-6 lg:p-8">

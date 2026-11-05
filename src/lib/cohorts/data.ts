@@ -12,6 +12,46 @@ import {
 
 type Admin = ReturnType<typeof createAdminClient>;
 
+/** A database problem with a message that is safe and useful to show admins. */
+export class CohortDbError extends Error {
+  constructor(message: string, readonly setupNeeded = false) {
+    super(message);
+    this.name = 'CohortDbError';
+  }
+}
+
+function dbError(error: { message: string; code?: string }): CohortDbError {
+  // 42P01 = Postgres "undefined table"; PGRST205 = PostgREST "table not in schema cache"
+  if (error.code === '42P01' || error.code === 'PGRST205' || /does not exist|schema cache/i.test(error.message)) {
+    return new CohortDbError(
+      'The cohort tracking tables are missing from the database. Run the SQL files in supabase/migrations/ (see docs/COHORT_TRACKING.md).',
+      true,
+    );
+  }
+  if (/fetch failed|ENOTFOUND|ECONNREFUSED|Invalid API key|JWT/i.test(error.message)) {
+    return new CohortDbError(
+      `Could not reach Supabase (${error.message}). Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY, and that the project still exists and is not paused.`,
+      true,
+    );
+  }
+  return new CohortDbError(`Database error: ${error.message}`);
+}
+
+/** Runs a loader; returns its value, or a displayable error message instead of crashing the page. */
+export async function safeLoad<T>(fn: () => Promise<T>): Promise<{ data: T; error: null } | { data: null; error: string }> {
+  try {
+    return { data: await fn(), error: null };
+  } catch (e) {
+    console.error('[cohorts] load failed:', e);
+    if (e instanceof CohortDbError) return { data: null, error: e.message };
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/fetch failed|ENOTFOUND|ECONNREFUSED/i.test(msg)) {
+      return { data: null, error: `Could not reach Supabase (${msg}). Check the project URL/keys and that the project still exists.` };
+    }
+    return { data: null, error: 'Something went wrong loading cohort data. Check the server logs for details.' };
+  }
+}
+
 export interface SnapshotMeta {
   id: string;
   program: string;
@@ -68,7 +108,7 @@ export async function listSnapshots(program: string, supabase: Admin = createAdm
     .eq('program', program)
     .eq('status', 'ready')
     .order('snapshot_date', { ascending: false });
-  if (error) throw new Error(error.message);
+  if (error) throw dbError(error);
   return (data ?? []) as SnapshotMeta[];
 }
 
@@ -81,7 +121,7 @@ export async function listCohorts(program?: string, supabase: Admin = createAdmi
     .order('created_at', { ascending: false });
   if (program) q = q.eq('program', program);
   const { data, error } = await q;
-  if (error) throw new Error(error.message);
+  if (error) throw dbError(error);
   return (data ?? []).map(({ cohort_members, ...c }) => ({
     ...(c as Cohort),
     member_count: (cohort_members as { count: number }[] | null)?.[0]?.count ?? 0,
@@ -90,7 +130,7 @@ export async function listCohorts(program?: string, supabase: Admin = createAdmi
 
 export async function getCohort(id: string, supabase: Admin = createAdminClient()): Promise<Cohort | null> {
   const { data, error } = await supabase.from('cohorts').select('*').eq('id', id).maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) throw dbError(error);
   return (data as Cohort) ?? null;
 }
 
@@ -104,7 +144,7 @@ export async function getCohortMembers(cohortId: string, supabase: Admin = creat
       .is('removed_at', null)
       .order('email')
       .range(from, from + 999);
-    if (error) throw new Error(error.message);
+    if (error) throw dbError(error);
     out.push(...((data ?? []) as CohortMember[]));
     if (!data || data.length < 1000) break;
   }
@@ -131,7 +171,7 @@ export async function fetchRowsForEmails(
         .in('email', chunk)
         .order('id')
         .range(from, from + 999);
-      if (error) throw new Error(error.message);
+      if (error) throw dbError(error);
       for (const r of data ?? []) {
         bySnapshot.get(r.snapshot_id)?.push({
           email: r.email,
@@ -223,6 +263,6 @@ export async function listActivity(limit = 100, supabase: Admin = createAdminCli
     .select('*')
     .order('performed_at', { ascending: false })
     .limit(limit);
-  if (error) throw new Error(error.message);
+  if (error) throw dbError(error);
   return (data ?? []) as ActivityLogEntry[];
 }

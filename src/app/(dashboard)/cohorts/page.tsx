@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { getCohortActor } from '@/lib/cohorts/guard';
 import { isProgram, PROGRAMS } from '@/lib/cohorts/constants';
-import { listCohorts, listSnapshots } from '@/lib/cohorts/data';
+import { listCohorts, listSnapshots, safeLoad } from '@/lib/cohorts/data';
+import { LoadError } from './_components/LoadError';
 import { COHORT_EDIT_ROLES } from '@/lib/roles';
 import { ProgramSwitcher } from './_components/ProgramSwitcher';
 import { CohortFormDialog } from './_components/CohortFormDialog';
@@ -20,7 +21,9 @@ export default async function CohortsPage(props: { searchParams: Promise<{ progr
   const program = isProgram(sp.program) ? sp.program : PROGRAMS[0];
   const canEdit = COHORT_EDIT_ROLES.includes(actor.role);
 
-  const [cohorts, snapshots] = await Promise.all([listCohorts(program), listSnapshots(program)]);
+  const loaded = await safeLoad(() => Promise.all([listCohorts(program), listSnapshots(program)]));
+  if (loaded.error !== null) return <LoadError message={loaded.error} />;
+  const [cohorts, snapshots] = loaded.data;
   const latest = snapshots[0];
   const stale = latest ? (daysSince(latest.snapshot_date) ?? 0) > 8 : false;
 
