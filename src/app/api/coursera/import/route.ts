@@ -472,15 +472,19 @@ export async function POST(request: NextRequest) {
 
   // 5e. Per-learner metrics
 
+  // The first snapshot is the lifetime baseline: it is not a week, so no deltas.
+  const isBaselineSnapshot = !prevMonth;
+
   const learnerMonthRecords = Array.from(byEmail.entries()).map(([email, rows]) => {
     const prev = prevMap.get(email) ?? { prev_hours: 0, prev_completions: 0 };
 
     const cumulative_hours = rows.reduce((s, r) => s + r.cumulative_learning_hours, 0);
-    const monthly_hours = Math.max(0, cumulative_hours - prev.prev_hours);
+    // Baseline (no earlier snapshot): lifetime totals only, no weekly delta.
+    const monthly_hours = isBaselineSnapshot ? 0 : Math.max(0, cumulative_hours - prev.prev_hours);
 
     const courses_enrolled = rows.length;
     const courses_completed = rows.filter(r => r.completed).length;
-    const new_completions = Math.max(0, courses_completed - prev.prev_completions);
+    const new_completions = isBaselineSnapshot ? 0 : Math.max(0, courses_completed - prev.prev_completions);
     const avg_progress = rows.reduce((s, r) => s + r.overall_progress, 0) / rows.length;
 
     const is_active = monthly_hours > 0;
@@ -501,7 +505,7 @@ export async function POST(request: NextRequest) {
       ? Math.max(0, Math.floor((Date.now() - latestActivity) / 86400000))
       : null;
 
-    const is_compliant = monthly_hours >= minMonthlyHours * periodWeekCount;
+    const is_compliant = !isBaselineSnapshot && monthly_hours >= minMonthlyHours * periodWeekCount;
 
     return {
       month: periodKey(snapshotMonth),

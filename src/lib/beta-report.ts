@@ -126,7 +126,7 @@ export async function addBetaSheets(wb: ExcelJS.Workbook, ctx: BetaContext): Pro
       joined: asDate(prog?.join_date),
       last_program: asDate(prog?.last_program_activity),
       business_unit: prog?.business_unit ?? cs.find(c => c.business_unit)?.business_unit ?? '',
-      hours_week: weekBy.has(e) ? n(weekBy.get(e)!.monthly_hours) : null,
+      hours_week: period.kind === 'baseline' ? null : weekBy.has(e) ? n(weekBy.get(e)!.monthly_hours) : null,
       hours_total: round1(cs.reduce((t, c) => t + n(c.cumulative_learning_hours), 0)),
       hours_program: prog ? n(prog.learning_hours) : null,
       courses_enrolled: realCourses.length,

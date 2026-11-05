@@ -41,7 +41,6 @@ export default async function ActivityLogsPage({
 
   const firstImportMonth = monthsList?.[monthsList.length - 1]?.month;
   const periodOf = makePeriodLabeler((monthsList ?? []).map(m => m.month as string));
-  void firstImportMonth;
   const selectedMonth = monthParam ?? monthsList?.[0]?.month ?? null;
 
   // Only cohort members are listed (full reports are stored; filtering happens here).
@@ -63,7 +62,10 @@ export default async function ActivityLogsPage({
   }
 
   // Status filter mapping
-  switch (status) {
+  // The first snapshot is the lifetime baseline: no weekly hours/active/target values.
+  const isBaseline = !!selectedMonth && selectedMonth === firstImportMonth;
+  const effectiveStatus = isBaseline && ['active', 'inactive', 'below_target'].includes(status) ? 'all' : status;
+  switch (effectiveStatus) {
     case 'active':         query = query.eq('is_active', true); break;
     case 'inactive':       query = query.eq('is_active', false); break;
     case 'below_target':   query = query.eq('is_active', true).eq('is_compliant', false); break;
@@ -72,7 +74,7 @@ export default async function ActivityLogsPage({
   }
 
   query = query
-    .order('monthly_hours', { ascending: false })
+    .order(isBaseline ? 'cumulative_hours' : 'monthly_hours', { ascending: false })
     .order('email')
     .range(offset, offset + PAGE_SIZE - 1);
 
@@ -120,6 +122,13 @@ export default async function ActivityLogsPage({
         hrefFor={id => buildUrl({ cohort: id === 'all' ? '' : id, page: '1' })}
       />
 
+      {isBaseline && (
+        <div className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 text-sm text-muted-foreground">
+          <strong className="text-foreground">Baseline:</strong> lifetime totals up to this date, not a week. Weekly hours,
+          active and on-target status start from the next upload.
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         {/* Month — uses form submit to avoid onChange in Server Component */}
@@ -162,12 +171,12 @@ export default async function ActivityLogsPage({
         <div className="flex gap-1 flex-wrap">
           {[
             { value: 'all', label: 'All' },
-            { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' },
-            { value: 'below_target', label: 'Below Target' },
+            { value: 'active', label: 'Active', weekly: true },
+            { value: 'inactive', label: 'Inactive', weekly: true },
+            { value: 'below_target', label: 'Below Target', weekly: true },
             { value: 'no_activity_30', label: 'No Activity 30d' },
             { value: 'no_activity_90', label: 'No Activity 90d' },
-          ].map(opt => (
+          ].filter(opt => !(isBaseline && opt.weekly)).map(opt => (
             <Link
               key={opt.value}
               href={buildUrl({ status: opt.value, page: '1' })}
@@ -194,12 +203,12 @@ export default async function ActivityLogsPage({
                 <tr className="border-b border-border/60 bg-muted/30">
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
                   <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Weekly h</th>
+                  {!isBaseline && <th className="text-right px-4 py-3 font-medium text-muted-foreground">Weekly h</th>}
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Cumulative h</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Courses</th>
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Completed</th>
-                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Active</th>
-                  <th className="text-center px-4 py-3 font-medium text-muted-foreground">Compliant</th>
+                  {!isBaseline && <th className="text-center px-4 py-3 font-medium text-muted-foreground">Active</th>}
+                  {!isBaseline && <th className="text-center px-4 py-3 font-medium text-muted-foreground">On Target</th>}
                   <th className="text-right px-4 py-3 font-medium text-muted-foreground">Days Inactive</th>
                 </tr>
               </thead>
@@ -223,16 +232,20 @@ export default async function ActivityLogsPage({
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{l.email}</td>
-                      <td className="px-4 py-3 text-right tabular-nums font-medium">{l.monthly_hours.toFixed(1)}</td>
-                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{l.cumulative_hours.toFixed(1)}</td>
+                      {!isBaseline && <td className="px-4 py-3 text-right tabular-nums font-medium">{Number(l.monthly_hours).toFixed(1)}</td>}
+                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{Number(l.cumulative_hours).toFixed(1)}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{l.courses_enrolled}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{l.courses_completed}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-block w-2 h-2 rounded-full ${l.is_active ? 'bg-emerald-500' : 'bg-rose-400'}`} />
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`inline-block w-2 h-2 rounded-full ${l.is_compliant ? 'bg-emerald-500' : 'bg-amber-400'}`} />
-                      </td>
+                      {!isBaseline && (
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-block w-2 h-2 rounded-full ${l.is_active ? 'bg-emerald-500' : 'bg-rose-400'}`} />
+                        </td>
+                      )}
+                      {!isBaseline && (
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-block w-2 h-2 rounded-full ${l.is_compliant ? 'bg-emerald-500' : 'bg-amber-400'}`} />
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
                         {l.days_since_activity !== null ? l.days_since_activity : '—'}
                       </td>

@@ -110,6 +110,9 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
 
   const firstImportMonth = availableMonths[availableMonths.length - 1];
   const periodOf = makePeriodLabeler(availableMonths);
+  // The first upload is the lifetime baseline: no weekly values or week-over-week changes.
+  const isBaseline = selectedMonth === firstImportMonth;
+  const weeksCovered = Math.max(1, periodOf(selectedMonth).weeks);
   const isSecondMonth = availableMonths.length >= 2 && selectedMonth === availableMonths[availableMonths.length - 2];
 
   const isFirstImport = (monthStr: string) => {
@@ -186,6 +189,10 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
         </div>
       )}
 
+      {isBaseline ? (
+        <BaselineView m={m} label={getLabel(selectedMonth)} />
+      ) : (
+      <>
       {/* Alerts */}
       {(m.alerts ?? []).length > 0 && (
         <div className="space-y-2">
@@ -206,7 +213,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
           accent="bg-indigo-500/10 text-indigo-500" />
         <KpiCard label="Active This Week" value={fmt(m.active_learners)} icon={Activity}
           accent="bg-emerald-500/10 text-emerald-500" deltaVal={isSecondMonth ? undefined : m.mom_active_learners} />
-        <KpiCard label="Monthly Hours" value={`${fmt(m.monthly_hours, 1)}h`} icon={Clock}
+        <KpiCard label={weeksCovered > 1 ? `Hours (${weeksCovered} weeks)` : "Hours This Week"} value={`${fmt(m.monthly_hours, 1)}h`} icon={Clock}
           accent="bg-blue-500/10 text-blue-500"
           sub={`${fmt(m.avg_hours_per_active_learner, 1)}h avg per active`}
           deltaVal={isSecondMonth ? undefined : m.mom_monthly_hours} />
@@ -217,11 +224,11 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
       {/* Row 2: Compliance + License KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Compliant Learners" value={fmt(m.compliant_learners)}
-          sub={`≥${m.config?.minimum_monthly_hours}h/mo`} icon={Shield}
+          sub={`≥${fmt(m.config?.minimum_monthly_hours, 1)}h this period`} icon={Shield}
           accent="bg-teal-500/10 text-teal-500" />
         <KpiCard label="Inactive This Week" value={fmt(m.inactive_learners)} icon={UserX}
           accent="bg-rose-500/10 text-rose-500" />
-        <KpiCard label="Monthly Completions" value={fmt(m.monthly_completions)} icon={CheckSquare}
+        <KpiCard label="Completions This Week" value={fmt(m.monthly_completions)} icon={CheckSquare}
           accent="bg-amber-500/10 text-amber-500" deltaVal={isSecondMonth ? undefined : m.mom_completions} />
         <KpiCard
           label="License Usage"
@@ -349,6 +356,56 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
               </div>
             )}
           </div>
+        </div>
+      </div>
+      </>
+      )}
+    </div>
+  );
+}
+
+// ── Baseline (lifetime) view ──────────────────────────────────────────────────
+// The first upload is everything learned up to the baseline Sunday. It is not a
+// week, so only lifetime totals are shown: no weekly hours, "active this week"
+// or changes. Weekly numbers start with the next upload.
+function BaselineView({ m, label }: { m: Metrics; label: string }) {
+  const learners = Number(m.total_learners) || 0;
+  const lifetime = Number(m.total_lifetime_hours) || 0;
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-start gap-3 rounded-lg border border-sky-500/30 bg-sky-500/5 p-4 text-sm">
+        <Shield className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+        <div>
+          <p className="font-semibold text-foreground">{label}</p>
+          <p className="mt-0.5 text-muted-foreground">
+            This is the starting point: everything learned on Coursera up to this date. It is not a weekly report, so no
+            weekly hours, active learners or changes are shown. Weekly figures start from the next upload, measured
+            against this baseline.
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <KpiCard label="Learners on Coursera" value={fmt(learners)} icon={Users} accent="bg-indigo-500/10 text-indigo-500" />
+        <KpiCard label="Lifetime Hours" value={`${fmt(lifetime, 0)}h`} icon={TrendingUp} accent="bg-violet-500/10 text-violet-500"
+          sub={learners ? `${fmt(lifetime / learners, 1)}h per learner` : undefined} />
+        <KpiCard label="Courses Enrolled" value={fmt(m.total_courses_enrolled)} icon={BookOpen} accent="bg-blue-500/10 text-blue-500" />
+        <KpiCard label="Courses Completed" value={fmt(m.total_courses_completed)} icon={CheckSquare} accent="bg-amber-500/10 text-amber-500"
+          sub={`${fmt(m.overall_completion_rate, 1)}% completion rate`} />
+      </div>
+      <div className="overflow-hidden rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm">
+        <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
+          <Award className="h-4 w-4 text-amber-500" />
+          <h3 className="text-sm font-semibold">Top Learners by Lifetime Hours (up to baseline)</h3>
+        </div>
+        <div className="divide-y divide-border/40">
+          {(m.top_learners_by_cumulative ?? []).slice(0, 10).map((l: { email: string; name: string; cumulative_hours: number }, i: number) => (
+            <Link key={l.email} href={`/learners/${encodeURIComponent(l.email)}`}
+              className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-accent/30">
+              <span className="w-5 shrink-0 text-xs font-bold tabular-nums text-muted-foreground">{i + 1}</span>
+              <div className="min-w-0 flex-1 truncate text-sm font-medium">{l.name || l.email}</div>
+              <span className="text-sm font-bold tabular-nums text-indigo-500">{fmt(l.cumulative_hours, 1)}h</span>
+            </Link>
+          ))}
         </div>
       </div>
     </div>
