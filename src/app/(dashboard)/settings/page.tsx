@@ -19,7 +19,7 @@ const SETTINGS_CARDS = [
     roles: USER_MANAGER_ROLES,
   },
   {
-    href: '/settings/coursera',
+    href: '/settings/targets',
     label: 'Coursera Targets',
     description: 'Weekly learning-hours target (default 5 h) that decides who is "on target", and the inactivity threshold.',
     icon: Target,

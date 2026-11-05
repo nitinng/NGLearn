@@ -4,6 +4,20 @@ NGLearn runs NGConnect's Coursera module (Dashboard, Activity Logs, Export Activ
 Import Reports) on **weekly** Coursera exports, with **cohorts** as the report scope.
 Learner enrollment and pruning are intentionally not included.
 
+## Pages
+
+| Path | Page |
+|---|---|
+| `/` | Dashboard (cohort-scoped Coursera analytics) |
+| `/activity-logs` | Activity Logs |
+| `/export` | Export Activity Report (Classic / Beta), cohorts |
+| `/import-reports` | Import Reports (weekly uploads) |
+| `/learners/[email]` | Learner detail |
+| `/settings/users` | User Roles |
+| `/settings/targets` | Coursera Targets (weekly hours target) |
+
+Old `/data-management/...` links redirect to these.
+
 ## 1. Database (Supabase, NGLearn project)
 
 1. Back up anything you need, then run `supabase/reset/00_wipe_public_schema.sql` in the SQL Editor.

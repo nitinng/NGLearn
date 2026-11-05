@@ -4,7 +4,8 @@ import { ShieldAlert } from 'lucide-react';
 import { hasAccess, RESOURCE_LABELS, type ActionType } from '@/lib/access';
 
 type DenyOptions = {
-  backHref?: string;
+  /** null hides the back link (e.g. on the home page itself) */
+  backHref?: string | null;
   backLabel?: string;
   description?: string;
 };
@@ -29,9 +30,11 @@ export async function denyUnlessAccess(
           {options.description ?? 'Ask an admin to give you the Program role if you need it.'}
         </p>
       </div>
-      <Link href={options.backHref ?? '/'} className="text-sm font-medium underline">
-        {options.backLabel ?? 'Back to dashboard'}
-      </Link>
+      {options.backHref !== null && (
+        <Link href={options.backHref ?? '/'} className="text-sm font-medium underline">
+          {options.backLabel ?? 'Back to dashboard'}
+        </Link>
+      )}
     </div>
   );
 }

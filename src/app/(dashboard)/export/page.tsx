@@ -383,14 +383,14 @@ export default function ExportCourseraActivityPage() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Link
-              href="/data-management/coursera"
+              href="/"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" /> Back to Coursera
             </Link>
             <span className="text-muted-foreground/40">•</span>
             <Link
-              href="/data-management/coursera/activity-logs"
+              href="/activity-logs"
               className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               View Activity Logs

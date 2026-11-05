@@ -55,7 +55,7 @@ Because NGLearn handles critical organizational data, it incorporates a foolproo
 Whenever a row in tables like `alumni_master` is modified, a database trigger fires to append a detailed record into the `audit_log` table, guaranteeing that no change goes untracked.
 
 ## Core Modules & Dashboards
-- **Coursera (`/data-management/coursera`)**: Weekly Coursera dashboard, activity logs, imports, and cohort-scoped Excel exports. See `docs/SETUP.md`.
+- **Pages**: `/` Dashboard · `/activity-logs` · `/export` (Classic / Beta report) · `/import-reports` · `/learners/[email]` · `/settings` (`/settings/users`, `/settings/targets`). See `docs/SETUP.md`.
 - **The Profile System**: Distinguishes between official organizational records (`alumni_master`) and self-service profile data (`alumni_profile`).
 
 ## License

@@ -11,7 +11,7 @@ interface PageProps {
 }
 
 export default async function LearnerDetailPage({ params }: PageProps) {
-  const denied = await denyUnlessAccess('data_management.coursera', 'view', { backHref: '/data-management', backLabel: 'Back to Data Management' });
+  const denied = await denyUnlessAccess('data_management.coursera', 'view', { backHref: '/', backLabel: 'Back to dashboard' });
   if (denied) return denied;
 
   const { email: encodedEmail } = await params;
@@ -80,7 +80,7 @@ export default async function LearnerDetailPage({ params }: PageProps) {
 
       {/* Back link */}
       <div>
-        <Link href="/data-management/coursera/activity-logs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <Link href="/activity-logs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           ← Activity Logs
         </Link>
       </div>

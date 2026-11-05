@@ -5,7 +5,6 @@ import {
   LayoutDashboard,
   GalleryVerticalEnd,
   Settings,
-  BarChart2,
   Activity,
   FileDown,
   Upload,
@@ -30,15 +29,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { setOpenMobile, isMobile } = useSidebar()
   const user = useUserContext()
 
-  const navGeneral: NavItem[] = [
-    {
-      title: "Dashboard",
-      url: "/",
-      icon: LayoutDashboard,
-      isActive: true,
-    },
-  ];
-
 
   const role = user?.role
   const canSeeCohorts = role === "Admin" || role === "PNC" || role === "CEOs Office" || role === "Program"
@@ -48,10 +38,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const navCohorts: NavItem[] = canSeeCohorts
     ? [
-        { title: "Coursera Dashboard", url: "/data-management/coursera", icon: BarChart2 },
-        { title: "Activity Logs", url: "/data-management/coursera/activity-logs", icon: Activity },
-        { title: "Export Report", url: "/data-management/coursera/export", icon: FileDown },
-        ...(canEditCoursera ? [{ title: "Import Reports", url: "/data-management/import-coursera", icon: Upload }] : []),
+        { title: "Dashboard", url: "/", icon: LayoutDashboard },
+        { title: "Activity Logs", url: "/activity-logs", icon: Activity },
+        { title: "Export Report", url: "/export", icon: FileDown },
+        ...(canEditCoursera ? [{ title: "Import Reports", url: "/import-reports", icon: Upload }] : []),
       ]
     : [];
 
@@ -89,7 +79,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={[...navGeneral, ...navCohorts, ...navManage]} />
+        <NavMain items={[...navCohorts, ...navManage]} />
       </SidebarContent>
     </Sidebar>
   )

@@ -47,7 +47,7 @@ export async function saveCourseraSettings(input: CourseraSettings): Promise<{ o
   const off = await supabase.from('coursera_learner_month').update({ is_compliant: false }, { count: 'exact' }).lt('monthly_hours', target).eq('is_compliant', true);
   if (on.error || off.error) return { ok: false, error: (on.error ?? off.error)!.message };
 
-  revalidatePath('/settings/coursera');
-  revalidatePath('/data-management/coursera');
+  revalidatePath('/settings/targets');
+  revalidatePath('/');
   return { ok: true, reflagged: (on.count ?? 0) + (off.count ?? 0) };
 }
