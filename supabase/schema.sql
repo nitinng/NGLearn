@@ -166,3 +166,5 @@ NOTIFY pgrst, 'reload schema';
 -- SELECT c.relname, c.relrowsecurity AS rls_on
 -- FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
 -- WHERE n.nspname = 'public' AND c.relkind = 'r' ORDER BY 1;
+
+-- Next: run supabase/migrations/20261106000001_beta_report_data.sql (beta report data + upload bucket).

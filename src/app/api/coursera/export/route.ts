@@ -11,6 +11,7 @@ import {
 import ExcelJS from 'exceljs';
 import { denyApiUnlessAccess } from '@/lib/api-guard';
 import { describePeriod } from '@/lib/report-periods';
+import { addBetaSheets } from '@/lib/beta-report';
 
 export const maxDuration = 300;
 
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
     userScope?: 'all' | 'users' | 'single' | 'list' | 'imported' | 'cohort';
     emails?: string[];
     cohortId?: string;
+    reportVariant?: 'classic' | 'beta';
     includeMemberDetailsSheet?: boolean;
     includeCourseBreakdown?: boolean;
     includeUnmatchedSheet?: boolean;
@@ -101,6 +103,7 @@ export async function POST(request: NextRequest) {
     userScope = 'all',
     emails: requestEmails = [],
     cohortId,
+    reportVariant = 'classic',
     includeMemberDetailsSheet = true,
     includeCourseBreakdown = true,
     includeUnmatchedSheet = true,
@@ -951,9 +954,28 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // ── BETA: extra sheets appended after the unchanged Classic sheets ─────────
+  if (reportVariant === 'beta') {
+    try {
+      await addBetaSheets(workbook, {
+        supabase,
+        month,
+        emails: userScope === 'all' ? Array.from(foundEmailSet) : sanitizedEmails,
+        names: emailToAlumniName,
+        baselineDate,
+        cohortName,
+      });
+    } catch (err) {
+      console.error('[export] beta sheets failed:', err);
+      return NextResponse.json({
+        error: `Beta report failed: ${err instanceof Error ? err.message : String(err)}. Has migration 20261106000001_beta_report_data.sql been run?`,
+      }, { status: 500 });
+    }
+  }
+
   const buffer = await workbook.xlsx.writeBuffer();
   const dateStr = (cohortName ? `${cohortName.replace(/[^A-Za-z0-9]+/g, '_')}_` : '') + (month === 'all' ? 'All_Snapshots' : month);
-  const filename = `Coursera_Activity_Report_${dateStr}_${Date.now()}.xlsx`;
+  const filename = `${reportVariant === 'beta' ? 'Coursera_BETA_Report' : 'Coursera_Activity_Report'}_${dateStr}_${Date.now()}.xlsx`;
 
   return new Response(buffer, {
     headers: {

@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation';
 import { getUserRole, USER_MANAGER_ROLES } from '@/lib/roles';
+import { EDIT_ROLES } from '@/lib/access';
 import Link from 'next/link';
 import { Settings, ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Shield } from 'lucide-react';
+import { Shield, Target } from 'lucide-react';
 
 const SETTINGS_CARDS = [
   {
@@ -15,12 +16,24 @@ const SETTINGS_CARDS = [
     gradient: 'from-emerald-500/10 via-green-500/5 to-transparent',
     border: 'hover:border-emerald-500/30 dark:hover:border-emerald-500/50',
     iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white',
+    roles: USER_MANAGER_ROLES,
+  },
+  {
+    href: '/settings/coursera',
+    label: 'Coursera Targets',
+    description: 'Weekly learning-hours target (default 5 h) that decides who is "on target", and the inactivity threshold.',
+    icon: Target,
+    badge: 'Admin / PNC / Program',
+    gradient: 'from-indigo-500/10 via-violet-500/5 to-transparent',
+    border: 'hover:border-indigo-500/30 dark:hover:border-indigo-500/50',
+    iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white',
+    roles: EDIT_ROLES,
   },
 ];
 
 export default async function SettingsPage() {
   const role = await getUserRole();
-  if (!USER_MANAGER_ROLES.includes(role)) redirect('/');
+  if (!USER_MANAGER_ROLES.includes(role) && !EDIT_ROLES.includes(role)) redirect('/');
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -39,17 +52,14 @@ export default async function SettingsPage() {
               Settings
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Administrative tools for user access and roles.
+              User access, roles and Coursera targets.
             </p>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {SETTINGS_CARDS.filter(card => {
-          if (role !== 'Admin' && card.label !== 'User Roles') return false;
-          return true;
-        }).map((card) => {
+        {SETTINGS_CARDS.filter(card => card.roles.includes(role)).map((card) => {
           const Icon = card.icon;
           return (
             <Link key={card.href} href={card.href} className="group block">

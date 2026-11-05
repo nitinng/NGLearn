@@ -32,6 +32,11 @@ If you ran `schema.sql` before the views were added, run
 
 Column names `snapshot_month` / `month` are kept from NGConnect but hold the weekly export date.
 
+3. Run `supabase/migrations/20261106000001_beta_report_data.sql`. It adds the extra Coursera columns and
+   tables used by the **Beta report** (specializations, program membership, video clips) and creates the
+   private `coursera-imports` Storage bucket. The browser uploads exports there, because Coursera exports
+   (~5–6 MB) are larger than the ~4.5 MB request limit on Vercel. Files are deleted right after import.
+
 ## 2. Environment variables
 
 ```
@@ -90,3 +95,25 @@ Download links are on each import screen; the files live in `public/templates/`:
 
 Example rows use `@example.org` emails and are ignored by both importers. Regenerate the files with
 `node scripts/generate-templates.mjs`.
+
+## 6. Classic vs Beta report
+
+Export Activity Report → **Report Type**:
+
+- **Classic**: the original report, unchanged.
+- **New report (BETA)**: the Classic sheets plus purple-tab sheets built from the rest of the Coursera export:
+  - **Beta Summary**: cohort KPIs (program status counts, projects by type, specializations, certificates, clips) and top courses
+  - **Learner 360**: per student: program status (Member / Invited / Deleted), invited and joined dates, hours this week,
+    courses / projects / specializations enrolled and completed, certificates, average grade, days inactive
+  - **Weekly Trend**: hours and active learners for each week since the baseline
+  - **Projects**: Guided, Self-Paced and Qwiklabs projects
+  - **Specializations**: progress through each specialization
+  - **Course Details+**: class start/end dates, grade, certificate URL, collection, contract
+  - **Video Clips**: clips watched, completion, whether they led to an enrollment
+
+Weeks imported before migration 20261106000001 have no specialization/program/clip data; re-import them if needed.
+
+## 7. Settings → Coursera Targets
+
+Admin, PNC and Program roles can change the **weekly learning-hours target** (default 5 h; learners below it are
+"below target") and the inactivity threshold. Saving re-checks every imported week against the new target.

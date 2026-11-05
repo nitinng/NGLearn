@@ -55,7 +55,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ]
     : [];
 
-  const navManage: NavItem[] = canManageUsers
+  const navManage: NavItem[] = canManageUsers || role === "Program"
     ? [{ title: "Settings", url: "/settings", icon: Settings }]
     : [];
 
