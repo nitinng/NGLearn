@@ -5,7 +5,7 @@ import { denyUnlessAccess } from '@/lib/guard';
  * check lives in this server layout.
  */
 export default async function CourseraExportLayout({ children }: { children: React.ReactNode }) {
-  const denied = await denyUnlessAccess('data_management.coursera_export', 'view', { backHref: '/', backLabel: 'Back to dashboard' });
+  const denied = await denyUnlessAccess('data_management.coursera_export', 'view', { backHref: '/dashboard', backLabel: 'Back to Dashboard' });
   if (denied) return denied;
 
   return <>{children}</>;

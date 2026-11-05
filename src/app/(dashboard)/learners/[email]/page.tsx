@@ -11,7 +11,7 @@ interface PageProps {
 }
 
 export default async function LearnerDetailPage({ params }: PageProps) {
-  const denied = await denyUnlessAccess('data_management.coursera', 'view', { backHref: '/', backLabel: 'Back to dashboard' });
+  const denied = await denyUnlessAccess('data_management.coursera', 'view', { backHref: '/dashboard', backLabel: 'Back to Dashboard' });
   if (denied) return denied;
 
   const { email: encodedEmail } = await params;

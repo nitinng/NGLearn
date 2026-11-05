@@ -76,7 +76,7 @@ Whenever a row in tables like `alumni_master` is modified, a database trigger (`
 ### 6.1 Coursera pages (historical section title: Data Management Hub)
 This is the most complex module, handling bulk data ingestion:
 - **GHAR Imports (`/import`)**: Ingests thousands of alumni records from GHAR via CSV/XLSX. Creates an `import_batch` and generates `import_batch_records` for every row, noting successes, skips, and failures.
-- **Pages**: `/` Dashboard · `/activity-logs` · `/export` (Classic / Beta report) · `/import-reports` · `/learners/[email]` · `/settings` (`/settings/users`, `/settings/targets`). See `docs/SETUP.md`.
+- **Pages**: `/` Home · `/dashboard` Dashboard · `/activity-logs` · `/export` (Classic / Beta report) · `/import-reports` · `/learners/[email]` · `/settings` (`/settings/users`, `/settings/targets`). See `docs/SETUP.md`.
 - **Rollback (`/rollback`)**: Allows an Admin to undo a specific import batch, utilizing the `audit_log` to restore prior values.
 
 ### 6.2 The Master Data Hub (`/manage/master-data`)

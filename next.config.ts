@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
       { source: '/data-management/coursera/activity-logs', destination: '/activity-logs', permanent: true },
       { source: '/data-management/coursera/export', destination: '/export', permanent: true },
       { source: '/data-management/coursera/learner/:email', destination: '/learners/:email', permanent: true },
-      { source: '/data-management/coursera', destination: '/', permanent: true },
+      { source: '/data-management/coursera', destination: '/dashboard', permanent: true },
       { source: '/data-management/import-coursera', destination: '/import-reports', permanent: true },
       { source: '/data-management', destination: '/', permanent: true },
       { source: '/settings/coursera', destination: '/settings/targets', permanent: true },

@@ -48,6 +48,6 @@ export async function saveCourseraSettings(input: CourseraSettings): Promise<{ o
   if (on.error || off.error) return { ok: false, error: (on.error ?? off.error)!.message };
 
   revalidatePath('/settings/targets');
-  revalidatePath('/');
+  revalidatePath('/dashboard');
   return { ok: true, reflagged: (on.count ?? 0) + (off.count ?? 0) };
 }

@@ -169,7 +169,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
             <button
               key={month}
               onClick={() => {
-                const path = basePath ?? '/';
+                const path = basePath ?? '/dashboard';
                 const param = queryParam ?? 'month';
                 router.push(`${path}?${param}=${month}${extraQuery ? `&${extraQuery}` : ''}`);
               }}

@@ -38,7 +38,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const navCohorts: NavItem[] = canSeeCohorts
     ? [
-        { title: "Dashboard", url: "/", icon: LayoutDashboard },
+        { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
         { title: "Activity Logs", url: "/activity-logs", icon: Activity },
         { title: "Export Report", url: "/export", icon: FileDown },
         ...(canEditCoursera ? [{ title: "Import Reports", url: "/import-reports", icon: Upload }] : []),

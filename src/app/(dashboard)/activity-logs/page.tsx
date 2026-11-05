@@ -24,7 +24,7 @@ export default async function ActivityLogsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const denied = await denyUnlessAccess('data_management.coursera_activity_logs', 'view', { backHref: '/', backLabel: 'Back to dashboard' });
+  const denied = await denyUnlessAccess('data_management.coursera_activity_logs', 'view', { backHref: '/dashboard', backLabel: 'Back to Dashboard' });
   if (denied) return denied;
 
   const { month: monthParam, cohort: cohortParam, search = '', status = 'all', page: pageParam } = await searchParams;
@@ -92,7 +92,7 @@ export default async function ActivityLogsPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               ← Dashboard
             </Link>
           </div>

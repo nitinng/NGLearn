@@ -383,10 +383,10 @@ export default function ExportCourseraActivityPage() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Link
-              href="/"
+              href="/dashboard"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to Coursera
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
             </Link>
             <span className="text-muted-foreground/40">•</span>
             <Link

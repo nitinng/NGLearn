@@ -8,7 +8,8 @@ Learner enrollment and pruning are intentionally not included.
 
 | Path | Page |
 |---|---|
-| `/` | Dashboard (cohort-scoped Coursera analytics) |
+| `/` | Home (greeting + shortcuts) |
+| `/dashboard` | Dashboard (cohort-scoped Coursera analytics) |
 | `/activity-logs` | Activity Logs |
 | `/export` | Export Activity Report (Classic / Beta), cohorts |
 | `/import-reports` | Import Reports (weekly uploads) |
