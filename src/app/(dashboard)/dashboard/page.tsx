@@ -7,7 +7,7 @@ import CourseraDashboardClient from './_components/CourseraDashboardClient';
 
 export const dynamic = 'force-dynamic';
 
-interface SearchParams { month?: string; cohort?: string }
+interface SearchParams { month?: string; cohort?: string; view?: string }
 
 export default async function CourseraDashboardPage({
   searchParams,
@@ -17,7 +17,8 @@ export default async function CourseraDashboardPage({
   const denied = await denyUnlessAccess('data_management.coursera', 'view', { backHref: '/', backLabel: 'Back to home' });
   if (denied) return denied;
 
-  const { month: monthParam, cohort: cohortParam } = await searchParams;
+  const { month: monthParam, cohort: cohortParam, view } = await searchParams;
+  const viewAll = view === 'all';
   const supabase = createAdminClient(); // reads run after the access check above
 
   const [{ data: monthsList }, cohorts] = await Promise.all([
@@ -49,7 +50,8 @@ export default async function CourseraDashboardPage({
   }
 
   const cohortId = resolveCohort(cohortParam, cohorts);
-  const targetMonth = monthParam && months.includes(monthParam) ? monthParam : months[0];
+  // "All time" = lifetime totals as of the latest upload.
+  const targetMonth = !viewAll && monthParam && months.includes(monthParam) ? monthParam : months[0];
   const { metrics, trend } = await buildScopedDashboard(cohortId, targetMonth, months);
   const generatedAt = (monthsList ?? []).find(m => m.month === targetMonth)?.generated_at ?? new Date().toISOString();
   const scopeLabel = cohortId ? cohorts.find(c => c.id === cohortId)!.name : 'All cohorts';
@@ -62,12 +64,13 @@ export default async function CourseraDashboardPage({
       availableMonths={months}
       generatedAt={generatedAt}
       scopeLabel={scopeLabel}
+      viewAll={viewAll}
       extraQuery={cohortId ? `cohort=${cohortId}` : undefined}
       scopeBar={
         <CohortPicker
           cohorts={cohorts}
           selected={cohortId}
-          hrefFor={id => `/dashboard?month=${targetMonth}${id === 'all' ? '' : `&cohort=${id}`}`}
+          hrefFor={id => `/dashboard?${viewAll ? 'view=all' : `month=${targetMonth}`}${id === 'all' ? '' : `&cohort=${id}`}`}
         />
       }
     />

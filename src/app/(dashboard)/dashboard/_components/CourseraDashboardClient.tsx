@@ -43,6 +43,8 @@ interface Props {
   scopeBar?: React.ReactNode;
   /** e.g. "Cohort 2" or "All cohorts" */
   scopeLabel?: string;
+  /** Show the "All time" (lifetime totals as of the latest upload) view instead of a week. */
+  viewAll?: boolean;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -103,7 +105,7 @@ const chartConfig = {
 const getDistColorVar = (i: number) => `var(--color-chart-primary)`;
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function CourseraDashboardClient({ metrics, trend, selectedMonth, availableMonths, availableMonthLabels, basePath, queryParam, generatedAt, extraQuery, scopeBar, scopeLabel }: Props) {
+export default function CourseraDashboardClient({ metrics, trend, selectedMonth, availableMonths, availableMonthLabels, basePath, queryParam, generatedAt, extraQuery, scopeBar, scopeLabel, viewAll = false }: Props) {
   const router = useRouter();
 
   const m = metrics;
@@ -113,6 +115,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
   // The first upload is the lifetime baseline: no weekly values or week-over-week changes.
   const isBaseline = selectedMonth === firstImportMonth;
   const weeksCovered = Math.max(1, periodOf(selectedMonth).weeks);
+  const latestEnd = new Date(`${selectedMonth}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).replace(',', '');
   const isSecondMonth = availableMonths.length >= 2 && selectedMonth === availableMonths[availableMonths.length - 2];
 
   const isFirstImport = (monthStr: string) => {
@@ -144,7 +147,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Coursera Analytics</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {scopeLabel ? `${scopeLabel} · ` : ''}{getLabel(selectedMonth)}
+            {scopeLabel ? `${scopeLabel} · ` : ''}{viewAll ? `All time (up to ${latestEnd})` : getLabel(selectedMonth)}
             {typeof m.cohort_members_total === 'number' && (
               <> · {m.total_learners} of {m.cohort_members_total} members in this snapshot</>
             )}
@@ -166,30 +169,50 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
       {scopeBar}
       </div>
 
-      {/* Snapshot Tabs */}
-      {availableMonths.length > 1 && (
-        <div className="flex gap-2 flex-wrap">
-          {availableMonths.map(month => (
-            <button
-              key={month}
-              onClick={() => {
-                const path = basePath ?? '/dashboard';
-                const param = queryParam ?? 'month';
-                router.push(`${path}?${param}=${month}${extraQuery ? `&${extraQuery}` : ''}`);
-              }}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
-                month === selectedMonth
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'border-border/80 hover:bg-accent'
-              }`}
-            >
-              {getShortLabel(month)}
-            </button>
-          ))}
+      {/* Period picker: "All time" + weeks (most recent first, down to the baseline) */}
+      {availableMonths.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              const path = basePath ?? '/dashboard';
+              router.push(`${path}?view=all${extraQuery ? `&${extraQuery}` : ''}`);
+            }}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
+              viewAll ? 'bg-primary text-primary-foreground border-primary' : 'border-border/80 hover:bg-accent'
+            }`}
+          >
+            All time
+          </button>
+          <select
+            aria-label="Week"
+            value={viewAll ? '' : selectedMonth}
+            onChange={e => {
+              if (!e.target.value) return;
+              const path = basePath ?? '/dashboard';
+              const param = queryParam ?? 'month';
+              router.push(`${path}?${param}=${e.target.value}${extraQuery ? `&${extraQuery}` : ''}`);
+            }}
+            className={`h-9 min-w-[18rem] rounded-full border px-4 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary/40 ${
+              viewAll ? 'border-border/80 bg-background text-muted-foreground' : 'border-primary bg-primary/5 text-foreground'
+            }`}
+          >
+            {viewAll && <option value="">Pick a week…</option>}
+            {[...availableMonths].sort().reverse().map(month => (
+              <option key={month} value={month}>{getLabel(month)}</option>
+            ))}
+          </select>
         </div>
       )}
 
-      {isBaseline ? (
+      {viewAll ? (
+        <BaselineView
+          m={m}
+          label={`All time · lifetime up to ${latestEnd}`}
+          note="Lifetime totals for this cohort as of the latest upload. Pick a week from the dropdown to see that week's figures."
+          topTitle="Top Learners by Lifetime Hours"
+        />
+      ) : isBaseline ? (
         <BaselineView m={m} label={getLabel(selectedMonth)} />
       ) : (
       <>
@@ -354,7 +377,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
 // The first upload is everything learned up to the baseline Sunday. It is not a
 // week, so only lifetime totals are shown: no weekly hours, "active this week"
 // or changes. Weekly numbers start with the next upload.
-function BaselineView({ m, label }: { m: Metrics; label: string }) {
+function BaselineView({ m, label, note, topTitle }: { m: Metrics; label: string; note?: string; topTitle?: string }) {
   const learners = Number(m.total_learners) || 0;
   const lifetime = Number(m.total_lifetime_hours) || 0;
   return (
@@ -364,9 +387,7 @@ function BaselineView({ m, label }: { m: Metrics; label: string }) {
         <div>
           <p className="font-semibold text-foreground">{label}</p>
           <p className="mt-0.5 text-muted-foreground">
-            This is the starting point: everything learned on Coursera up to this date. It is not a weekly report, so no
-            weekly hours, active learners or changes are shown. Weekly figures start from the next upload, measured
-            against this baseline.
+            {note ?? 'This is the starting point: everything learned on Coursera up to this date. It is not a weekly report, so no weekly hours, active learners or changes are shown. Weekly figures start from the next upload, measured against this baseline.'}
           </p>
         </div>
       </div>
@@ -381,7 +402,7 @@ function BaselineView({ m, label }: { m: Metrics; label: string }) {
       <div className="overflow-hidden rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm">
         <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
           <Award className="h-4 w-4 text-amber-500" />
-          <h3 className="text-sm font-semibold">Top Learners by Lifetime Hours (up to baseline)</h3>
+          <h3 className="text-sm font-semibold">{topTitle ?? 'Top Learners by Lifetime Hours (up to baseline)'}</h3>
         </div>
         <div className="divide-y divide-border/40">
           {(m.top_learners_by_cumulative ?? []).slice(0, 10).map((l: { email: string; name: string; cumulative_hours: number }, i: number) => (
