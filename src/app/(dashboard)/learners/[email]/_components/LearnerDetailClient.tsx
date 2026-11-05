@@ -111,7 +111,7 @@ export default function LearnerDetailClient({ monthlyHistory, courses, snapshotD
               {[...monthlyHistory].reverse().map(r => (
                 <tr key={r.month} className="border-b border-border/40 last:border-0">
                   <td className="py-2 pr-4">{periodOf(r.month).label}</td>
-                  <td className="py-2 px-3 text-right tabular-nums">{r.monthly_hours.toFixed(1)}</td>
+                  <td className="py-2 px-3 text-right tabular-nums">{r.month === baselineDate ? <span className="text-muted-foreground" title="Baseline: lifetime totals only">—</span> : Number(r.monthly_hours).toFixed(1)}</td>
                   <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">{r.cumulative_hours.toFixed(1)}</td>
                   <td className="py-2 px-3 text-center">
                     {r.is_active

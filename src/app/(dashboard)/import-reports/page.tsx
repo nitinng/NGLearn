@@ -34,6 +34,7 @@ interface UploadResult {
   month: string;
   period?: string;
   extraSheets?: { specializations: number; programMembers: number; videoClips: number };
+  notices?: string[];
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -298,7 +299,7 @@ export default function ImportCourseraPage() {
               <li><strong className="text-foreground">First import only:</strong> a baseline report with all learning up to a <strong className="text-foreground">Sunday</strong> (Coursera lifetime report).</li>
               <li><strong className="text-foreground">Then every Monday:</strong> generate the Coursera report <strong className="text-foreground">up to the previous Sunday</strong>. Do <strong className="text-foreground">not</strong> include Monday. Monday belongs to the next week; including it moves those hours into the wrong week.</li>
               <li>Weeks run <strong className="text-foreground">Monday → Sunday</strong> and only move forward. The list offers every finished week after your last upload. If you skip weeks, the skipped weeks are merged into this upload (e.g. &ldquo;Weeks 2–5&rdquo;); nothing is ever counted twice.</li>
-              <li>If the file contains activity after the week&apos;s Sunday, the import stops and tells you.</li>
+              <li>Times are India time (IST). A little activity after Sunday (export downloaded Mon–Wed) is just noted. If the file has activity weeks after the chosen Sunday, it&apos;s a newer export and the import stops and suggests the right week.</li>
             </ul>
           </div>
         </div>
@@ -400,6 +401,11 @@ export default function ImportCourseraPage() {
               <div><span className="text-muted-foreground">Learners</span><br /><strong>{uploadResult.learnersAffected.toLocaleString()}</strong></div>
               <div><span className="text-muted-foreground">Duration</span><br /><strong>{formatDuration(uploadResult.durationMs)}</strong></div>
             </div>
+            {uploadResult.notices && uploadResult.notices.length > 0 && (
+              <ul className="mt-1 list-disc pl-5 text-xs text-amber-700 dark:text-amber-400">
+                {uploadResult.notices.map((n, i) => <li key={i}>{n}</li>)}
+              </ul>
+            )}
             {uploadResult.extraSheets && (
               <p className="text-xs text-muted-foreground mt-1">
                 Also saved for the beta report: {uploadResult.extraSheets.specializations.toLocaleString()} specialization rows,{' '}

@@ -88,15 +88,20 @@ Reports follow a fixed Monday → Sunday schedule so no day is counted twice:
 1. **Once, at the start: baseline.** Import Coursera's lifetime report covering all learning up to a
    **Sunday**. Zuvy's agreed baseline is **Sunday 29 March 2026** (pre-selected), so Week 1 = Mon 30 Mar – Sun 5 Apr.
    It is labelled "Baseline · lifetime up to Sun 29 Mar 2026".
+   The baseline is **not a week**: it stores no weekly hours, active learners, completions or changes, and the
+   Dashboard / Activity Logs show only lifetime totals for it. Weekly figures start with the next upload,
+   measured against the baseline. (If a baseline was imported before this rule, click **Recalculate** on it.)
 2. **After that, every Monday:** generate the Coursera report **up to the previous Sunday. Do not include Monday.**
    The Import Reports dropdown lists every finished week after the last upload (newest pre-selected).
    Normally pick the newest week. If you skip weeks (for example going straight from the April baseline to
    this week, since Coursera can't export a past week), the skipped weeks are merged into one period,
    labelled e.g. "Weeks 1–31 · Mon 30 Mar – Sun 1 Nov 2026", and the weekly hours target is multiplied
    by the number of weeks. Uploads only move forward; nothing is counted twice.
-3. **Overlap check:** if any row has activity or a completion after that Sunday (UTC), or the file name
-   shows it was generated before the week ended, the import stops with the details. Regenerate the report,
-   or confirm "Import anyway" (logged in the import history).
+3. **Overlap check (India time):** a week ends at Sunday 23:59 IST. Coursera exports run up to the moment they
+   are downloaded, so an export taken Monday–Wednesday has a little activity after Sunday: that is shown as a
+   notice and imports normally. If the file has activity much later (more than 3 days after the Sunday), it's
+   a newer export than the week chosen; the import stops and suggests the right Sunday ("Import anyway" is
+   still possible and is logged).
 4. Mistake? Roll back the newest week and import it again.
 5. **Dashboard / Activity Logs**: pick a cohort tab (or "All cohorts"); weeks are labelled "Wk N · dates".
 6. **Export Activity Report**: pick the week, pick a cohort card, optionally **Verify Users**, export.
