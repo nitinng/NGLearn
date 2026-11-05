@@ -2,22 +2,11 @@
 
 import * as React from "react"
 import {
-  BookOpen,
-  LifeBuoy,
-  Send,
   LayoutDashboard,
   GalleryVerticalEnd,
-  Users,
-  GraduationCap,
-  Database,
-  DatabaseBackup,
-  Trophy,
-  Briefcase,
-  CalendarClock,
-  HeartHandshake,
-  BarChart,
   Settings,
-  TrendingUp,
+  UsersRound,
+  FileSpreadsheet,
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
@@ -49,27 +38,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   ];
 
 
-  const navManage: NavItem[] = [
-    {
-      title: "Published Reports",
-      url: "/published-reports",
-      icon: BookOpen,
-    },
-    {
-      title: "Settings",
-      url: "/settings",
-      icon: Settings,
-    },
-  ];
+  const role = user?.role
+  const canSeeCohorts = role === "Admin" || role === "PNC" || role === "CEOs Office" || role === "Program"
+  const canManageUsers = role === "Admin" || role === "PNC" || role === "CEOs Office"
 
-  const navContests: NavItem[] = [
-    {
-      title: "All Contests",
-      url: "/contests",
-      icon: Trophy,
-    },
-  ];
+  const navCohorts: NavItem[] = canSeeCohorts
+    ? [
+        { title: "Cohorts", url: "/cohorts", icon: UsersRound },
+        { title: "Weekly Snapshots", url: "/cohorts/snapshots", icon: FileSpreadsheet },
+      ]
+    : [];
 
+  const navManage: NavItem[] = canManageUsers
+    ? [{ title: "Settings", url: "/settings", icon: Settings }]
+    : [];
 
   return (
     <Sidebar
@@ -101,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={[...navGeneral, ...navContests, ...navManage]} />
+        <NavMain items={[...navGeneral, ...navCohorts, ...navManage]} />
       </SidebarContent>
     </Sidebar>
   )

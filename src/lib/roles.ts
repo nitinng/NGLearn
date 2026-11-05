@@ -2,7 +2,14 @@ import { auth } from '@/lib/auth';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 
-export type UserRole = "Admin" | "PNC" | "CEOs Office" | "Member";
+export type UserRole = "Admin" | "PNC" | "CEOs Office" | "Program" | "Member";
+
+/** Roles that can open the Settings area and manage users. */
+export const USER_MANAGER_ROLES: UserRole[] = ["Admin", "PNC", "CEOs Office"];
+/** Roles that can view cohort tracking dashboards and download reports. */
+export const COHORT_VIEW_ROLES: UserRole[] = ["Admin", "PNC", "CEOs Office", "Program"];
+/** Roles that can upload snapshots and create or edit cohorts. */
+export const COHORT_EDIT_ROLES: UserRole[] = ["Admin", "PNC", "Program"];
 
 export type UserTeam = "CEO's Office" | "Alumni Growth" | "Pay-Forward" | "Alumni Network" | "None";
 

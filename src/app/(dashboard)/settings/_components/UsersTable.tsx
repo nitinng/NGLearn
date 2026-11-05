@@ -39,7 +39,7 @@ export function UsersTable({ users, currentUserRole, currentUserId }: Props) {
   };
 
   // Determine available roles based on current user's role
-  const availableRoles: UserRole[] = ["Admin", "CEOs Office", "PNC", "Member"];
+  const availableRoles: UserRole[] = ["Admin", "CEOs Office", "PNC", "Program", "Member"];
   
   const canAssignAdmin = currentUserRole === 'Admin';
   const roleOptions = availableRoles.filter(role => 

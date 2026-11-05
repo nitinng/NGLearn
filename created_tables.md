@@ -85,3 +85,12 @@ Permanent, append-only change history for all alumni data. Supports rollback.
 
 - **Columns**: `id` (UUID PK), `table_name`, `record_id` (TEXT — email for alumni_master, UUID for others), `field_name`, `old_value`, `new_value`, `action_type` (`INSERT`/`UPDATE`/`DELETE`/`IMPORT`/`RESTORE`), `changed_by_user_id`, `changed_by_name`, `changed_by_role`, `changed_at`, `ip_address`.
 - **RLS**: No UPDATE or DELETE policies (append-only). Super Admin and internal roles can SELECT. All writes use the service-role client.
+
+---
+
+## 9–13. Cohort tracking (`cohort_snapshots`, `cohort_snapshot_rows`, `cohorts`, `cohort_members`, `cohort_activity_log`)
+Weekly Coursera exports per program and cohort email lists. Created by `supabase/migrations/20261105000001_cohort_tracking.sql`;
+see `docs/COHORT_TRACKING.md`. RLS on, no anon/authenticated access; the server uses the service role after a role check.
+
+The legacy `coursera_*`, `contest_*`, `published_reports` and `ng_members*` tables were dropped by
+`supabase/migrations/20261105000000_drop_legacy_coursera_and_contests.sql`.

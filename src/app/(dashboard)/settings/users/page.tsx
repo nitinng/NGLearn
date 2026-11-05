@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getUserRole } from '@/lib/roles';
+import { getUserRole, USER_MANAGER_ROLES } from '@/lib/roles';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { UsersTable } from '../_components/UsersTable';
 import { Shield } from 'lucide-react';
@@ -10,7 +10,7 @@ import { auth } from '@/lib/auth';
 
 export default async function UsersPage() {
   const role = await getUserRole();
-  if (role === 'Member') redirect('/');
+  if (!USER_MANAGER_ROLES.includes(role)) redirect('/');
 
   const { userId: currentUserId } = await auth();
 
