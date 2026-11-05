@@ -19,13 +19,21 @@ import {
   Search,
   Loader2,
   Trash2,
-  ArrowLeft,
   LayoutDashboard,
   Plus,
   UsersRound,
   Sparkles,
 } from 'lucide-react';
 import { makePeriodLabeler } from '@/lib/report-periods';
+import { PageShell, PageHeader } from '@/components/page-shell';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 interface AvailableMonth {
   month: string;
@@ -376,73 +384,54 @@ export default function ExportCourseraActivityPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-8 p-4 md:p-6 lg:p-8 max-w-5xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
-      
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
-            </Link>
-            <span className="text-muted-foreground/40">•</span>
-            <Link
-              href="/activity-logs"
-              className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              View Activity Logs
-            </Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-500/20 shadow-inner">
-              <FileDown className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Export Activity Report</h1>
-              <p className="text-muted-foreground text-sm mt-0.5">
-                Generate formatted Excel reports with Member Details, Dashboard summary cards, learning hours, and course breakdowns.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <PageShell>
+      <PageHeader
+        icon={FileDown}
+        back={{ href: '/dashboard', label: 'Back to Dashboard' }}
+        title="Export Activity Report"
+        description="Generate formatted Excel reports with Member Details, Dashboard summary cards, learning hours, and course breakdowns."
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/activity-logs">View Activity Logs</Link>
+          </Button>
+        }
+      />
 
       {/* Main Form Container */}
-      <div className="bg-card border border-border/60 rounded-2xl p-6 sm:p-8 shadow-sm space-y-8">
+      <Card>
+        <CardContent className="space-y-8">
         
         {/* Step 1: Select Month */}
         <div className="space-y-2">
-          <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+          <Label className="text-sm font-semibold text-foreground flex items-center justify-between">
             <span>1. Select Weekly Snapshot</span>
             {loadingMonths && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Loader2 className="w-3 h-3 animate-spin" /> Loading snapshots...
               </span>
             )}
-          </label>
+          </Label>
 
-          <div className="relative max-w-md">
-            <select
-              value={selectedMonth}
-              onChange={(e) => {
-                setSelectedMonth(e.target.value);
-                setVerificationResult(null);
-              }}
-              disabled={loadingMonths}
-              className="w-full appearance-none bg-background border border-border/80 rounded-xl px-4 py-2.5 pr-10 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 transition shadow-sm cursor-pointer disabled:opacity-50"
-            >
+          <Select
+            value={selectedMonth || undefined}
+            onValueChange={v => {
+              setSelectedMonth(v);
+              setVerificationResult(null);
+            }}
+            disabled={loadingMonths}
+          >
+            <SelectTrigger className="w-full max-w-md" aria-label="Weekly snapshot">
+              <SelectValue placeholder="Select a snapshot" />
+            </SelectTrigger>
+            <SelectContent>
               {availableMonths.map((m) => (
-                <option key={m.month} value={m.month}>
+                <SelectItem key={m.month} value={m.month}>
                   {makePeriodLabeler(availableMonths.map(a => a.month))(m.month).label}
-                </option>
+                </SelectItem>
               ))}
-              <option value="all">All snapshots (full history)</option>
-            </select>
-            <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-          </div>
+              <SelectItem value="all">All snapshots (full history)</SelectItem>
+            </SelectContent>
+          </Select>
           <p className="text-xs text-muted-foreground">
             Choose which weekly snapshot to report on. Hours are the hours learned since the previous snapshot. Pick &ldquo;All snapshots&rdquo; for the full history. The numbers below are for the selected cohort.
           </p>
@@ -490,22 +479,23 @@ export default function ExportCourseraActivityPage() {
 
         {/* Step 2: Select Cohort */}
         <div className="space-y-3 pt-2 border-t border-border/40">
-          <label className="text-sm font-semibold text-foreground flex items-center justify-between">
+          <Label className="text-sm font-semibold text-foreground flex items-center justify-between">
             <span>2. Learner Scope: Cohort</span>
             {loadingCohorts && (
               <span className="text-xs text-muted-foreground flex items-center gap-1">
                 <Loader2 className="w-3 h-3 animate-spin" /> Loading cohorts...
               </span>
             )}
-          </label>
+          </Label>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {cohorts.map(c => {
               const active = !importMode && selectedCohortId === c.id;
               return (
-                <div
+                <Card
                   key={c.id}
                   role="button"
+                  aria-pressed={active}
                   tabIndex={0}
                   onClick={() => {
                     setSelectedCohortId(c.id);
@@ -520,50 +510,53 @@ export default function ExportCourseraActivityPage() {
                       setVerificationResult(null);
                     }
                   }}
-                  className={`group relative p-4 rounded-xl border text-left transition flex items-start gap-3 cursor-pointer ${
-                    active
-                      ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                      : 'border-border/60 bg-background/50 hover:bg-muted/40 hover:border-border'
-                  }`}
+                  className={cn(
+                    'group relative flex-row items-start gap-3 p-4 text-left transition cursor-pointer outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
+                    active ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'hover:bg-muted/40',
+                  )}
                 >
                   <UsersRound className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <span className="font-semibold text-sm text-foreground block truncate">{c.name}</span>
                     <span className="text-xs text-muted-foreground">{c.member_count.toLocaleString()} learners</span>
                   </div>
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon-xs"
                     onClick={e => {
                       e.stopPropagation();
                       deleteCohort(c);
                     }}
+                    onKeyDown={e => e.stopPropagation()}
                     aria-label={`Delete ${c.name}`}
-                    className="absolute right-2 top-2 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-destructive transition"
+                    className="absolute right-2 top-2 text-muted-foreground opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-destructive"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                  </Button>
+                </Card>
               );
             })}
 
-            <button
+            <Button
               type="button"
+              variant="outline"
+              aria-pressed={importMode}
               onClick={() => {
                 setImportMode(true);
                 setVerificationResult(null);
               }}
-              className={`p-4 rounded-xl border border-dashed text-left transition flex items-start gap-3 ${
-                importMode
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                  : 'border-border/80 bg-background/50 hover:bg-muted/40 hover:border-border'
-              }`}
+              className={cn(
+                'h-auto items-start justify-start gap-3 whitespace-normal rounded-xl border-dashed p-4 text-left font-normal',
+                importMode && 'border-primary bg-primary/5 ring-1 ring-primary',
+              )}
             >
               <Plus className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-sm text-foreground block">Import Cohort</span>
                 <span className="text-xs text-muted-foreground">Name a cohort and upload Full Name + Email ID (.xlsx)</span>
               </div>
-            </button>
+            </Button>
           </div>
 
           <div className="pt-2">
@@ -576,13 +569,11 @@ export default function ExportCourseraActivityPage() {
                       Columns: &apos;Full Name&apos; and an email column (e.g. &apos;NG email ID&apos;). Each sheet becomes one cohort, named after the sheet; you can rename it below.
                     </span>
                   </div>
-                  <a
-                    href="/templates/cohort_import_template.xlsx"
-                    download
-                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium shrink-0"
-                  >
-                    <Download className="w-3.5 h-3.5" /> Download Template (.xlsx)
-                  </a>
+                  <Button asChild variant="link" size="sm" className="h-auto shrink-0 p-0 text-xs">
+                    <a href="/templates/cohort_import_template.xlsx" download>
+                      <Download className="w-3.5 h-3.5" /> Download Template (.xlsx)
+                    </a>
+                  </Button>
                 </div>
 
                 {!parsedFileName ? (
@@ -610,27 +601,25 @@ export default function ExportCourseraActivityPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-foreground truncate">{parsedFileName}</span>
-                      <button type="button" onClick={clearParsedFile} className="text-muted-foreground hover:text-destructive p-1 rounded transition" aria-label="Clear file">
+                      <Button type="button" variant="ghost" size="icon-sm" onClick={clearParsedFile} className="text-muted-foreground hover:text-destructive" aria-label="Clear file">
                         <Trash2 className="w-4 h-4" />
-                      </button>
+                      </Button>
                     </div>
                     {parsedSheets.map((sh, idx) => {
                       const exists = cohorts.some(c => c.name.toLowerCase() === sh.name.trim().toLowerCase());
                       return (
                         <div key={sh.sheet} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg bg-background border border-border/60">
-                          <input
-                            type="checkbox"
+                          <Checkbox
                             checked={sh.include}
                             disabled={sh.members.length === 0}
-                            onChange={e => setParsedSheets(prev => prev.map((p, i) => (i === idx ? { ...p, include: e.target.checked } : p)))}
-                            className="h-4 w-4 rounded border-border text-primary cursor-pointer"
+                            onCheckedChange={v => setParsedSheets(prev => prev.map((p, i) => (i === idx ? { ...p, include: v === true } : p)))}
                             aria-label={`Import sheet ${sh.sheet}`}
                           />
-                          <input
+                          <Input
                             value={sh.name}
                             onChange={e => setParsedSheets(prev => prev.map((p, i) => (i === idx ? { ...p, name: e.target.value } : p)))}
                             placeholder="Cohort name"
-                            className="flex-1 min-w-0 text-sm px-3 py-1.5 rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            className="h-8 flex-1 min-w-0"
                           />
                           <span className="text-xs text-muted-foreground shrink-0">
                             {sh.members.length} learners
@@ -642,15 +631,15 @@ export default function ExportCourseraActivityPage() {
                       );
                     })}
                     <div className="flex justify-end">
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         onClick={saveCohorts}
                         disabled={savingCohorts || !parsedSheets.some(sh => sh.include)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:opacity-95 transition disabled:opacity-50"
                       >
                         {savingCohorts ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                         Save cohort{parsedSheets.filter(sh => sh.include).length > 1 ? 's' : ''}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -664,11 +653,13 @@ export default function ExportCourseraActivityPage() {
                   <p className="text-xs text-muted-foreground">
                     Check whether the {selectedCohort.member_count} learner(s) in {selectedCohort.name} exist in Coursera snapshots or the live enterprise roster before exporting.
                   </p>
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={handleVerifyUsers}
                     disabled={verifying}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-muted text-xs font-medium transition shrink-0"
+                    className="shrink-0"
                   >
                     {verifying ? (
                       <>
@@ -681,7 +672,7 @@ export default function ExportCourseraActivityPage() {
                         Verify Users
                       </>
                     )}
-                  </button>
+                  </Button>
                 </div>
 
                 {/* Verification Results & Live Dashboard Cards */}
@@ -745,16 +736,18 @@ export default function ExportCourseraActivityPage() {
                     {/* Matched Users Toggle & List */}
                     {verificationResult.foundCount > 0 && (
                       <div className="space-y-2 pt-1">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setShowFoundList(!showFoundList)}
-                          className="flex items-center justify-between w-full text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline text-left"
+                          className="h-auto w-full justify-between px-0 py-1 text-xs font-medium text-emerald-600 hover:bg-transparent hover:underline dark:text-emerald-400"
                         >
                           <span>
                             {showFoundList ? 'Hide' : 'Show'} {verificationResult.foundCount} confirmed Coursera member(s)
                           </span>
                           {showFoundList ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                        </button>
+                        </Button>
 
                         {showFoundList && (
                           <div className="max-h-56 overflow-y-auto space-y-1.5 p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/20">
@@ -771,23 +764,26 @@ export default function ExportCourseraActivityPage() {
                                   {f.lastActivityDate && f.lastActivityDate !== '—' && (
                                     <span>Last Active: <strong className="font-medium text-foreground">{f.lastActivityDate}</strong></span>
                                   )}
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                                  <Badge variant="outline" className="text-[10px] border-emerald-500/30 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
                                     Member
-                                  </span>
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                    f.activityStatus === 'Active'
-                                      ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-semibold'
-                                      : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'
-                                  }`}>
+                                  </Badge>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      'text-[10px]',
+                                      f.activityStatus === 'Active'
+                                        ? 'border-emerald-500/30 bg-emerald-500/20 font-semibold text-emerald-700 dark:text-emerald-300'
+                                        : 'border-amber-500/30 bg-amber-500/15 text-amber-700 dark:text-amber-300',
+                                    )}
+                                  >
                                     {f.activityStatus === 'Active' ? 'Active (<= 30d)' : 'Inactive (> 30d)'}
-                                  </span>
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                    f.source?.includes('Live API')
-                                      ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/20'
-                                      : 'bg-muted text-muted-foreground'
-                                  }`}>
+                                  </Badge>
+                                  <Badge
+                                    variant={f.source?.includes('Live API') ? 'outline' : 'secondary'}
+                                    className={cn('text-[10px]', f.source?.includes('Live API') && 'border-blue-500/20 bg-blue-500/15 text-blue-600 dark:text-blue-400')}
+                                  >
                                     {f.source || 'Snapshots'}
-                                  </span>
+                                  </Badge>
                                 </div>
                               </div>
                             ))}
@@ -799,16 +795,18 @@ export default function ExportCourseraActivityPage() {
                     {/* Missing / Unmatched users list */}
                     {verificationResult.notFoundCount > 0 && (
                       <div className="space-y-2 pt-1 border-t border-border/40">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
+                          size="sm"
                           onClick={() => setShowMissingList(!showMissingList)}
-                          className="flex items-center justify-between w-full text-xs font-medium text-rose-600 dark:text-rose-400 hover:underline text-left"
+                          className="h-auto w-full justify-between px-0 py-1 text-xs font-medium text-rose-600 hover:bg-transparent hover:underline dark:text-rose-400"
                         >
                           <span>
                             {showMissingList ? 'Hide' : 'Show'} {verificationResult.notFoundCount} email(s) with no Coursera account
                           </span>
                           {showMissingList ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                        </button>
+                        </Button>
 
                         {showMissingList && (
                           <div className="max-h-48 overflow-y-auto space-y-1.5 p-2 rounded-lg bg-rose-500/5 border border-rose-500/20">
@@ -819,16 +817,20 @@ export default function ExportCourseraActivityPage() {
                                   {nf.name && <span className="text-muted-foreground text-[11px] truncate">({nf.name})</span>}
                                 </div>
                                 <div className="flex items-center gap-2 shrink-0">
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                                    nf.memberStatus === 'Invited'
-                                      ? 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border border-blue-500/30'
-                                      : 'bg-rose-500/15 text-rose-700 dark:text-rose-300 border border-rose-500/30'
-                                  }`}>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      'text-[10px]',
+                                      nf.memberStatus === 'Invited'
+                                        ? 'border-blue-500/30 bg-blue-500/15 text-blue-700 dark:text-blue-300'
+                                        : 'border-rose-500/30 bg-rose-500/15 text-rose-700 dark:text-rose-300',
+                                    )}
+                                  >
                                     {nf.memberStatus || 'Not Invited'}
-                                  </span>
-                                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono">
+                                  </Badge>
+                                  <Badge variant="secondary" className="font-mono text-[10px]">
                                     Activity: NA
-                                  </span>
+                                  </Badge>
                                 </div>
                               </div>
                             ))}
@@ -845,90 +847,86 @@ export default function ExportCourseraActivityPage() {
 
         {/* Step 3: Report type */}
         <div className="pt-2 border-t border-border/40 space-y-3">
-          <label className="text-sm font-semibold text-foreground">3. Report Type</label>
+          <Label className="text-sm font-semibold text-foreground">3. Report Type</Label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button
+            <Button
               type="button"
+              variant="outline"
+              aria-pressed={reportVariant === 'classic'}
               onClick={() => setReportVariant('classic')}
-              className={`p-4 rounded-xl border text-left transition flex items-start gap-3 ${
-                reportVariant === 'classic'
-                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
-                  : 'border-border/60 bg-background/50 hover:bg-muted/40 hover:border-border'
-              }`}
+              className={cn(
+                'h-auto items-start justify-start gap-3 whitespace-normal rounded-xl p-4 text-left font-normal',
+                reportVariant === 'classic' && 'border-primary bg-primary/5 ring-1 ring-primary',
+              )}
             >
               <FileSpreadsheet className="w-5 h-5 text-primary shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-sm text-foreground block">Classic report</span>
                 <span className="text-xs text-muted-foreground">The existing report, unchanged: member details, weekly activity, course breakdown, unmatched learners.</span>
               </div>
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
+              variant="outline"
+              aria-pressed={reportVariant === 'beta'}
               onClick={() => setReportVariant('beta')}
-              className={`p-4 rounded-xl border text-left transition flex items-start gap-3 ${
-                reportVariant === 'beta'
-                  ? 'border-violet-500 bg-violet-500/5 ring-1 ring-violet-500'
-                  : 'border-border/60 bg-background/50 hover:bg-muted/40 hover:border-border'
-              }`}
+              className={cn(
+                'h-auto items-start justify-start gap-3 whitespace-normal rounded-xl p-4 text-left font-normal',
+                reportVariant === 'beta' && 'border-violet-500 bg-violet-500/5 ring-1 ring-violet-500',
+              )}
             >
               <Sparkles className="w-5 h-5 text-violet-500 shrink-0 mt-0.5" />
               <div>
                 <span className="font-semibold text-sm text-foreground flex items-center gap-2">
                   New report
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-700 dark:text-violet-300 font-bold tracking-wider">BETA</span>
+                  <Badge variant="outline" className="border-transparent bg-violet-500/15 text-[10px] font-bold tracking-wider text-violet-700 dark:text-violet-300">BETA</Badge>
                 </span>
                 <span className="text-xs text-muted-foreground">
                   Everything in Classic, plus: Learner 360 (program status, invited/joined dates, certificates, grades), week-by-week trend,
                   projects (guided / self-paced / labs), specializations, class dates and contracts, and video clips.
                 </span>
               </div>
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Step 4: Options */}
         <div className="pt-2 border-t border-border/40 space-y-2">
-          <label className="text-sm font-semibold text-foreground">
+          <Label className="text-sm font-semibold text-foreground">
             4. Report Output Structure
-          </label>
+          </Label>
           <div className="space-y-2.5 pt-1">
             <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="include-member-details"
                 checked={includeMemberDetailsSheet}
-                onChange={e => setIncludeMemberDetailsSheet(e.target.checked)}
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary/40 cursor-pointer"
+                onCheckedChange={v => setIncludeMemberDetailsSheet(v === true)}
               />
-              <label htmlFor="include-member-details" className="text-sm text-foreground cursor-pointer select-none">
+              <Label htmlFor="include-member-details" className="block cursor-pointer select-none text-sm font-normal text-foreground">
                 Include Member Details Sheet <span className="text-xs text-muted-foreground">(adds a dedicated worksheet summarizing Member, Inactive, and Invited statuses, enrolled courses, and KPI dashboard summary cards)</span>
-              </label>
+              </Label>
             </div>
 
             <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="include-course-breakdown"
                 checked={includeCourseBreakdown}
-                onChange={e => setIncludeCourseBreakdown(e.target.checked)}
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary/40 cursor-pointer"
+                onCheckedChange={v => setIncludeCourseBreakdown(v === true)}
               />
-              <label htmlFor="include-course-breakdown" className="text-sm text-foreground cursor-pointer select-none">
+              <Label htmlFor="include-course-breakdown" className="block cursor-pointer select-none text-sm font-normal text-foreground">
                 Include Course-Level Breakdown Sheet <span className="text-xs text-muted-foreground">(adds a worksheet with individual course enrollments, hours, and grades)</span>
-              </label>
+              </Label>
             </div>
 
             <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
+              <Checkbox
                 id="include-unmatched-sheet"
                 checked={includeUnmatchedSheet}
-                onChange={e => setIncludeUnmatchedSheet(e.target.checked)}
-                className="h-4 w-4 rounded border-border text-primary focus:ring-primary/40 cursor-pointer"
+                onCheckedChange={v => setIncludeUnmatchedSheet(v === true)}
               />
-              <label htmlFor="include-unmatched-sheet" className="text-sm text-foreground cursor-pointer select-none">
+              <Label htmlFor="include-unmatched-sheet" className="block cursor-pointer select-none text-sm font-normal text-foreground">
                 Include Unmatched / No Coursera Account Sheet <span className="text-xs text-muted-foreground">(adds a worksheet listing requested users who do not exist or have no Coursera records)</span>
-              </label>
+              </Label>
             </div>
           </div>
         </div>
@@ -956,11 +954,12 @@ export default function ExportCourseraActivityPage() {
               : 'Pick a cohort to export.'}
           </div>
 
-          <button
+          <Button
             type="button"
+            size="lg"
             onClick={handleExport}
             disabled={exporting || loadingMonths || importMode || !selectedCohortId}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-95 shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full sm:w-auto"
           >
             {exporting ? (
               <>
@@ -973,11 +972,11 @@ export default function ExportCourseraActivityPage() {
                 {reportVariant === 'beta' ? 'Export Beta Report (.xlsx)' : 'Export Activity Report (.xlsx)'}
               </>
             )}
-          </button>
+          </Button>
         </div>
 
-      </div>
-
-    </div>
+        </CardContent>
+      </Card>
+    </PageShell>
   );
 }

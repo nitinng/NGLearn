@@ -5,6 +5,8 @@ import { useUserContext } from "@/contexts/user-context"
 import { hourlyGreetings } from "@/components/dashboard-greeting"
 import { ArrowLeft, Search, Sun, Moon, Sunrise, Sunset } from "lucide-react"
 import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 export default function GreetingsPreviewPage() {
   const user = useUserContext()
@@ -60,29 +62,26 @@ export default function GreetingsPreviewPage() {
         {/* Period Tabs */}
         <div className="flex flex-wrap gap-2">
           {(Object.keys(periods) as Array<keyof typeof periods>).map((tab) => (
-            <button
+            <Button
               key={tab}
+              size="sm"
+              variant={activeTab === tab ? 'default' : 'outline'}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-300 cursor-pointer ${
-                activeTab === tab
-                  ? periods[tab].bg + " shadow-sm scale-[1.02]"
-                  : "bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-850"
-              }`}
             >
               {periods[tab].label}
-            </button>
+            </Button>
           ))}
         </div>
 
         {/* Search Query */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input
+          <Input
             type="text"
             placeholder="Search greeting text or subtext..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-zinc-850 bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-slate-500/20 text-slate-950 dark:text-white"
+            className="w-full pl-9"
           />
         </div>
       </div>

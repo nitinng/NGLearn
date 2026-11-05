@@ -3,6 +3,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { IMPORT_BUCKET } from '@/lib/coursera-storage';
+import { PageShell, PageHeader } from '@/components/page-shell';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 import { addDays, completedSundaysSince, makePeriodLabeler, uploadableSundays } from '@/lib/report-periods';
 
 /** Zuvy's agreed baseline: lifetime learning up to Sunday 29 March 2026 (Week 1 = 30 Mar – 5 Apr). */
@@ -258,328 +268,324 @@ export default function ImportCourseraPage() {
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
+  const visibleLog = activeTab === 'all' ? importLog : importLog.filter(r => r.action === activeTab);
+
   return (
-    <div className="flex flex-1 flex-col gap-8 p-4 md:p-6 lg:p-8 max-w-5xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-6">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 text-blue-500 rounded-xl border border-blue-500/20 shadow-inner">
-            <Upload className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Import Coursera Reports</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Upload the full Coursera Learner Activity export for each Monday–Sunday week. Everything is stored, but the dashboard, logs and reports only show learners who are in a cohort. Add someone to a cohort later and their past weeks appear too.</p>
-          </div>
-        </div>
-        <a
-          href="/templates/coursera_weekly_report_template.xlsx"
-          download
-          className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors"
-        >
-          <Download className="w-4 h-4" />
-          Download Template
-        </a>
-      </div>
+    <PageShell>
+      <PageHeader
+        icon={Upload}
+        title="Import Coursera Reports"
+        description="Upload the full Coursera Learner Activity export for each Monday–Sunday week. Everything is stored, but the dashboard, logs and reports only show learners who are in a cohort. Add someone to a cohort later and their past weeks appear too."
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <a href="/templates/coursera_weekly_report_template.xlsx" download>
+              <Download className="w-4 h-4" />
+              Download Template
+            </a>
+          </Button>
+        }
+      />
 
       {/* Upload Section */}
-      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-6 space-y-5">
-        <h2 className="text-lg font-semibold">Upload Report</h2>
-
-        {/* Period being imported */}
-        {isBaseline ? (
-          <div className="space-y-1.5">
-            <label htmlFor="baseline-sunday" className="text-sm font-medium text-foreground/80">
-              Baseline report (one-off): lifetime learning up to Sunday…
-            </label>
-            <select
-              id="baseline-sunday"
-              value={baselineSunday}
-              onChange={e => setBaselineSunday(e.target.value)}
-              className="w-full max-w-sm bg-background border border-border/80 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-            >
-              {baselineOptions.map(d => (
-                <option key={d} value={d}>{longDate(d)}{d === DEFAULT_BASELINE ? ' (agreed baseline)' : ''}</option>
-              ))}
-            </select>
-            <p className="text-xs text-muted-foreground">
-              Upload the Coursera export that covers everything up to this Sunday. Week 1 will then be Monday {longDate(addDays(baselineSunday, 1))} to Sunday {longDate(addDays(baselineSunday, 7))}.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            <label htmlFor="week-choice" className="text-sm font-medium text-foreground/80">Week (report end date)</label>
-            {choices.length > 0 ? (
-              <>
-                <select
-                  id="week-choice"
-                  value={selectedMonth}
-                  onChange={e => setWeekChoice(e.target.value)}
-                  className="w-full max-w-xl bg-background border border-border/80 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-                >
-                  {choices.map(d => (
-                    <option key={d} value={d}>{labelFor(d).label}</option>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Upload Report</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {/* Period being imported */}
+          {isBaseline ? (
+            <div className="space-y-1.5">
+              <Label htmlFor="baseline-sunday">Baseline report (one-off): lifetime learning up to Sunday…</Label>
+              <Select value={baselineSunday} onValueChange={setBaselineSunday}>
+                <SelectTrigger id="baseline-sunday" className="w-full max-w-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {baselineOptions.map(d => (
+                    <SelectItem key={d} value={d}>{longDate(d)}{d === DEFAULT_BASELINE ? ' (agreed baseline)' : ''}</SelectItem>
                   ))}
-                </select>
-                <p className="text-xs text-muted-foreground">
-                  Report start date is always <strong className="text-foreground">1 April 2020</strong>; the end date is the Sunday shown.
-                  {selectedPeriod && selectedPeriod.weeks > 1 && (
-                    <> Weeks since your last upload ({selectedPeriod.weeks} weeks) will be counted together in this report, and the weekly target is multiplied by {selectedPeriod.weeks}.</>
-                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Upload the Coursera export that covers everything up to this Sunday. Week 1 will then be Monday {longDate(addDays(baselineSunday, 1))} to Sunday {longDate(addDays(baselineSunday, 7))}.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="week-choice">Week (report end date)</Label>
+              {choices.length > 0 ? (
+                <>
+                  <Select value={selectedMonth} onValueChange={setWeekChoice}>
+                    <SelectTrigger id="week-choice" className="w-full max-w-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {choices.map(d => (
+                        <SelectItem key={d} value={d}>{labelFor(d).label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Report start date is always <strong className="text-foreground">1 April 2020</strong>; the end date is the Sunday shown.
+                    {selectedPeriod && selectedPeriod.weeks > 1 && (
+                      <> Weeks since your last upload ({selectedPeriod.weeks} weeks) will be counted together in this report, and the weekly target is multiplied by {selectedPeriod.weeks}.</>
+                    )}
+                  </p>
+                </>
+              ) : (
+                <div className="p-4 rounded-lg border border-border/60 bg-muted/30 text-sm">
+                  Nothing to import yet. The next week, {labelFor(addDays(latestImported!, 7)).label}, can be imported from Monday {longDate(addDays(latestImported!, 8))}.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* What to export from Coursera */}
+          {selectedMonth && (
+            <div className="flex gap-3 p-4 rounded-lg border border-sky-500/30 bg-sky-500/5 text-sm">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-sky-600" />
+              <div className="space-y-1">
+                <p className="font-semibold text-foreground">Date range to pick in Coursera</p>
+                <p className="text-muted-foreground">
+                  In the Coursera export, set <strong className="text-foreground">Learner activity date range → Custom</strong>:
                 </p>
-              </>
+                <p className="font-mono text-foreground">
+                  Start date {COURSERA_START_DATE} · End date {usDate(selectedMonth)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Always use the same start date so every learner is included. The end date is the Sunday
+                  {isBaseline ? ' this baseline runs up to.' : ' this week ends on (do not include Monday).'} Then upload the file here as it is.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Drop zone */}
+          <div
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
+            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              'relative border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-200',
+              dragging ? 'border-primary bg-primary/5' : 'border-border/60 hover:border-primary/40 hover:bg-accent/40',
+            )}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx"
+              className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            />
+            <FileSpreadsheet className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
+            {file ? (
+              <div className="space-y-1">
+                <p className="font-semibold text-foreground">{file.name}</p>
+                <p className="text-sm text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+              </div>
             ) : (
-              <div className="p-4 rounded-lg border border-border/60 bg-muted/30 text-sm">
-                Nothing to import yet. The next week, {labelFor(addDays(latestImported!, 7)).label}, can be imported from Monday {longDate(addDays(latestImported!, 8))}.
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">Drop your .xlsx file here</p>
+                <p className="text-sm text-muted-foreground">or click to browse</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Supports exports up to 25MB and 100,000 rows</p>
               </div>
             )}
           </div>
-        )}
 
-        {/* What to export from Coursera */}
-        {selectedMonth && (
-          <div className="flex gap-3 p-4 rounded-lg border border-sky-500/30 bg-sky-500/5 text-sm">
-            <Info className="w-4 h-4 shrink-0 mt-0.5 text-sky-600" />
-            <div className="space-y-1">
-              <p className="font-semibold text-foreground">Date range to pick in Coursera</p>
-              <p className="text-muted-foreground">
-                In the Coursera export, set <strong className="text-foreground">Learner activity date range → Custom</strong>:
-              </p>
-              <p className="font-mono text-foreground">
-                Start date {COURSERA_START_DATE} · End date {usDate(selectedMonth)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Always use the same start date so every learner is included. The end date is the Sunday
-                {isBaseline ? ' this baseline runs up to.' : ' this week ends on (do not include Monday).'} Then upload the file here as it is.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Drop zone */}
-        <div
-          onDragOver={e => { e.preventDefault(); setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={onDrop}
-          onClick={() => fileInputRef.current?.click()}
-          className={`relative border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all duration-200 ${dragging ? 'border-primary bg-primary/5' : 'border-border/60 hover:border-primary/40 hover:bg-accent/40'}`}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".xlsx"
-            className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
-          />
-          <FileSpreadsheet className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
-          {file ? (
-            <div className="space-y-1">
-              <p className="font-semibold text-foreground">{file.name}</p>
-              <p className="text-sm text-muted-foreground">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <p className="font-medium text-foreground">Drop your .xlsx file here</p>
-              <p className="text-sm text-muted-foreground">or click to browse</p>
-              <p className="text-xs text-muted-foreground/70 mt-1">Supports exports up to 25MB and 100,000 rows</p>
+          {/* Error / result */}
+          {uploadError && (
+            <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
+              <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{uploadError}</span>
             </div>
           )}
-        </div>
-
-        {/* Error / result */}
-        {uploadError && (
-          <div className="flex items-start gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
-            <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>{uploadError}</span>
-          </div>
-        )}
-        {uploadResult && (
-          <div className="flex flex-col gap-1 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm">
-            <div className="flex items-center gap-2 font-semibold"><CheckCircle2 className="w-4 h-4" /> Imported {uploadResult.period ?? 'report'}</div>
-            <div className="grid grid-cols-3 gap-3 mt-2 text-xs">
-              <div><span className="text-muted-foreground">Rows imported</span><br /><strong>{uploadResult.rowsImported.toLocaleString()}</strong></div>
-              <div><span className="text-muted-foreground">Learners</span><br /><strong>{uploadResult.learnersAffected.toLocaleString()}</strong></div>
-              <div><span className="text-muted-foreground">Duration</span><br /><strong>{formatDuration(uploadResult.durationMs)}</strong></div>
+          {uploadResult && (
+            <div className="flex flex-col gap-1 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm">
+              <div className="flex items-center gap-2 font-semibold"><CheckCircle2 className="w-4 h-4" /> Imported {uploadResult.period ?? 'report'}</div>
+              <div className="grid grid-cols-3 gap-3 mt-2 text-xs">
+                <div><span className="text-muted-foreground">Rows imported</span><br /><strong>{uploadResult.rowsImported.toLocaleString()}</strong></div>
+                <div><span className="text-muted-foreground">Learners</span><br /><strong>{uploadResult.learnersAffected.toLocaleString()}</strong></div>
+                <div><span className="text-muted-foreground">Duration</span><br /><strong>{formatDuration(uploadResult.durationMs)}</strong></div>
+              </div>
+              {uploadResult.extraSheets && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Also saved for the beta report: {uploadResult.extraSheets.specializations.toLocaleString()} specialization rows,{' '}
+                  {uploadResult.extraSheets.programMembers.toLocaleString()} program members, {uploadResult.extraSheets.videoClips.toLocaleString()} video clip rows.
+                </p>
+              )}
             </div>
-            {uploadResult.extraSheets && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Also saved for the beta report: {uploadResult.extraSheets.specializations.toLocaleString()} specialization rows,{' '}
-                {uploadResult.extraSheets.programMembers.toLocaleString()} program members, {uploadResult.extraSheets.videoClips.toLocaleString()} video clip rows.
-              </p>
+          )}
+
+          {/* Upload button */}
+          <Button
+            id="upload-submit-btn"
+            className="w-full"
+            onClick={() => handleUpload()}
+            disabled={!file || !selectedMonth || !nextReady || uploading}
+          >
+            {uploading ? (
+              <><RefreshCw className="w-4 h-4 animate-spin" /> Processing…</>
+            ) : (
+              <><Upload className="w-4 h-4" /> {isBaseline ? 'Upload baseline report' : selectedPeriod ? `Upload ${selectedPeriod.shortLabel}` : 'Upload'}</>
             )}
-          </div>
-        )}
-
-        {/* Upload button */}
-        <button
-          id="upload-submit-btn"
-          onClick={() => handleUpload()}
-          disabled={!file || !selectedMonth || !nextReady || uploading}
-          className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
-        >
-          {uploading ? (
-            <><RefreshCw className="w-4 h-4 animate-spin" /> Processing…</>
-          ) : (
-            <><Upload className="w-4 h-4" /> {isBaseline ? 'Upload baseline report' : selectedPeriod ? `Upload ${selectedPeriod.shortLabel}` : 'Upload'}</>
-          )}
-        </button>
-      </div>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Import History */}
-      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-border/60 flex items-center justify-between">
+      <Card className="gap-0 overflow-hidden py-0">
+        <div className="px-6 py-4 border-b border-border/60 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">Import History</h2>
-          <div className="flex bg-muted/50 p-1 rounded-lg">
-            {(['import', 'rollback', 'recalculate', 'all'] as const).map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md capitalize transition-colors ${
-                  activeTab === tab ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab === 'all' ? 'All' : `${tab}s`}
-              </button>
-            ))}
-          </div>
+          <Tabs value={activeTab} onValueChange={v => setActiveTab(v as typeof activeTab)}>
+            <TabsList>
+              {(['import', 'rollback', 'recalculate', 'all'] as const).map(tab => (
+                <TabsTrigger key={tab} value={tab} className="text-xs capitalize">
+                  {tab === 'all' ? 'All' : `${tab}s`}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         </div>
         {loadingHistory ? (
           <div className="p-8 text-center text-muted-foreground text-sm">Loading…</div>
         ) : importLog.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground text-sm">No imports yet. Upload your first Coursera report above.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/60 bg-muted/30">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Snapshot</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">File</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Rows</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Learners</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Action</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Status</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Duration</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(activeTab === 'all' ? importLog : importLog.filter(r => r.action === activeTab)).map((row, idx) => {
-                  const isRolledBack = rolledBackMonths.has(row.snapshot_month);
-                  const isNewestActive = row.action === 'import' && row.status === 'success' && !isRolledBack && row.snapshot_month === newestImportMonth;
-                  const isBaselineRow = row.snapshot_month === baselineDate;
-                  const canRollback = isNewestActive && !isBaselineRow;
-                  const olderThanNewest = row.action === 'import' && row.status === 'success' && !isRolledBack && !isNewestActive;
-                  
-                  let tooltipMsg = undefined;
-                  if (isRolledBack && row.action === 'import') tooltipMsg = 'Already rolled back';
-                  else if (olderThanNewest) tooltipMsg = `Roll back ${periodLabel(newestImportMonth!)} first`;
+          <Table>
+            <TableHeader className="bg-muted/30">
+              <TableRow>
+                <TableHead className="px-4">Snapshot</TableHead>
+                <TableHead className="px-4">File</TableHead>
+                <TableHead className="px-4 text-right">Rows</TableHead>
+                <TableHead className="px-4 text-right">Learners</TableHead>
+                <TableHead className="px-4">Action</TableHead>
+                <TableHead className="px-4">Status</TableHead>
+                <TableHead className="px-4 text-right">Duration</TableHead>
+                <TableHead className="px-4">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {visibleLog.map((row, idx) => {
+                const isRolledBack = rolledBackMonths.has(row.snapshot_month);
+                const isNewestActive = row.action === 'import' && row.status === 'success' && !isRolledBack && row.snapshot_month === newestImportMonth;
+                const isBaselineRow = row.snapshot_month === baselineDate;
+                const canRollback = isNewestActive && !isBaselineRow;
+                const olderThanNewest = row.action === 'import' && row.status === 'success' && !isRolledBack && !isNewestActive;
 
-                  return (
-                    <tr key={`${row.id}-${idx}`} className="border-b border-border/40 last:border-0 hover:bg-accent/20 transition-colors">
-                      <td className="px-4 py-3 font-medium whitespace-nowrap">{periodLabel(row.snapshot_month)}</td>
-                      <td className="px-4 py-3 text-muted-foreground max-w-[160px] truncate">{row.filename ?? '—'}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{formatRows(row.rows_imported)}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{formatRows(row.learners_affected)}</td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium
-                          ${row.action === 'import' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
-                            row.action === 'rollback' ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' :
-                            'bg-amber-500/10 text-amber-600 dark:text-amber-400'}`}>
-                          {row.action === 'import' && <Upload className="w-3 h-3" />}
-                          {row.action === 'rollback' && <RotateCcw className="w-3 h-3" />}
-                          {row.action === 'recalculate' && <RefreshCw className="w-3 h-3" />}
-                          {row.action}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {row.status === 'success' ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
-                            <CheckCircle2 className="w-3 h-3" /> success
-                          </span>
-                        ) : row.status === 'error' ? (
-                          <span className="inline-flex items-center gap-1 text-xs text-destructive">
-                            <XCircle className="w-3 h-3" /> error
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="w-3 h-3" /> {row.status}
-                          </span>
+                let tooltipMsg = undefined;
+                if (isRolledBack && row.action === 'import') tooltipMsg = 'Already rolled back';
+                else if (olderThanNewest) tooltipMsg = `Roll back ${periodLabel(newestImportMonth!)} first`;
+
+                return (
+                  <TableRow key={`${row.id}-${idx}`}>
+                    <TableCell className="px-4 py-3 font-medium">{periodLabel(row.snapshot_month)}</TableCell>
+                    <TableCell className="px-4 py-3 text-muted-foreground max-w-[160px] truncate">{row.filename ?? '—'}</TableCell>
+                    <TableCell className="px-4 py-3 text-right tabular-nums">{formatRows(row.rows_imported)}</TableCell>
+                    <TableCell className="px-4 py-3 text-right tabular-nums">{formatRows(row.learners_affected)}</TableCell>
+                    <TableCell className="px-4 py-3">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          'border-transparent capitalize',
+                          row.action === 'import' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                          row.action === 'rollback' ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' :
+                          'bg-amber-500/10 text-amber-600 dark:text-amber-400',
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{formatDuration(row.duration_ms)}</td>
-                      <td className="px-4 py-3">
-                        {row.action === 'import' && row.status === 'success' && (
-                          <div className="flex items-center gap-2">
-                            {/* Recalculate — always available for successful imports */}
-                            <button
-                              id={`recalc-btn-${row.snapshot_month}`}
-                              onClick={() => handleRecalculate(row)}
-                              disabled={recalcLoading === row.snapshot_month}
-                              title="Recompute metrics without re-uploading"
-                              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border border-border/80 hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                            >
-                              <RefreshCw className={`w-3 h-3 ${recalcLoading === row.snapshot_month ? 'animate-spin' : ''}`} />
-                              Recalculate
-                            </button>
-                            {/* Rollback: only the newest import, never the baseline */}
-                            {!isBaselineRow && (
-                            <button
+                      >
+                        {row.action === 'import' && <Upload className="w-3 h-3" />}
+                        {row.action === 'rollback' && <RotateCcw className="w-3 h-3" />}
+                        {row.action === 'recalculate' && <RefreshCw className="w-3 h-3" />}
+                        {row.action}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
+                      {row.status === 'success' ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="w-3 h-3" /> success
+                        </span>
+                      ) : row.status === 'error' ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-destructive">
+                          <XCircle className="w-3 h-3" /> error
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" /> {row.status}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-right tabular-nums text-muted-foreground">{formatDuration(row.duration_ms)}</TableCell>
+                    <TableCell className="px-4 py-3">
+                      {row.action === 'import' && row.status === 'success' && (
+                        <div className="flex items-center gap-2">
+                          {/* Recalculate — always available for successful imports */}
+                          <Button
+                            id={`recalc-btn-${row.snapshot_month}`}
+                            variant="outline"
+                            size="xs"
+                            onClick={() => handleRecalculate(row)}
+                            disabled={recalcLoading === row.snapshot_month}
+                            title="Recompute metrics without re-uploading"
+                          >
+                            <RefreshCw className={cn('w-3 h-3', recalcLoading === row.snapshot_month && 'animate-spin')} />
+                            Recalculate
+                          </Button>
+                          {/* Rollback: only the newest import, never the baseline */}
+                          {!isBaselineRow && (
+                            <Button
                               id={`rollback-btn-${row.snapshot_month}`}
+                              variant="outline"
+                              size="xs"
                               onClick={() => canRollback && setConfirmRollback(row)}
                               disabled={!canRollback}
                               title={tooltipMsg}
-                              className="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-md border border-rose-500/30 text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                              className="border-rose-500/30 text-rose-600 hover:bg-rose-500/10 hover:text-rose-700 dark:text-rose-400"
                             >
                               <RotateCcw className="w-3 h-3" />
                               Rollback
-                            </button>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         )}
-      </div>
+      </Card>
 
-      {/* Rollback confirmation modal */}
-      {confirmRollback && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-rose-500/10 text-rose-500">
+      {/* Rollback confirmation */}
+      <Dialog open={!!confirmRollback} onOpenChange={open => { if (!open && !rollbackLoading) setConfirmRollback(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <span className="p-2 rounded-xl bg-rose-500/10 text-rose-500">
                 <AlertTriangle className="w-5 h-5" />
-              </div>
-              <h3 className="text-lg font-bold">Confirm Rollback</h3>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+              </span>
+              Confirm Rollback
+            </DialogTitle>
+            <DialogDescription className="leading-relaxed">
               This will permanently delete all data for{' '}
-              <strong className="text-foreground">{periodLabel(confirmRollback.snapshot_month)}</strong>.
+              <strong className="text-foreground">{confirmRollback ? periodLabel(confirmRollback.snapshot_month) : ''}</strong>.
               Weeks must be rolled back newest first.
-            </p>
-            <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={() => setConfirmRollback(null)}
-                className="flex-1 py-2 rounded-lg border border-border/80 text-sm font-medium hover:bg-accent transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                id="confirm-rollback-btn"
-                onClick={handleRollback}
-                disabled={rollbackLoading}
-                className="flex-1 py-2 rounded-lg bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
-              >
-                {rollbackLoading ? <><RefreshCw className="w-4 h-4 animate-spin" /> Rolling back…</> : 'Yes, Delete Data'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmRollback(null)} disabled={rollbackLoading}>
+              Cancel
+            </Button>
+            <Button id="confirm-rollback-btn" variant="destructive" onClick={handleRollback} disabled={rollbackLoading}>
+              {rollbackLoading ? <><RefreshCw className="w-4 h-4 animate-spin" /> Rolling back…</> : 'Yes, Delete Data'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </PageShell>
   );
 }
