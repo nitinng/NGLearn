@@ -65,25 +65,40 @@ export async function inviteNewUser(email: string, name: string, role: UserRole)
     }
 
     const adminClient = createAdminClient();
+    const cleanEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return { error: 'Enter a valid email address.' };
+    }
 
-    const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
-      data: {
-        full_name: name,
-        name: name,
-      }
+    // Sign-in is Google-only, so no invite email is needed (Supabase's built-in mailer
+    // allows only a few emails per hour, which caused "rate limit" errors). Create the
+    // account directly; the person's first Google sign-in with this email links to it.
+    const { data: created, error: createError } = await adminClient.auth.admin.createUser({
+      email: cleanEmail,
+      email_confirm: true,
+      user_metadata: { full_name: name, name },
+      app_metadata: { role },
     });
 
-    if (inviteError) {
-      return { error: inviteError.message };
+    if (createError) {
+      const exists = /already (been )?registered|already exists/i.test(createError.message);
+      if (!exists) return { error: createError.message };
+      // Already has an account (e.g. signed in before): just set the role.
+      let existingId: string | null = null;
+      for (let page = 1; page <= 20 && !existingId; page++) {
+        const { data, error } = await adminClient.auth.admin.listUsers({ page, perPage: 200 });
+        if (error) return { error: error.message };
+        existingId = data.users.find(u => u.email?.toLowerCase() === cleanEmail)?.id ?? null;
+        if (data.users.length < 200) break;
+      }
+      if (!existingId) return { error: createError.message };
+      const { error: roleError } = await adminClient.auth.admin.updateUserById(existingId, { app_metadata: { role } });
+      if (roleError) return { error: roleError.message };
+      revalidatePath('/settings');
+      return { success: true, existing: true };
     }
 
-    // Roles are only trusted from app_metadata (user_metadata is user-editable).
-    if (invited?.user) {
-      const { error: roleError } = await adminClient.auth.admin.updateUserById(invited.user.id, {
-        app_metadata: { role },
-      });
-      if (roleError) return { error: roleError.message };
-    }
+    if (!created?.user) return { error: 'Could not create the user.' };
 
     revalidatePath('/settings');
     return { success: true };

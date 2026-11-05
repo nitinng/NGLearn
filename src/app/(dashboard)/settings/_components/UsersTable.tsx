@@ -57,7 +57,7 @@ export function UsersTable({ users, currentUserRole, currentUserId }: Props) {
       if (res.error) {
         toast.error(res.error);
       } else {
-        toast.success(`Invite sent to ${addEmail}`);
+        toast.success(res.existing ? `${addEmail} already had an account; role updated.` : `${addEmail} added. They can now sign in with Google.`);
         setIsAdding(false);
         setAddEmail('');
         setAddName('');
@@ -142,7 +142,7 @@ export function UsersTable({ users, currentUserRole, currentUserId }: Props) {
                     ) : (
                       <UserPlus className="w-4 h-4" />
                     )}
-                    Invite
+                    Add user
                   </button>
                 </td>
               </tr>
