@@ -43,7 +43,7 @@ interface Course {
 interface Props {
   monthlyHistory: MonthRecord[];
   courses: Course[];
-  /** All snapshot dates (any order), for "Week N" / "Weeks M–N" labels */
+  /** All snapshot dates (any order), for "Week N" labels */
   snapshotDates?: string[];
 }
 

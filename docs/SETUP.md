@@ -95,7 +95,7 @@ Reports follow a fixed Monday → Sunday schedule so no day is counted twice:
    The Import Reports dropdown lists every finished week after the last upload (newest pre-selected).
    Normally pick the newest week. If you skip weeks (for example going straight from the April baseline to
    this week, since Coursera can't export a past week), the skipped weeks are merged into one period,
-   labelled e.g. "Weeks 1–31 · Mon 30 Mar – Sun 1 Nov 2026", and the weekly hours target is multiplied
+   labelled by its end week, e.g. "Week 31 · report end date Sun 1 Nov 2026", and the weekly hours target is multiplied
    by the number of weeks. Uploads only move forward; nothing is counted twice.
 3. **Coursera date range:** the page shows the exact range to pick for the selected period, e.g.
    *Learner activity date range → Custom → Start 04/01/2020 · End 11/01/2026* (the Sunday). Always use the same
