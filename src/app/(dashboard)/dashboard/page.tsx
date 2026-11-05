@@ -18,7 +18,8 @@ export default async function CourseraDashboardPage({
   if (denied) return denied;
 
   const { month: monthParam, cohort: cohortParam, view } = await searchParams;
-  const viewAll = view === 'all';
+  // "All time" is the default; a specific week is shown when ?month= is given.
+  const viewAll = view === 'all' || !monthParam;
   const supabase = createAdminClient(); // reads run after the access check above
 
   const [{ data: monthsList }, cohorts] = await Promise.all([
