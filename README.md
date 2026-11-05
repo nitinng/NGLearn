@@ -1,6 +1,8 @@
+> **Current scope (Nov 2026):** NGLearn now only runs weekly Coursera tracking for Zuvy cohorts. Alumni, GHAR import and contest sections below are historical. See [`docs/SETUP.md`](docs/SETUP.md) for the live setup.
+
 # NGLearn
 
-**NGLearn** is a robust, full-stack administrative platform built to serve as the central nervous system for managing the NavGurukul alumni network. It acts as an overarching workspace where administrators, program managers, and operators can manage massive datasets (such as GHAR-imported data and cohort-level Coursera learning for programs like Zuvy and MSDF) securely. Simultaneously, it serves as a self-service profile portal for alumni (Members) to update their personal and professional details.
+**NGLearn** is a robust, full-stack administrative platform built to serve as the central nervous system for managing the NavGurukul alumni network. It acts as an overarching workspace where administrators, program managers, and operators can manage massive datasets (weekly Coursera learning data for programs like Zuvy, reported by cohort) securely. Simultaneously, it serves as a self-service profile portal for alumni (Members) to update their personal and professional details.
 
 ## Getting Started
 
@@ -42,7 +44,7 @@ The application uses a highly modern, bleeding-edge React ecosystem to ensure hi
 - **`src/middleware.ts`**: The application's frontline defense. It intercepts requests, validates the Supabase auth session, and redirects unauthorized users away from protected routes.
 - **App Router (`src/app`)**:
   - **`(dashboard)/`**: The primary layout encompassing the Sidebar, Header, and main workspace. It fetches the user's role on the server and wraps the UI in a `UserProvider` Context.
-  - **`api/alumni/`**, **`api/cohorts/`**: API endpoints for heavy data processing.
+  - **`api/coursera/`**: Coursera import, metrics, cohorts and export endpoints.
   - **`auth/` & `login/`**: Handles login flows and Supabase OAuth callbacks.
 
 ### Roles, Teams, & Access Control
@@ -53,7 +55,7 @@ Because NGLearn handles critical organizational data, it incorporates a foolproo
 Whenever a row in tables like `alumni_master` is modified, a database trigger fires to append a detailed record into the `audit_log` table, guaranteeing that no change goes untracked.
 
 ## Core Modules & Dashboards
-- **Cohort Tracking (`/cohorts`)**: Weekly Coursera snapshots filtered to cohort email lists, with week-over-week deltas and Excel reports. See `docs/COHORT_TRACKING.md`.
+- **Coursera (`/data-management/coursera`)**: Weekly Coursera dashboard, activity logs, imports, and cohort-scoped Excel exports. See `docs/SETUP.md`.
 - **The Profile System**: Distinguishes between official organizational records (`alumni_master`) and self-service profile data (`alumni_profile`).
 
 ## License

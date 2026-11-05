@@ -1,7 +1,9 @@
+> **Current scope (Nov 2026):** NGLearn now only runs weekly Coursera tracking for Zuvy cohorts. Alumni, GHAR import and contest sections below are historical. See [`docs/SETUP.md`](docs/SETUP.md) for the live setup.
+
 # NGLearn Web Application Documentation (Comprehensive)
 
 ## 1. Overview
-**NGLearn** is a robust, full-stack administrative platform built to serve as the central nervous system for managing the NavGurukul alumni network. It acts as an overarching workspace where administrators, program managers, and operators can manage massive datasets (such as GHAR-imported data and cohort-level Coursera learning for programs like Zuvy and MSDF) securely. Simultaneously, it serves as a self-service profile portal for alumni (Members) to update their personal and professional details.
+**NGLearn** is a robust, full-stack administrative platform built to serve as the central nervous system for managing the NavGurukul alumni network. It acts as an overarching workspace where administrators, program managers, and operators can manage massive datasets (weekly Coursera learning data for programs like Zuvy, reported by cohort) securely. Simultaneously, it serves as a self-service profile portal for alumni (Members) to update their personal and professional details.
 
 ## 2. Technology Stack & Core Tooling
 The application uses a highly modern, bleeding-edge React ecosystem to ensure high performance, security, and developer experience.
@@ -31,7 +33,7 @@ The application uses a highly modern, bleeding-edge React ecosystem to ensure hi
 - **App Router (`src/app`)**:
   - **`(dashboard)/`**: The primary layout encompassing the Sidebar, Header, and main workspace. It fetches the user's role on the server and wraps the UI in a `UserProvider` Context.
   - **`api/alumni/`**: Contains endpoints like `/import` (for bulk GHAR imports), `/admin` (for administrative overrides), and `/[email]` (for retrieving specific alumni records).
-  - **`api/cohorts/`**: Cohort tracking endpoints (weekly snapshot upload/delete, member upload, Excel report). See `docs/COHORT_TRACKING.md`.
+  - **`api/coursera/`**: Coursera import, metrics, cohorts and export endpoints. See `docs/SETUP.md`.
   - **`auth/` & `login/`**: Handles login flows and Supabase OAuth callbacks.
 
 ### 3.2 Utilities & State Management
@@ -74,7 +76,7 @@ Whenever a row in tables like `alumni_master` is modified, a database trigger (`
 ### 6.1 The Data Management Hub (`/data-management`)
 This is the most complex module, handling bulk data ingestion:
 - **GHAR Imports (`/import`)**: Ingests thousands of alumni records from GHAR via CSV/XLSX. Creates an `import_batch` and generates `import_batch_records` for every row, noting successes, skips, and failures.
-- **Cohort Tracking (`/cohorts`)**: Weekly Coursera exports filtered to cohort email lists. See `docs/COHORT_TRACKING.md`.
+- **Coursera (`/data-management/coursera`)**: Weekly imports, dashboard, activity logs and cohort-scoped exports. See `docs/SETUP.md`.
 - **Rollback (`/rollback`)**: Allows an Admin to undo a specific import batch, utilizing the `audit_log` to restore prior values.
 
 ### 6.2 The Master Data Hub (`/manage/master-data`)

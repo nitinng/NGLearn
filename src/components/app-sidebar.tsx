@@ -5,8 +5,10 @@ import {
   LayoutDashboard,
   GalleryVerticalEnd,
   Settings,
-  UsersRound,
-  FileSpreadsheet,
+  BarChart2,
+  Activity,
+  FileDown,
+  Upload,
 } from "lucide-react"
 
 import { NavMain, NavItem } from "@/components/nav-main"
@@ -42,10 +44,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const canSeeCohorts = role === "Admin" || role === "PNC" || role === "CEOs Office" || role === "Program"
   const canManageUsers = role === "Admin" || role === "PNC" || role === "CEOs Office"
 
+  const canEditCoursera = role === "Admin" || role === "PNC" || role === "Program"
+
   const navCohorts: NavItem[] = canSeeCohorts
     ? [
-        { title: "Cohorts", url: "/cohorts", icon: UsersRound },
-        { title: "Weekly Snapshots", url: "/cohorts/snapshots", icon: FileSpreadsheet },
+        { title: "Coursera Dashboard", url: "/data-management/coursera", icon: BarChart2 },
+        { title: "Activity Logs", url: "/data-management/coursera/activity-logs", icon: Activity },
+        { title: "Export Report", url: "/data-management/coursera/export", icon: FileDown },
+        ...(canEditCoursera ? [{ title: "Import Reports", url: "/data-management/import-coursera", icon: Upload }] : []),
       ]
     : [];
 
