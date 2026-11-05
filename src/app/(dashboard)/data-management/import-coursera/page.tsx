@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { describePeriod, nextExpectedPeriod, recentCompletedSundays, weekHasEnded, addDays } from '@/lib/report-periods';
 import { Upload, FileSpreadsheet, Download, RotateCcw, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -25,12 +26,10 @@ interface UploadResult {
   skippedRows: number;
   durationMs: number;
   month: string;
+  period?: string;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-function formatMonth(dateStr: string, _firstMonth?: string | null) {
-  return new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
-}
 function formatDuration(ms: number | null) {
   if (!ms) return '—';
   if (ms < 1000) return `${ms}ms`;
@@ -41,13 +40,8 @@ function formatRows(n: number | null) {
   return n.toLocaleString();
 }
 
-const todayIso = () => new Date().toISOString().slice(0, 10);
-
-/** Coursera export names contain the export date, e.g. "... CourseraEnterpriseExport 2026-07-16 17-18-01 UTC.xlsx". */
-function dateFromFilename(name: string): string | null {
-  const m = name.match(/(\d{4}-\d{2}-\d{2})/);
-  return m && m[1] <= todayIso() ? m[1] : null;
-}
+const longDate = (iso: string) =>
+  new Date(iso + 'T12:00:00Z').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function ImportCourseraPage() {
@@ -58,7 +52,8 @@ export default function ImportCourseraPage() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'import' | 'rollback' | 'recalculate'>('import');
 
-  const [selectedMonth, setSelectedMonth] = useState(todayIso());
+  const [baselineSunday, setBaselineSunday] = useState(() => recentCompletedSundays(1)[0]);
+  const [warnings, setWarnings] = useState<string[] | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -90,8 +85,13 @@ export default function ImportCourseraPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const importedDates = new Set(availableMonths.map(m => m.month));
-  const dateAlreadyImported = !!selectedMonth && importedDates.has(selectedMonth);
+  // ── Fixed weekly schedule ──────────────────────────────────────────────────
+  const importedDates = availableMonths.map(m => m.month).sort();
+  const baselineDate = importedDates[0] ?? null;
+  const next = nextExpectedPeriod(importedDates);
+  const selectedMonth = next.kind === 'baseline' ? baselineSunday : next.end;
+  const nextReady = weekHasEnded(selectedMonth);
+  const periodLabel = (d: string) => describePeriod(d, baselineDate ?? d).label;
 
   // ── File handling ──────────────────────────────────────────────────────────
   const handleFile = (f: File) => {
@@ -104,9 +104,8 @@ export default function ImportCourseraPage() {
       return;
     }
     setFile(f);
-    const d = dateFromFilename(f.name);
-    if (d) setSelectedMonth(d);
     setUploadError(null);
+    setWarnings(null);
     setUploadResult(null);
   };
 
@@ -119,27 +118,31 @@ export default function ImportCourseraPage() {
   }, []);
 
   // ── Upload ─────────────────────────────────────────────────────────────────
-  const handleUpload = async () => {
-    if (!file || !selectedMonth) return;
+  const handleUpload = async (acknowledge = false) => {
+    if (!file || !selectedMonth || !nextReady) return;
     setUploading(true);
     setUploadError(null);
     setUploadResult(null);
+    if (!acknowledge) setWarnings(null);
 
     const { data: { user } } = await supabase.auth.getUser();
     const fd = new FormData();
     fd.append('file', file);
     fd.append('snapshotMonth', selectedMonth);
     if (user?.email) fd.append('uploadedBy', user.email);
+    if (acknowledge) fd.append('acknowledgeWarnings', 'true');
 
     try {
       const res = await fetch('/api/coursera/import', { method: 'POST', body: fd });
       const json = await res.json();
-      if (!res.ok) {
+      if (res.status === 422 && json.code === 'period_warnings') {
+        setWarnings(json.warnings ?? []);
+      } else if (!res.ok) {
         setUploadError(json.error ?? 'Upload failed');
       } else {
         setUploadResult(json);
+        setWarnings(null);
         setFile(null);
-        setSelectedMonth(todayIso());
         await fetchData();
       }
     } catch {
@@ -223,7 +226,7 @@ export default function ImportCourseraPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Import Coursera Reports</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Upload the full weekly Coursera Learner Activity export. Everything is stored, but the dashboard, logs and reports only show learners who are in a cohort. Add someone to a cohort later and their past weeks appear too.</p>
+            <p className="text-muted-foreground text-sm mt-0.5">Upload the full Coursera Learner Activity export for each Monday–Sunday week. Everything is stored, but the dashboard, logs and reports only show learners who are in a cohort. Add someone to a cohort later and their past weeks appear too.</p>
           </div>
         </div>
         <a
@@ -240,25 +243,51 @@ export default function ImportCourseraPage() {
       <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-6 space-y-5">
         <h2 className="text-lg font-semibold">Upload Report</h2>
 
-        {/* Snapshot date */}
-        <div className="space-y-1.5">
-          <label htmlFor="snapshot-date" className="text-sm font-medium text-foreground/80">Snapshot Date</label>
-          <input
-            id="snapshot-date"
-            type="date"
-            max={todayIso()}
-            value={selectedMonth}
-            onChange={e => setSelectedMonth(e.target.value)}
-            className="w-full max-w-xs bg-background border border-border/80 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-          />
-          {dateAlreadyImported ? (
-            <p className="text-xs text-amber-600">A snapshot for this date is already imported. Roll it back first to re-import.</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">
-              The date Coursera generated the export (filled in from the file name when possible). Upload the full export once a week; hours are worked out against the previous snapshot.
-            </p>
-          )}
+        {/* Reporting rules */}
+        <div className="flex gap-3 p-4 rounded-lg border border-amber-500/30 bg-amber-500/5 text-sm">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+          <div className="space-y-1.5">
+            <p className="font-semibold text-foreground">Weekly reporting rules: no overlapping days</p>
+            <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
+              <li><strong className="text-foreground">First import only:</strong> a baseline report with all learning up to a <strong className="text-foreground">Sunday</strong> (Coursera lifetime report).</li>
+              <li><strong className="text-foreground">Then every Monday:</strong> generate the Coursera report <strong className="text-foreground">up to the previous Sunday</strong>. Do <strong className="text-foreground">not</strong> include Monday. Monday belongs to the next week; including it moves those hours into the wrong week.</li>
+              <li>Weeks run <strong className="text-foreground">Monday → Sunday</strong> and are imported in order, one at a time, with no gaps. The date is set for you.</li>
+              <li>If the file contains activity after the week&apos;s Sunday, the import stops and tells you.</li>
+            </ul>
+          </div>
         </div>
+
+        {/* Period being imported */}
+        {next.kind === 'baseline' ? (
+          <div className="space-y-1.5">
+            <label htmlFor="baseline-sunday" className="text-sm font-medium text-foreground/80">
+              Baseline report (one-off): lifetime learning up to Sunday…
+            </label>
+            <select
+              id="baseline-sunday"
+              value={baselineSunday}
+              onChange={e => setBaselineSunday(e.target.value)}
+              className="w-full max-w-sm bg-background border border-border/80 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+            >
+              {recentCompletedSundays(12).map(d => (
+                <option key={d} value={d}>{longDate(d)}</option>
+              ))}
+            </select>
+            <p className="text-xs text-muted-foreground">
+              Pick the Sunday before the cohort started. Week 1 will then be Monday {longDate(addDays(baselineSunday, 1))} to Sunday {longDate(addDays(baselineSunday, 7))}.
+            </p>
+          </div>
+        ) : (
+          <div className={`p-4 rounded-lg border ${nextReady ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-muted/30'}`}>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Next report to import</p>
+            <p className="text-lg font-semibold mt-0.5">{next.label}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {nextReady
+                ? <>In Coursera, generate the report for Monday {longDate(next.start!)} → Sunday {longDate(next.end)}, ending on the Sunday.</>
+                : <>This week isn&apos;t over yet. Generate and import it from Monday {longDate(addDays(next.end, 1))}.</>}
+            </p>
+          </div>
+        )}
 
         {/* Drop zone */}
         <div
@@ -299,7 +328,7 @@ export default function ImportCourseraPage() {
         )}
         {uploadResult && (
           <div className="flex flex-col gap-1 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-sm">
-            <div className="flex items-center gap-2 font-semibold"><CheckCircle2 className="w-4 h-4" /> Import successful</div>
+            <div className="flex items-center gap-2 font-semibold"><CheckCircle2 className="w-4 h-4" /> Imported {uploadResult.period ?? 'report'}</div>
             <div className="grid grid-cols-3 gap-3 mt-2 text-xs">
               <div><span className="text-muted-foreground">Rows imported</span><br /><strong>{uploadResult.rowsImported.toLocaleString()}</strong></div>
               <div><span className="text-muted-foreground">Learners</span><br /><strong>{uploadResult.learnersAffected.toLocaleString()}</strong></div>
@@ -308,17 +337,39 @@ export default function ImportCourseraPage() {
           </div>
         )}
 
+        {warnings && warnings.length > 0 && (
+          <div className="p-4 rounded-lg border border-rose-500/30 bg-rose-500/5 text-sm space-y-2">
+            <div className="flex items-center gap-2 font-semibold text-rose-700 dark:text-rose-400">
+              <AlertTriangle className="w-4 h-4" /> This report may overlap with another week
+            </div>
+            <ul className="list-disc pl-5 space-y-1 text-muted-foreground">
+              {warnings.map((w, i) => <li key={i}>{w}</li>)}
+            </ul>
+            <p className="text-xs text-muted-foreground">Best fix: regenerate the report in Coursera ending on Sunday and upload that instead.</p>
+            <button
+              type="button"
+              onClick={() => {
+                if (confirm('Import anyway? Hours from days outside this week will be counted in this week.')) handleUpload(true);
+              }}
+              disabled={uploading}
+              className="text-xs font-medium px-3 py-1.5 rounded-md border border-rose-500/40 text-rose-700 dark:text-rose-400 hover:bg-rose-500/10 transition disabled:opacity-40"
+            >
+              I&apos;ve checked. Import anyway.
+            </button>
+          </div>
+        )}
+
         {/* Upload button */}
         <button
           id="upload-submit-btn"
-          onClick={handleUpload}
-          disabled={!file || !selectedMonth || dateAlreadyImported || uploading}
+          onClick={() => handleUpload(false)}
+          disabled={!file || !selectedMonth || !nextReady || uploading}
           className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center justify-center gap-2"
         >
           {uploading ? (
             <><RefreshCw className="w-4 h-4 animate-spin" /> Processing…</>
           ) : (
-            <><Upload className="w-4 h-4" /> Upload and Process</>
+            <><Upload className="w-4 h-4" /> {next.kind === 'baseline' ? 'Upload baseline report' : `Upload ${next.shortLabel}`}</>
           )}
         </button>
       </div>
@@ -369,11 +420,11 @@ export default function ImportCourseraPage() {
                   
                   let tooltipMsg = undefined;
                   if (isRolledBack && row.action === 'import') tooltipMsg = 'Already rolled back';
-                  else if (olderThanNewest) tooltipMsg = `Rollback ${formatMonth(newestImportMonth!)} first`;
+                  else if (olderThanNewest) tooltipMsg = `Roll back ${periodLabel(newestImportMonth!)} first`;
 
                   return (
                     <tr key={`${row.id}-${idx}`} className="border-b border-border/40 last:border-0 hover:bg-accent/20 transition-colors">
-                      <td className="px-4 py-3 font-medium">{formatMonth(row.snapshot_month, availableMonths[availableMonths.length - 1]?.month)}</td>
+                      <td className="px-4 py-3 font-medium whitespace-nowrap">{periodLabel(row.snapshot_month)}</td>
                       <td className="px-4 py-3 text-muted-foreground max-w-[160px] truncate">{row.filename ?? '—'}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{formatRows(row.rows_imported)}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{formatRows(row.learners_affected)}</td>
@@ -453,8 +504,8 @@ export default function ImportCourseraPage() {
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               This will permanently delete all data for{' '}
-              <strong className="text-foreground">{formatMonth(confirmRollback.snapshot_month)}</strong>.
-              Months must be rolled back in reverse order (newest first).
+              <strong className="text-foreground">{periodLabel(confirmRollback.snapshot_month)}</strong>.
+              Weeks must be rolled back newest first.
             </p>
             <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
             <div className="flex gap-3 pt-2">

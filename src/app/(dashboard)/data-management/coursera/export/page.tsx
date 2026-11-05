@@ -24,6 +24,7 @@ import {
   Plus,
   UsersRound,
 } from 'lucide-react';
+import { describePeriod } from '@/lib/report-periods';
 
 interface AvailableMonth {
   month: string;
@@ -50,10 +51,6 @@ interface ParsedSheet {
   duplicateRows: number;
 }
 
-/** Weekly snapshot dates (YYYY-MM-DD) shown as e.g. "Week of 05 Nov 2026". */
-function formatMonth(dateStr: string) {
-  return `Week of ${new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
-}
 
 export default function ExportCourseraActivityPage() {
   // State
@@ -436,7 +433,7 @@ export default function ExportCourseraActivityPage() {
             >
               {availableMonths.map((m) => (
                 <option key={m.month} value={m.month}>
-                  {formatMonth(m.month)}
+                  {describePeriod(m.month, availableMonths[availableMonths.length - 1]?.month).label}
                 </option>
               ))}
               <option value="all">All snapshots (full history)</option>

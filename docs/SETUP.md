@@ -63,11 +63,20 @@ Set on **Settings → User Roles** (stored in `auth.users.app_metadata.role`).
 
 ## 4. Weekly routine
 
-1. **Import Reports**: upload the full Coursera Learner Activity export and set the snapshot date
-   (taken from the file name when present). Hours are computed against the previous snapshot.
-2. **Dashboard / Activity Logs**: pick a cohort tab (or "All cohorts").
-3. **Export Activity Report**: pick the snapshot, pick a cohort card, optionally **Verify Users**, export.
-4. New cohort: on the Export page click **Import Cohort** and upload an .xlsx with `Full Name` and an
+Reports follow a fixed Monday → Sunday schedule so no day is counted twice:
+
+1. **Once, at the start: baseline.** Import Coursera's lifetime report covering all learning up to a
+   **Sunday** (the Sunday before the cohort started). It is labelled "Baseline · lifetime up to Sun …".
+2. **Every Monday after that:** generate the Coursera report **up to the previous Sunday. Do not include Monday.**
+   Import Reports shows exactly which week is next (e.g. "Week 1 · Mon 2 Nov – Sun 8 Nov 2026"),
+   accepts only that week, and only once the Sunday has passed (India time). Weeks can't be skipped or repeated.
+3. **Overlap check:** if any row has activity or a completion after that Sunday (UTC), or the file name
+   shows it was generated before the week ended, the import stops with the details. Regenerate the report,
+   or confirm "Import anyway" (logged in the import history).
+4. Mistake? Roll back the newest week and import it again.
+5. **Dashboard / Activity Logs**: pick a cohort tab (or "All cohorts"); weeks are labelled "Wk N · dates".
+6. **Export Activity Report**: pick the week, pick a cohort card, optionally **Verify Users**, export.
+7. New cohort: on the Export page click **Import Cohort** and upload an .xlsx with `Full Name` and an
    email column. Each sheet becomes one cohort named after the sheet (rename before saving).
 
 ## 5. Templates

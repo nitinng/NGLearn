@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
 import { denyUnlessAccess } from '@/lib/guard';
 import { listCohortOptions, resolveCohort, scopedLearnerQuery } from '@/lib/cohort-scope';
 import { CohortPicker } from '@/components/cohort-picker';
+import { describePeriod } from '@/lib/report-periods';
 
 interface SearchParams {
   month?: string;
@@ -17,9 +18,6 @@ interface SearchParams {
 
 const PAGE_SIZE = 50;
 
-function formatMonth(dateStr: string, _firstMonth?: string | null) {
-  return new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
-}
 
 export default async function ActivityLogsPage({
   searchParams,
@@ -100,7 +98,7 @@ export default async function ActivityLogsPage({
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Activity Logs</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {scopeLabel} · {selectedMonth ? formatMonth(selectedMonth, firstImportMonth) : 'All snapshots'} · {(count ?? 0).toLocaleString()} learners
+            {scopeLabel} · {selectedMonth ? describePeriod(selectedMonth, firstImportMonth).label : 'All snapshots'} · {(count ?? 0).toLocaleString()} learners
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -133,7 +131,7 @@ export default async function ActivityLogsPage({
             className="bg-background border border-border/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
           >
             {(monthsList ?? []).map(m => (
-              <option key={m.month} value={m.month}>{formatMonth(m.month, firstImportMonth)}</option>
+              <option key={m.month} value={m.month}>{describePeriod(m.month, firstImportMonth).label}</option>
             ))}
           </select>
           <button type="submit" className="px-3 py-2 rounded-lg border border-border/80 text-sm hover:bg-accent transition-colors">Filter</button>
