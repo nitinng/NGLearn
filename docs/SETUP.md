@@ -86,10 +86,14 @@ Set on **Settings → User Roles** (stored in `auth.users.app_metadata.role`).
 Reports follow a fixed Monday → Sunday schedule so no day is counted twice:
 
 1. **Once, at the start: baseline.** Import Coursera's lifetime report covering all learning up to a
-   **Sunday** (the Sunday before the cohort started). It is labelled "Baseline · lifetime up to Sun …".
-2. **Every Monday after that:** generate the Coursera report **up to the previous Sunday. Do not include Monday.**
-   Import Reports shows exactly which week is next (e.g. "Week 1 · Mon 2 Nov – Sun 8 Nov 2026"),
-   accepts only that week, and only once the Sunday has passed (India time). Weeks can't be skipped or repeated.
+   **Sunday**. Zuvy's agreed baseline is **Sunday 29 March 2026** (pre-selected), so Week 1 = Mon 30 Mar – Sun 5 Apr.
+   It is labelled "Baseline · lifetime up to Sun 29 Mar 2026".
+2. **After that, every Monday:** generate the Coursera report **up to the previous Sunday. Do not include Monday.**
+   The Import Reports dropdown lists every finished week after the last upload (newest pre-selected).
+   Normally pick the newest week. If you skip weeks (for example going straight from the April baseline to
+   this week, since Coursera can't export a past week), the skipped weeks are merged into one period,
+   labelled e.g. "Weeks 1–31 · Mon 30 Mar – Sun 1 Nov 2026", and the weekly hours target is multiplied
+   by the number of weeks. Uploads only move forward; nothing is counted twice.
 3. **Overlap check:** if any row has activity or a completion after that Sunday (UTC), or the file name
    shows it was generated before the week ended, the import stops with the details. Regenerate the report,
    or confirm "Import anyway" (logged in the import history).

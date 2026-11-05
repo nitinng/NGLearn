@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { IMPORT_BUCKET } from '@/lib/coursera-storage';
-import { describePeriod, nextExpectedPeriod, recentCompletedSundays, weekHasEnded, addDays } from '@/lib/report-periods';
+import { addDays, completedSundaysSince, makePeriodLabeler, uploadableSundays } from '@/lib/report-periods';
+
+/** Zuvy's agreed baseline: lifetime learning up to Sunday 29 March 2026 (Week 1 = 30 Mar – 5 Apr). */
+const DEFAULT_BASELINE = '2026-03-29';
+/** How far back the baseline list goes. */
+const BASELINE_LIST_FROM = '2025-11-02';
 import { Upload, FileSpreadsheet, Download, RotateCcw, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -54,7 +59,10 @@ export default function ImportCourseraPage() {
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [activeTab, setActiveTab] = useState<'all' | 'import' | 'rollback' | 'recalculate'>('import');
 
-  const [baselineSunday, setBaselineSunday] = useState(() => recentCompletedSundays(1)[0]);
+  const baselineOptions = completedSundaysSince(BASELINE_LIST_FROM);
+  const [baselineSunday, setBaselineSunday] = useState(() =>
+    baselineOptions.includes(DEFAULT_BASELINE) ? DEFAULT_BASELINE : baselineOptions[0]);
+  const [weekChoice, setWeekChoice] = useState<string | null>(null);
   const [warnings, setWarnings] = useState<string[] | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -90,10 +98,19 @@ export default function ImportCourseraPage() {
   // ── Fixed weekly schedule ──────────────────────────────────────────────────
   const importedDates = availableMonths.map(m => m.month).sort();
   const baselineDate = importedDates[0] ?? null;
-  const next = nextExpectedPeriod(importedDates);
-  const selectedMonth = next.kind === 'baseline' ? baselineSunday : next.end;
-  const nextReady = weekHasEnded(selectedMonth);
-  const periodLabel = (d: string) => describePeriod(d, baselineDate ?? d).label;
+  const isBaseline = importedDates.length === 0;
+  // Every finished week after the latest upload (oldest first). Default = the newest.
+  const choices = uploadableSundays(importedDates);
+  const labelFor = (d: string) => makePeriodLabeler([...importedDates, d])(d);
+  const selectedMonth = isBaseline
+    ? baselineSunday
+    : weekChoice && choices.includes(weekChoice) ? weekChoice : choices[choices.length - 1] ?? '';
+  const nextReady = !!selectedMonth;
+  const selectedPeriod = selectedMonth ? labelFor(selectedMonth) : null;
+  const historyLabel = makePeriodLabeler(importedDates);
+  const periodLabel = (d: string) => historyLabel(d).label;
+  const latestImported = importedDates[importedDates.length - 1] ?? null;
+  void baselineDate;
 
   // ── File handling ──────────────────────────────────────────────────────────
   const handleFile = (f: File) => {
@@ -280,14 +297,14 @@ export default function ImportCourseraPage() {
             <ul className="list-disc pl-4 space-y-1 text-muted-foreground">
               <li><strong className="text-foreground">First import only:</strong> a baseline report with all learning up to a <strong className="text-foreground">Sunday</strong> (Coursera lifetime report).</li>
               <li><strong className="text-foreground">Then every Monday:</strong> generate the Coursera report <strong className="text-foreground">up to the previous Sunday</strong>. Do <strong className="text-foreground">not</strong> include Monday. Monday belongs to the next week; including it moves those hours into the wrong week.</li>
-              <li>Weeks run <strong className="text-foreground">Monday → Sunday</strong> and are imported in order, one at a time, with no gaps. The date is set for you.</li>
+              <li>Weeks run <strong className="text-foreground">Monday → Sunday</strong> and only move forward. The list offers every finished week after your last upload. If you skip weeks, the skipped weeks are merged into this upload (e.g. &ldquo;Weeks 2–5&rdquo;); nothing is ever counted twice.</li>
               <li>If the file contains activity after the week&apos;s Sunday, the import stops and tells you.</li>
             </ul>
           </div>
         </div>
 
         {/* Period being imported */}
-        {next.kind === 'baseline' ? (
+        {isBaseline ? (
           <div className="space-y-1.5">
             <label htmlFor="baseline-sunday" className="text-sm font-medium text-foreground/80">
               Baseline report (one-off): lifetime learning up to Sunday…
@@ -298,23 +315,43 @@ export default function ImportCourseraPage() {
               onChange={e => setBaselineSunday(e.target.value)}
               className="w-full max-w-sm bg-background border border-border/80 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
             >
-              {recentCompletedSundays(12).map(d => (
-                <option key={d} value={d}>{longDate(d)}</option>
+              {baselineOptions.map(d => (
+                <option key={d} value={d}>{longDate(d)}{d === DEFAULT_BASELINE ? ' (agreed baseline)' : ''}</option>
               ))}
             </select>
             <p className="text-xs text-muted-foreground">
-              Pick the Sunday before the cohort started. Week 1 will then be Monday {longDate(addDays(baselineSunday, 1))} to Sunday {longDate(addDays(baselineSunday, 7))}.
+              Upload the Coursera export that covers everything up to this Sunday. Week 1 will then be Monday {longDate(addDays(baselineSunday, 1))} to Sunday {longDate(addDays(baselineSunday, 7))}.
             </p>
           </div>
         ) : (
-          <div className={`p-4 rounded-lg border ${nextReady ? 'border-primary/30 bg-primary/5' : 'border-border/60 bg-muted/30'}`}>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Next report to import</p>
-            <p className="text-lg font-semibold mt-0.5">{next.label}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {nextReady
-                ? <>In Coursera, generate the report for Monday {longDate(next.start!)} → Sunday {longDate(next.end)}, ending on the Sunday.</>
-                : <>This week isn&apos;t over yet. Generate and import it from Monday {longDate(addDays(next.end, 1))}.</>}
-            </p>
+          <div className="space-y-1.5">
+            <label htmlFor="week-choice" className="text-sm font-medium text-foreground/80">Week this report covers</label>
+            {choices.length > 0 ? (
+              <>
+                <select
+                  id="week-choice"
+                  value={selectedMonth}
+                  onChange={e => { setWeekChoice(e.target.value); setWarnings(null); }}
+                  className="w-full max-w-xl bg-background border border-border/80 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+                >
+                  {choices.map(d => (
+                    <option key={d} value={d}>{labelFor(d).label}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  {selectedPeriod && selectedPeriod.weeks > 1 ? (
+                    <>This skips weeks: everything learned from Monday {longDate(selectedPeriod.start!)} to Sunday {longDate(selectedPeriod.end)} is counted as one period ({selectedPeriod.weeks} weeks), and the weekly target is multiplied by {selectedPeriod.weeks}. </>
+                  ) : selectedPeriod ? (
+                    <>In Coursera, generate the report on Monday {longDate(addDays(selectedPeriod.end, 1))}, covering up to Sunday {longDate(selectedPeriod.end)}. </>
+                  ) : null}
+                  The list shows every finished week after your last upload; pick the Sunday your export runs up to.
+                </p>
+              </>
+            ) : (
+              <div className="p-4 rounded-lg border border-border/60 bg-muted/30 text-sm">
+                Nothing to import yet. The next week, {labelFor(addDays(latestImported!, 7)).label}, can be imported from Monday {longDate(addDays(latestImported!, 8))}.
+              </div>
+            )}
           </div>
         )}
 
@@ -404,7 +441,7 @@ export default function ImportCourseraPage() {
           {uploading ? (
             <><RefreshCw className="w-4 h-4 animate-spin" /> Processing…</>
           ) : (
-            <><Upload className="w-4 h-4" /> {next.kind === 'baseline' ? 'Upload baseline report' : `Upload ${next.shortLabel}`}</>
+            <><Upload className="w-4 h-4" /> {isBaseline ? 'Upload baseline report' : selectedPeriod ? `Upload ${selectedPeriod.shortLabel}` : 'Upload'}</>
           )}
         </button>
       </div>

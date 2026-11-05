@@ -5,7 +5,7 @@ import ExcelJS from 'exceljs';
 import { Readable } from 'stream';
 import { denyApiUnlessAccess } from '@/lib/api-guard';
 import { computeMetricsBlob } from '@/lib/coursera-metrics';
-import { addDays, describePeriod, isSunday, nextExpectedPeriod, weekHasEnded } from '@/lib/report-periods';
+import { addDays, isSunday, makePeriodLabeler, weekHasEnded } from '@/lib/report-periods';
 import { courseExtras, parseProgramActivity, parseSpecializations, parseVideoClips } from '@/lib/coursera-extra-sheets';
 import { IMPORT_BUCKET } from '@/lib/coursera-storage';
 
@@ -125,19 +125,22 @@ export async function POST(request: NextRequest) {
     }, { status: 400 });
   }
   if (existingDates.length > 0) {
-    const expected = nextExpectedPeriod(existingDates);
-    if (expected.kind !== 'week' || !isSunday(existingDates[0])) {
+    const latest = existingDates[existingDates.length - 1];
+    if (!isSunday(existingDates[0])) {
       return NextResponse.json({
         error: 'Existing reports do not follow the Monday–Sunday schedule. Roll them back and start again with a baseline report.'
       }, { status: 409 });
     }
-    if (snapshotMonth !== expected.end) {
+    // Weeks may be skipped (they merge into this import) but never go backwards or overlap.
+    if (snapshotMonth <= latest) {
       return NextResponse.json({
-        error: `The next report must be ${expected.label}. Weeks are imported in order with no gaps or overlaps.`
+        error: `Reports must be newer than the latest import (${latest}). To replace that week, roll it back first.`
       }, { status: 409 });
     }
   }
-  const period = describePeriod(snapshotMonth, existingDates[0] ?? snapshotMonth);
+  const period = makePeriodLabeler([...existingDates, snapshotMonth])(snapshotMonth);
+  // A merged multi-week period needs the weekly target once per week to count as on target.
+  const periodWeekCount = Math.max(1, period.weeks);
   if (!fileName.toLowerCase().endsWith('.xlsx')) {
     return NextResponse.json({ error: 'Only .xlsx files are supported' }, { status: 400 });
   }
@@ -475,7 +478,7 @@ export async function POST(request: NextRequest) {
       ? Math.max(0, Math.floor((Date.now() - latestActivity) / 86400000))
       : null;
 
-    const is_compliant = monthly_hours >= minMonthlyHours;
+    const is_compliant = monthly_hours >= minMonthlyHours * periodWeekCount;
 
     return {
       month: periodKey(snapshotMonth),

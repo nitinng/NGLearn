@@ -25,7 +25,7 @@ import {
   UsersRound,
   Sparkles,
 } from 'lucide-react';
-import { describePeriod } from '@/lib/report-periods';
+import { makePeriodLabeler } from '@/lib/report-periods';
 
 interface AvailableMonth {
   month: string;
@@ -436,7 +436,7 @@ export default function ExportCourseraActivityPage() {
             >
               {availableMonths.map((m) => (
                 <option key={m.month} value={m.month}>
-                  {describePeriod(m.month, availableMonths[availableMonths.length - 1]?.month).label}
+                  {makePeriodLabeler(availableMonths.map(a => a.month))(m.month).label}
                 </option>
               ))}
               <option value="all">All snapshots (full history)</option>

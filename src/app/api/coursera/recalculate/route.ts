@@ -104,6 +104,11 @@ export async function POST(request: NextRequest) {
     .single();
 
   const prevMonth: string | null = prevMonthRow?.snapshot_month ?? null;
+  // Weeks this snapshot covers (merged periods need the weekly target once per week).
+  const weekGap = prevMonth
+    ? Math.round((Date.parse(`${snapshotMonth}T00:00:00Z`) - Date.parse(`${prevMonth}T00:00:00Z`)) / (7 * 86400000))
+    : 1;
+  const periodWeekCount = Math.max(1, weekGap);
 
   // Fetch prev month totals via coursera_learner_month
   type PrevTotals = { email: string; prev_hours: number; prev_completions: number };
@@ -152,7 +157,7 @@ export async function POST(request: NextRequest) {
       ? Math.max(0, Math.floor((Date.now() - latestActivity) / 86400000))
       : null;
 
-    const is_compliant = monthly_hours >= minMonthlyHours;
+    const is_compliant = monthly_hours >= minMonthlyHours * periodWeekCount;
 
     return {
       month: periodKey(snapshotMonth),

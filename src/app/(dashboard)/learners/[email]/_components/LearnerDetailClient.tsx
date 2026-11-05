@@ -12,7 +12,7 @@ import {
 import { CheckCircle2, XCircle, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { describePeriod } from '@/lib/report-periods';
+import { makePeriodLabeler } from '@/lib/report-periods';
 
 interface MonthRecord {
   month: string;
@@ -43,8 +43,8 @@ interface Course {
 interface Props {
   monthlyHistory: MonthRecord[];
   courses: Course[];
-  /** Oldest snapshot overall (the baseline), for "Week N" labels */
-  baselineDate?: string | null;
+  /** All snapshot dates (any order), for "Week N" / "Weeks M–N" labels */
+  snapshotDates?: string[];
 }
 
 function formatMonthShort(dateStr: string) {
@@ -59,14 +59,17 @@ function formatMonth(dateStr: string) {
   return new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
-export default function LearnerDetailClient({ monthlyHistory, courses, baselineDate }: Props) {
+export default function LearnerDetailClient({ monthlyHistory, courses, snapshotDates }: Props) {
   const [isCourseListExpanded, setIsCourseListExpanded] = useState(false);
   const firstMonth = monthlyHistory[0]?.month;
+  const allDates = snapshotDates?.length ? snapshotDates : monthlyHistory.map(r => r.month);
+  const periodOf = makePeriodLabeler(allDates);
+  const baselineDate = [...allDates].sort()[0] ?? null;
 
   const chartData = monthlyHistory
     .filter(r => r.month !== (baselineDate ?? firstMonth))
     .map(r => ({
-      label: describePeriod(r.month, baselineDate ?? firstMonth).shortLabel,
+      label: periodOf(r.month).shortLabel,
       monthly_hours: r.monthly_hours,
       is_compliant: r.is_compliant,
     }));
@@ -107,7 +110,7 @@ export default function LearnerDetailClient({ monthlyHistory, courses, baselineD
             <tbody>
               {[...monthlyHistory].reverse().map(r => (
                 <tr key={r.month} className="border-b border-border/40 last:border-0">
-                  <td className="py-2 pr-4">{describePeriod(r.month, baselineDate ?? firstMonth).label}</td>
+                  <td className="py-2 pr-4">{periodOf(r.month).label}</td>
                   <td className="py-2 px-3 text-right tabular-nums">{r.monthly_hours.toFixed(1)}</td>
                   <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">{r.cumulative_hours.toFixed(1)}</td>
                   <td className="py-2 px-3 text-center">

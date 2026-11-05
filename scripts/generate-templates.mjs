@@ -77,7 +77,7 @@ function addInstructions(wb, lines) {
     'One row per learner per course. Upload the WHOLE export, not just one cohort: every learner is stored, and dashboards show only people in a cohort.',
     'The grey example rows use @example.org emails and are ignored on import, but delete them anyway if you fill this template by hand.',
     'SCHEDULE: the first import is a one-off baseline (lifetime learning up to a Sunday). After that, every Monday generate the report covering up to the PREVIOUS SUNDAY. Never include Monday: it belongs to the next week and would put hours in the wrong week.',
-    'Weeks run Monday to Sunday (Week 1 = the Monday after the baseline Sunday). Import Reports sets the week for you and only accepts the next week in order.',
+    'Weeks run Monday to Sunday (Week 1 = the Monday after the baseline Sunday). On Import Reports, pick the Sunday your export runs up to; skipped weeks are merged into that upload.',
   ]);
   await wb.xlsx.writeFile(new URL('coursera_weekly_report_template.xlsx', OUT).pathname);
 }

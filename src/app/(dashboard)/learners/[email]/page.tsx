@@ -19,12 +19,10 @@ export default async function LearnerDetailPage({ params }: PageProps) {
 
   const supabase = createAdminClient(); // reads run after the access check above
 
-  const { data: baselineRow } = await supabase
+  const { data: snapshotRows } = await supabase
     .from('coursera_computed_metrics')
     .select('month')
-    .order('month', { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order('month', { ascending: true });
 
   // Only learners who belong to a cohort are viewable.
   if (!(await isCohortMember(email, supabase))) notFound();
@@ -110,7 +108,7 @@ export default async function LearnerDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      <LearnerDetailClient monthlyHistory={monthlyHistory} courses={courses ?? []} baselineDate={baselineRow?.month ?? null} />
+      <LearnerDetailClient monthlyHistory={monthlyHistory} courses={courses ?? []} snapshotDates={(snapshotRows ?? []).map(r => r.month as string)} />
     </div>
   );
 }
