@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ChartContainer,
@@ -35,6 +36,12 @@ interface Props {
   basePath?: string;
   queryParam?: string;
   generatedAt: string;
+  /** Extra query string kept when switching snapshot tabs (e.g. "cohort=<id>"). */
+  extraQuery?: string;
+  /** Rendered under the header, e.g. the cohort picker. */
+  scopeBar?: React.ReactNode;
+  /** e.g. "Cohort 2" or "All cohorts" */
+  scopeLabel?: string;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -95,7 +102,7 @@ const chartConfig = {
 const getDistColorVar = (i: number) => `var(--color-chart-primary)`;
 
 // ── Main Component ────────────────────────────────────────────────────────────
-export default function CourseraDashboardClient({ metrics, trend, selectedMonth, availableMonths, availableMonthLabels, basePath, queryParam, generatedAt }: Props) {
+export default function CourseraDashboardClient({ metrics, trend, selectedMonth, availableMonths, availableMonthLabels, basePath, queryParam, generatedAt, extraQuery, scopeBar, scopeLabel }: Props) {
   const router = useRouter();
 
   const m = metrics;
@@ -132,7 +139,11 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Coursera Analytics</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {getLabel(selectedMonth)} · Generated {new Date(generatedAt).toLocaleString()}
+            {scopeLabel ? `${scopeLabel} · ` : ''}{getLabel(selectedMonth)}
+            {typeof m.cohort_members_total === 'number' && (
+              <> · {m.total_learners} of {m.cohort_members_total} members in this snapshot</>
+            )}
+            {' '}· Generated {new Date(generatedAt).toLocaleString()}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -146,6 +157,8 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
             Import Reports
           </Link>
         </div>
+
+      {scopeBar}
       </div>
 
       {/* Snapshot Tabs */}
@@ -157,7 +170,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
               onClick={() => {
                 const path = basePath ?? '/data-management/coursera';
                 const param = queryParam ?? 'month';
-                router.push(`${path}?${param}=${month}`);
+                router.push(`${path}?${param}=${month}${extraQuery ? `&${extraQuery}` : ''}`);
               }}
               className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
                 month === selectedMonth

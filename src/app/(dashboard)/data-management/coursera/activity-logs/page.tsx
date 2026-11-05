@@ -4,9 +4,12 @@ import { getUserRole } from '@/lib/roles';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
 import { denyUnlessAccess } from '@/lib/guard';
+import { listCohortOptions, resolveCohort, scopedLearnerQuery } from '@/lib/cohort-scope';
+import { CohortPicker } from '@/components/cohort-picker';
 
 interface SearchParams {
   month?: string;
+  cohort?: string;
   search?: string;
   status?: string;
   page?: string;
@@ -26,7 +29,7 @@ export default async function ActivityLogsPage({
   const denied = await denyUnlessAccess('data_management.coursera_activity_logs', 'view', { backHref: '/data-management', backLabel: 'Back to Data Management' });
   if (denied) return denied;
 
-  const { month: monthParam, search = '', status = 'all', page: pageParam } = await searchParams;
+  const { month: monthParam, cohort: cohortParam, search = '', status = 'all', page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? '1', 10));
   const offset = (page - 1) * PAGE_SIZE;
 
@@ -41,11 +44,13 @@ export default async function ActivityLogsPage({
   const firstImportMonth = monthsList?.[monthsList.length - 1]?.month;
   const selectedMonth = monthParam ?? monthsList?.[0]?.month ?? null;
 
-  // Build query
+  // Only cohort members are listed (full reports are stored; filtering happens here).
+  const cohorts = await listCohortOptions(supabase);
+  const cohortId = resolveCohort(cohortParam, cohorts);
+  const scopeLabel = cohortId ? cohorts.find(c => c.id === cohortId)!.name : 'All cohorts';
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let query: any = supabase
-    .from('coursera_learner_month')
-    .select('*', { count: 'exact' });
+  let query: any = scopedLearnerQuery(supabase, cohortId, '*', { count: 'exact' });
 
   if (selectedMonth) {
     query = query.eq('month', selectedMonth);
@@ -54,7 +59,7 @@ export default async function ActivityLogsPage({
   if (search) {
     // Strip characters that have meaning in PostgREST filter syntax.
     const term = search.replace(/[,()*%\\]/g, ' ').trim();
-    if (term) query = query.or(`name.ilike.%${term}%,email.ilike.%${term}%`);
+    if (term) query = query.or(`full_name.ilike.%${term}%,name.ilike.%${term}%,email.ilike.%${term}%`);
   }
 
   // Status filter mapping
@@ -68,6 +73,7 @@ export default async function ActivityLogsPage({
 
   query = query
     .order('monthly_hours', { ascending: false })
+    .order('email')
     .range(offset, offset + PAGE_SIZE - 1);
 
   const { data: learners, count } = await query;
@@ -76,7 +82,7 @@ export default async function ActivityLogsPage({
   // Build URL with updated params
   function buildUrl(overrides: Partial<SearchParams>) {
     const params = new URLSearchParams();
-    const merged = { month: selectedMonth ?? '', search, status, page: String(page), ...overrides };
+    const merged = { month: selectedMonth ?? '', cohort: cohortId ?? '', search, status, page: String(page), ...overrides };
     Object.entries(merged).forEach(([k, v]) => { if (v) params.set(k, v); });
     return `/data-management/coursera/activity-logs?${params.toString()}`;
   }
@@ -94,7 +100,7 @@ export default async function ActivityLogsPage({
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Activity Logs</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {selectedMonth ? formatMonth(selectedMonth, firstImportMonth) : 'All snapshots'} · {(count ?? 0).toLocaleString()} learners
+            {scopeLabel} · {selectedMonth ? formatMonth(selectedMonth, firstImportMonth) : 'All snapshots'} · {(count ?? 0).toLocaleString()} learners
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -108,12 +114,19 @@ export default async function ActivityLogsPage({
         </div>
       </div>
 
+      <CohortPicker
+        cohorts={cohorts}
+        selected={cohortId}
+        hrefFor={id => buildUrl({ cohort: id === 'all' ? '' : id, page: '1' })}
+      />
+
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         {/* Month — uses form submit to avoid onChange in Server Component */}
         <form method="get" action="/data-management/coursera/activity-logs" className="flex gap-2 items-center">
           {search && <input type="hidden" name="search" value={search} />}
           {status !== 'all' && <input type="hidden" name="status" value={status} />}
+          {cohortId && <input type="hidden" name="cohort" value={cohortId} />}
           <select
             name="month"
             defaultValue={selectedMonth ?? ''}
@@ -130,6 +143,7 @@ export default async function ActivityLogsPage({
         <form action={buildUrl({ page: '1' }).split('?')[0]} method="get" className="flex gap-2">
           {selectedMonth && <input type="hidden" name="month" value={selectedMonth} />}
           {status !== 'all' && <input type="hidden" name="status" value={status} />}
+          {cohortId && <input type="hidden" name="cohort" value={cohortId} />}
           <input
             name="search"
             defaultValue={search}
@@ -194,7 +208,7 @@ export default async function ActivityLogsPage({
                   <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No learners match your filters.</td></tr>
                 ) : (
                   (learners ?? []).map((l: {
-                    email: string; name: string | null;
+                    email: string; name: string | null; full_name?: string | null;
                     monthly_hours: number; cumulative_hours: number;
                     courses_enrolled: number; courses_completed: number;
                     is_active: boolean; is_compliant: boolean; days_since_activity: number | null;
@@ -205,7 +219,7 @@ export default async function ActivityLogsPage({
                           href={`/data-management/coursera/learner/${encodeURIComponent(l.email)}`}
                           className="font-medium hover:text-primary transition-colors"
                         >
-                          {l.name ?? '—'}
+                          {l.full_name ?? l.name ?? '—'}
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground text-xs">{l.email}</td>

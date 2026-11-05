@@ -125,6 +125,25 @@ CREATE TABLE public.cohort_members (
 );
 CREATE INDEX idx_cohort_members_email ON public.cohort_members (email);
 
+-- ── 8. Cohort-scoped views (what the app shows) ──────────────────
+-- Full weekly reports are stored, but the dashboard, activity logs and
+-- learner pages only ever show people who are in a cohort. Filtering at
+-- read time means a student added to a cohort later shows up with their
+-- full past history.
+CREATE VIEW public.cohort_learner_month WITH (security_invoker = true) AS
+SELECT cm.cohort_id, cm.full_name, lm.*
+FROM public.coursera_learner_month lm
+JOIN public.cohort_members cm ON cm.email = lm.email;
+
+CREATE VIEW public.tracked_learner_month WITH (security_invoker = true) AS
+SELECT
+  (SELECT cm.full_name FROM public.cohort_members cm
+    WHERE cm.email = lm.email AND cm.full_name IS NOT NULL
+    ORDER BY cm.added_at DESC LIMIT 1) AS full_name,
+  lm.*
+FROM public.coursera_learner_month lm
+WHERE EXISTS (SELECT 1 FROM public.cohort_members cm WHERE cm.email = lm.email);
+
 -- ── Security ─────────────────────────────────────────────────────
 ALTER TABLE public.coursera_config           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.coursera_snapshots        ENABLE ROW LEVEL SECURITY;
@@ -143,7 +162,7 @@ COMMIT;
 
 NOTIFY pgrst, 'reload schema';
 
--- Check: 7 tables, all with rls_on = true.
+-- Check: 7 tables (all rls_on = true) and 2 views.
 -- SELECT c.relname, c.relrowsecurity AS rls_on
 -- FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
 -- WHERE n.nspname = 'public' AND c.relkind = 'r' ORDER BY 1;

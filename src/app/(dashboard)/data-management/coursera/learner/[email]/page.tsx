@@ -4,6 +4,7 @@ import { getUserRole } from '@/lib/roles';
 import Link from 'next/link';
 import LearnerDetailClient from './_components/LearnerDetailClient';
 import { denyUnlessAccess } from '@/lib/guard';
+import { isCohortMember } from '@/lib/cohort-scope';
 
 interface PageProps {
   params: Promise<{ email: string }>;
@@ -18,6 +19,16 @@ export default async function LearnerDetailPage({ params }: PageProps) {
 
   const supabase = createAdminClient(); // reads run after the access check above
 
+  // Only learners who belong to a cohort are viewable.
+  if (!(await isCohortMember(email, supabase))) notFound();
+  const { data: memberRow } = await supabase
+    .from('cohort_members')
+    .select('full_name')
+    .eq('email', email)
+    .not('full_name', 'is', null)
+    .limit(1)
+    .maybeSingle();
+
   // 1. Monthly history
   const { data: monthlyHistory, error: histErr } = await supabase
     .from('coursera_learner_month')
@@ -29,7 +40,7 @@ export default async function LearnerDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  const learnerName = monthlyHistory[monthlyHistory.length - 1]?.name ?? email;
+  const learnerName = memberRow?.full_name ?? monthlyHistory[monthlyHistory.length - 1]?.name ?? email;
   const latestRecord = monthlyHistory[monthlyHistory.length - 1];
   const latestYearMonth = latestRecord.month.substring(0, 7);
 

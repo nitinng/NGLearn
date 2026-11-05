@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { denyApiUnlessAccess } from '@/lib/api-guard';
+import { isCohortMember } from '@/lib/cohort-scope';
 
 export async function GET(
   _request: NextRequest,
@@ -20,6 +21,11 @@ export async function GET(
   if (denied) return denied;
 
   const supabase = createAdminClient();
+
+  // Only learners who belong to a cohort are exposed.
+  if (!(await isCohortMember(decodedEmail, supabase))) {
+    return NextResponse.json({ error: 'Learner not found' }, { status: 404 });
+  }
 
   // 1. Monthly history for this learner
   const { data: monthlyHistory, error: historyErr } = await supabase

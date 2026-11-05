@@ -19,6 +19,16 @@ Learner enrollment and pruning are intentionally not included.
 | `coursera_import_log` | Import / rollback / recalculate history |
 | `cohorts` | Named cohorts (Cohort 2, Cohort 3, ...) |
 | `cohort_members` | Full name + email of each student in a cohort |
+| `cohort_learner_month` (view) | Weekly learner rows for one cohort's members |
+| `tracked_learner_month` (view) | Weekly learner rows for anyone in any cohort |
+
+**Only cohort members are ever shown.** Every upload stores the full Coursera export (e.g. all 1,500
+learners), but the Dashboard, Activity Logs, learner pages and exports read through the two views
+above. Learners outside every cohort never appear. Adding someone to a cohort later shows their
+full past history straight away, because their earlier weeks were stored.
+
+If you ran `schema.sql` before the views were added, run
+`supabase/migrations/20261106000000_cohort_scope_views.sql` once.
 
 Column names `snapshot_month` / `month` are kept from NGConnect but hold the weekly export date.
 
@@ -55,6 +65,7 @@ Set on **Settings → User Roles** (stored in `auth.users.app_metadata.role`).
 
 1. **Import Reports**: upload the full Coursera Learner Activity export and set the snapshot date
    (taken from the file name when present). Hours are computed against the previous snapshot.
-2. **Export Activity Report**: pick the snapshot, pick a cohort card, optionally **Verify Users**, export.
-3. New cohort: on the Export page click **Import Cohort** and upload an .xlsx with `Full Name` and an
+2. **Dashboard / Activity Logs**: pick a cohort tab (or "All cohorts").
+3. **Export Activity Report**: pick the snapshot, pick a cohort card, optionally **Verify Users**, export.
+4. New cohort: on the Export page click **Import Cohort** and upload an .xlsx with `Full Name` and an
    email column. Each sheet becomes one cohort named after the sheet (rename before saving).

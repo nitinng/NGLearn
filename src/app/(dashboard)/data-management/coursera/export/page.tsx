@@ -152,15 +152,15 @@ export default function ExportCourseraActivityPage() {
     }
   }, []);
 
-  // Organisation-wide numbers for the selected snapshot
-  const fetchMonthOverview = useCallback(async (month: string) => {
-    if (!month || month === 'all') {
+  // Numbers for the selected cohort in the selected snapshot
+  const fetchMonthOverview = useCallback(async (month: string, cohortId: string | null) => {
+    if (!month || month === 'all' || !cohortId) {
       setMonthOverview(null);
       return;
     }
     setLoadingOverview(true);
     try {
-      const res = await fetch(`/api/coursera/metrics?month=${encodeURIComponent(month)}`);
+      const res = await fetch(`/api/coursera/metrics?month=${encodeURIComponent(month)}&cohort=${encodeURIComponent(cohortId)}`);
       if (!res.ok) {
         setMonthOverview(null);
         return;
@@ -186,9 +186,9 @@ export default function ExportCourseraActivityPage() {
 
   useEffect(() => {
     if (selectedMonth) {
-      fetchMonthOverview(selectedMonth);
+      fetchMonthOverview(selectedMonth, importMode ? null : selectedCohortId);
     }
-  }, [selectedMonth, fetchMonthOverview]);
+  }, [selectedMonth, selectedCohortId, importMode, fetchMonthOverview]);
 
   // Import cohort: read the workbook (one cohort per sheet) for preview
   const handleCohortFile = async (file: File) => {
@@ -444,7 +444,7 @@ export default function ExportCourseraActivityPage() {
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           </div>
           <p className="text-xs text-muted-foreground">
-            Choose which weekly snapshot to report on. Hours are the hours learned since the previous snapshot. Pick &ldquo;All snapshots&rdquo; for the full history. The numbers below are for all Coursera learners in that snapshot.
+            Choose which weekly snapshot to report on. Hours are the hours learned since the previous snapshot. Pick &ldquo;All snapshots&rdquo; for the full history. The numbers below are for the selected cohort.
           </p>
 
           {/* Month Snapshot Metrics Preview Cards */}
@@ -453,7 +453,7 @@ export default function ExportCourseraActivityPage() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl bg-muted/30 border border-border/40">
                 <div className="space-y-0.5">
                   <span className="text-[11px] text-muted-foreground font-medium flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-primary" /> Total Learners
+                    <Users className="w-3.5 h-3.5 text-primary" /> Cohort Learners in Snapshot
                   </span>
                   <p className="text-lg font-bold text-foreground">
                     {loadingOverview ? '—' : monthOverview.totalLearners.toLocaleString()}

@@ -223,7 +223,7 @@ export default function ImportCourseraPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Import Coursera Reports</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Upload the weekly Coursera Learner Activity export to update the dashboard and reports.</p>
+            <p className="text-muted-foreground text-sm mt-0.5">Upload the full weekly Coursera Learner Activity export. Everything is stored, but the dashboard, logs and reports only show learners who are in a cohort. Add someone to a cohort later and their past weeks appear too.</p>
           </div>
         </div>
         <a
