@@ -92,7 +92,7 @@ Reports follow a fixed Monday → Sunday schedule so no day is counted twice:
    Dashboard / Activity Logs show only lifetime totals for it. Weekly figures start with the next upload,
    measured against the baseline. (If a baseline was imported before this rule, click **Recalculate** on it.)
 2. **After that, every Monday:** generate the Coursera report **up to the previous Sunday. Do not include Monday.**
-   The Import Reports dropdown lists every finished week after the last upload (newest pre-selected).
+   The Import Reports dropdown lists every finished week after the last upload, with the next week (the one right after the last upload) pre-selected.
    Normally pick the newest week. If you skip weeks (for example going straight from the April baseline to
    this week, since Coursera can't export a past week), the skipped weeks are merged into one period,
    labelled by its end week, e.g. "Week 31 · report end date Sun 1 Nov 2026", and the weekly hours target is multiplied

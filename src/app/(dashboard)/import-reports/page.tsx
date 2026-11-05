@@ -102,12 +102,12 @@ export default function ImportCourseraPage() {
   const importedDates = availableMonths.map(m => m.month).sort();
   const baselineDate = importedDates[0] ?? null;
   const isBaseline = importedDates.length === 0;
-  // Every finished week after the latest upload (oldest first). Default = the newest.
+  // Every finished week after the latest upload (oldest first). Default = the next upload (the week right after the last one).
   const choices = uploadableSundays(importedDates);
   const labelFor = (d: string) => makePeriodLabeler([...importedDates, d])(d);
   const selectedMonth = isBaseline
     ? baselineSunday
-    : weekChoice && choices.includes(weekChoice) ? weekChoice : choices[choices.length - 1] ?? '';
+    : weekChoice && choices.includes(weekChoice) ? weekChoice : choices[0] ?? '';
   const nextReady = !!selectedMonth;
   const selectedPeriod = selectedMonth ? labelFor(selectedMonth) : null;
   const historyLabel = makePeriodLabeler(importedDates);
