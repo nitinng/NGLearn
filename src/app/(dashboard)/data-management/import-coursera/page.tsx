@@ -227,7 +227,7 @@ export default function ImportCourseraPage() {
           </div>
         </div>
         <a
-          href="/api/coursera/template"
+          href="/templates/coursera_weekly_report_template.xlsx"
           download
           className="inline-flex items-center gap-2 text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors"
         >

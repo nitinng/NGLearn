@@ -69,3 +69,15 @@ Set on **Settings → User Roles** (stored in `auth.users.app_metadata.role`).
 3. **Export Activity Report**: pick the snapshot, pick a cohort card, optionally **Verify Users**, export.
 4. New cohort: on the Export page click **Import Cohort** and upload an .xlsx with `Full Name` and an
    email column. Each sheet becomes one cohort named after the sheet (rename before saving).
+
+## 5. Templates
+
+Download links are on each import screen; the files live in `public/templates/`:
+
+| Template | Used on | Contents |
+|---|---|---|
+| `coursera_weekly_report_template.xlsx` | Import Reports | "Learner Activity" sheet with every column the importer reads, plus instructions |
+| `cohort_import_template.xlsx` | Export → Import Cohort | One sheet per cohort with `Full Name` and `NG email ID`, plus instructions |
+
+Example rows use `@example.org` emails and are ignored by both importers. Regenerate the files with
+`node scripts/generate-templates.mjs`.

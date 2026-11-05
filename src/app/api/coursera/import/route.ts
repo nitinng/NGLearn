@@ -193,7 +193,11 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const validRows = rawRows.filter(r => r['Email'] && r['Course ID']);
+  // Template example rows use the reserved example.org domain and are ignored.
+  const validRows = rawRows.filter(r =>
+    r['Email'] && r['Course ID'] &&
+    !String(r['Email']).trim().toLowerCase().endsWith('@example.org')
+  );
   const skippedRows = totalRows - validRows.length;
 
   // ── STEP 3: Transform rows ───────────────────────────────────────────────

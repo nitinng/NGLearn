@@ -569,11 +569,20 @@ export default function ExportCourseraActivityPage() {
           <div className="pt-2">
             {importMode && (
               <div className="space-y-3 bg-muted/20 border border-border/60 rounded-xl p-4">
-                <div>
-                  <span className="text-xs font-medium text-foreground block">Upload cohort list (.xlsx)</span>
-                  <span className="text-[11px] text-muted-foreground">
-                    Columns: &apos;Full Name&apos; and an email column (e.g. &apos;NG email ID&apos;). Each sheet becomes one cohort, named after the sheet; you can rename it below.
-                  </span>
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                  <div>
+                    <span className="text-xs font-medium text-foreground block">Upload cohort list (.xlsx)</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      Columns: &apos;Full Name&apos; and an email column (e.g. &apos;NG email ID&apos;). Each sheet becomes one cohort, named after the sheet; you can rename it below.
+                    </span>
+                  </div>
+                  <a
+                    href="/templates/cohort_import_template.xlsx"
+                    download
+                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium shrink-0"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download Template (.xlsx)
+                  </a>
                 </div>
 
                 {!parsedFileName ? (
