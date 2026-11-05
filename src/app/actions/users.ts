@@ -1,15 +1,14 @@
 'use server';
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getUserRole, UserRole } from '@/lib/roles';
+import { getUserRole, UserRole, USER_MANAGER_ROLES } from '@/lib/roles';
 import { revalidatePath } from 'next/cache';
 
 export async function updateUserRole(userId: string, newRole: UserRole) {
   try {
     const callerRole = await getUserRole();
 
-    // Member cannot edit roles
-    if (callerRole === 'Member') {
+    if (!USER_MANAGER_ROLES.includes(callerRole)) {
       return { error: 'Unauthorized. Members cannot modify roles.' };
     }
 
@@ -56,8 +55,7 @@ export async function inviteNewUser(email: string, name: string, role: UserRole)
   try {
     const callerRole = await getUserRole();
 
-    // Member cannot invite
-    if (callerRole === 'Member') {
+    if (!USER_MANAGER_ROLES.includes(callerRole)) {
       return { error: 'Unauthorized. Members cannot invite users.' };
     }
 
@@ -68,16 +66,23 @@ export async function inviteNewUser(email: string, name: string, role: UserRole)
 
     const adminClient = createAdminClient();
 
-    const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
+    const { data: invited, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email, {
       data: {
         full_name: name,
         name: name,
-        role: role
       }
     });
 
     if (inviteError) {
       return { error: inviteError.message };
+    }
+
+    // Roles are only trusted from app_metadata (user_metadata is user-editable).
+    if (invited?.user) {
+      const { error: roleError } = await adminClient.auth.admin.updateUserById(invited.user.id, {
+        app_metadata: { role },
+      });
+      if (roleError) return { error: roleError.message };
     }
 
     revalidatePath('/settings');

@@ -1,69 +1,11 @@
 import { redirect } from 'next/navigation';
-import { getUserRole } from '@/lib/roles';
+import { getUserRole, USER_MANAGER_ROLES } from '@/lib/roles';
 import Link from 'next/link';
-import {
-  Activity,
-  Upload,
-  Users,
-  LayoutDashboard,
-  Settings,
-  ArrowRight,
-  Monitor,
-} from 'lucide-react';
+import { Settings, ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Shield } from 'lucide-react';
 
 const SETTINGS_CARDS = [
-  {
-    href: '/settings/members',
-    label: 'Manage Members',
-    description: 'Upload and manage the unified NG member list (Full Name, Email, Team, Group).',
-    icon: Users,
-    badge: 'Super Admin',
-    gradient: 'from-violet-500/10 via-purple-500/5 to-transparent',
-    border: 'hover:border-violet-500/30 dark:hover:border-violet-500/50',
-    iconBg: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 group-hover:bg-violet-600 group-hover:text-white',
-  },
-  {
-    href: '/settings/import-reports',
-    label: 'Import Reports',
-    description: 'Upload global Coursera XLSX exports and manage import history.',
-    icon: Upload,
-    badge: 'Super Admin',
-    gradient: 'from-blue-500/10 via-sky-500/5 to-transparent',
-    border: 'hover:border-blue-500/30 dark:hover:border-blue-500/50',
-    iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-600 group-hover:text-white',
-  },
-  {
-    href: '/settings/activity-logs',
-    label: 'Activity Logs',
-    description: 'Browse, filter, and search per-learner monthly activity records.',
-    icon: Activity,
-    badge: 'Admin',
-    gradient: 'from-cyan-500/10 via-teal-500/5 to-transparent',
-    border: 'hover:border-cyan-500/30 dark:hover:border-cyan-500/50',
-    iconBg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 group-hover:bg-cyan-600 group-hover:text-white',
-  },
-  {
-    href: '/settings/manage-contests',
-    label: 'Manage Contests',
-    description: 'Configure contest series, sub-contests with start & end dates.',
-    icon: LayoutDashboard,
-    badge: 'Admin',
-    gradient: 'from-orange-500/10 via-amber-500/5 to-transparent',
-    border: 'hover:border-orange-500/30 dark:hover:border-orange-500/50',
-    iconBg: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 group-hover:bg-orange-600 group-hover:text-white',
-  },
-  {
-    href: '/settings/preferences',
-    label: 'Dashboard Preferences',
-    description: 'Toggle Global vs Member analytics view visibility across the platform.',
-    icon: Monitor,
-    badge: 'Admin',
-    gradient: 'from-pink-500/10 via-rose-500/5 to-transparent',
-    border: 'hover:border-pink-500/30 dark:hover:border-pink-500/50',
-    iconBg: 'bg-pink-500/10 text-pink-600 dark:text-pink-400 group-hover:bg-pink-600 group-hover:text-white',
-  },
   {
     href: '/settings/users',
     label: 'User Roles',
@@ -78,7 +20,7 @@ const SETTINGS_CARDS = [
 
 export default async function SettingsPage() {
   const role = await getUserRole();
-  if (role === 'Member') redirect('/');
+  if (!USER_MANAGER_ROLES.includes(role)) redirect('/');
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
@@ -97,7 +39,7 @@ export default async function SettingsPage() {
               Settings
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Administrative tools for members, imports, activity tracking, and contest management.
+              Administrative tools for user access and roles.
             </p>
           </div>
         </div>
