@@ -24,6 +24,7 @@ import {
   Plus,
   UsersRound,
 } from 'lucide-react';
+import { describePeriod } from '@/lib/report-periods';
 
 interface AvailableMonth {
   month: string;
@@ -50,10 +51,6 @@ interface ParsedSheet {
   duplicateRows: number;
 }
 
-/** Weekly snapshot dates (YYYY-MM-DD) shown as e.g. "Week of 05 Nov 2026". */
-function formatMonth(dateStr: string) {
-  return `Week of ${new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })}`;
-}
 
 export default function ExportCourseraActivityPage() {
   // State
@@ -436,7 +433,7 @@ export default function ExportCourseraActivityPage() {
             >
               {availableMonths.map((m) => (
                 <option key={m.month} value={m.month}>
-                  {formatMonth(m.month)}
+                  {describePeriod(m.month, availableMonths[availableMonths.length - 1]?.month).label}
                 </option>
               ))}
               <option value="all">All snapshots (full history)</option>
@@ -569,11 +566,20 @@ export default function ExportCourseraActivityPage() {
           <div className="pt-2">
             {importMode && (
               <div className="space-y-3 bg-muted/20 border border-border/60 rounded-xl p-4">
-                <div>
-                  <span className="text-xs font-medium text-foreground block">Upload cohort list (.xlsx)</span>
-                  <span className="text-[11px] text-muted-foreground">
-                    Columns: &apos;Full Name&apos; and an email column (e.g. &apos;NG email ID&apos;). Each sheet becomes one cohort, named after the sheet; you can rename it below.
-                  </span>
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                  <div>
+                    <span className="text-xs font-medium text-foreground block">Upload cohort list (.xlsx)</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      Columns: &apos;Full Name&apos; and an email column (e.g. &apos;NG email ID&apos;). Each sheet becomes one cohort, named after the sheet; you can rename it below.
+                    </span>
+                  </div>
+                  <a
+                    href="/templates/cohort_import_template.xlsx"
+                    download
+                    className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-medium shrink-0"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Download Template (.xlsx)
+                  </a>
                 </div>
 
                 {!parsedFileName ? (

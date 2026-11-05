@@ -42,6 +42,8 @@ export function normaliseMembers(rows: { full_name?: string | null; email?: stri
       invalidRows++;
       continue;
     }
+    // Template example rows use the reserved example.org domain.
+    if (email.endsWith('@example.org')) continue;
     const full_name = String(r.full_name ?? '').trim() || null;
     const prev = seen.get(email);
     if (prev) {
@@ -89,7 +91,8 @@ export async function parseCohortWorkbook(buffer: ArrayBuffer): Promise<ParsedCo
     });
 
     const parsed = normaliseMembers(rows);
-    if (parsed.members.length || parsed.invalidRows) out.push({ sheet: ws.name, ...parsed });
+    // Sheets without any real emails (e.g. an Instructions sheet) are skipped.
+    if (parsed.members.length) out.push({ sheet: ws.name, ...parsed });
   }
   return out;
 }

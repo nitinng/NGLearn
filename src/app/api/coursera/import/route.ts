@@ -5,6 +5,7 @@ import ExcelJS from 'exceljs';
 import { Readable } from 'stream';
 import { denyApiUnlessAccess } from '@/lib/api-guard';
 import { computeMetricsBlob } from '@/lib/coursera-metrics';
+import { addDays, describePeriod, isSunday, nextExpectedPeriod, weekHasEnded } from '@/lib/report-periods';
 
 export const maxDuration = 300;
 
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
   const file = formData.get('file') as File | null;
   const snapshotMonth = (formData.get('snapshotMonth') as string | null)?.trim();
   const uploadedBy = (formData.get('uploadedBy') as string | null)?.trim() || null;
+  const acknowledgeWarnings = formData.get('acknowledgeWarnings') === 'true';
 
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   if (!snapshotMonth || !/^\d{4}-\d{2}-\d{2}$/.test(snapshotMonth)) {
@@ -94,9 +96,38 @@ export async function POST(request: NextRequest) {
   if (isNaN(parsedDate.getTime())) {
     return NextResponse.json({ error: 'snapshotMonth is not a valid date' }, { status: 400 });
   }
-  if (snapshotMonth > new Date().toISOString().slice(0, 10)) {
-    return NextResponse.json({ error: 'Snapshot date cannot be in the future' }, { status: 400 });
+  // ── Weekly period rules: one lifetime baseline ending on a Sunday, then
+  // consecutive Monday→Sunday weeks with no gaps and no overlaps.
+  const { data: existingSnaps, error: snapListErr } = await supabase
+    .from('coursera_computed_metrics')
+    .select('month')
+    .order('month', { ascending: true });
+  if (snapListErr) {
+    return NextResponse.json({ error: `Could not check existing reports: ${snapListErr.message}` }, { status: 500 });
   }
+  const existingDates = (existingSnaps ?? []).map(r => r.month as string);
+  if (!isSunday(snapshotMonth)) {
+    return NextResponse.json({ error: 'Reports must end on a Sunday.' }, { status: 400 });
+  }
+  if (!weekHasEnded(snapshotMonth)) {
+    return NextResponse.json({
+      error: `The week ending ${snapshotMonth} is not over yet. Generate and import it from Monday ${addDays(snapshotMonth, 1)}.`
+    }, { status: 400 });
+  }
+  if (existingDates.length > 0) {
+    const expected = nextExpectedPeriod(existingDates);
+    if (expected.kind !== 'week' || !isSunday(existingDates[0])) {
+      return NextResponse.json({
+        error: 'Existing reports do not follow the Monday–Sunday schedule. Roll them back and start again with a baseline report.'
+      }, { status: 409 });
+    }
+    if (snapshotMonth !== expected.end) {
+      return NextResponse.json({
+        error: `The next report must be ${expected.label}. Weeks are imported in order with no gaps or overlaps.`
+      }, { status: 409 });
+    }
+  }
+  const period = describePeriod(snapshotMonth, existingDates[0] ?? snapshotMonth);
   if (!file.name.toLowerCase().endsWith('.xlsx')) {
     return NextResponse.json({ error: 'Only .xlsx files are supported' }, { status: 400 });
   }
@@ -193,7 +224,11 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const validRows = rawRows.filter(r => r['Email'] && r['Course ID']);
+  // Template example rows use the reserved example.org domain and are ignored.
+  const validRows = rawRows.filter(r =>
+    r['Email'] && r['Course ID'] &&
+    !String(r['Email']).trim().toLowerCase().endsWith('@example.org')
+  );
   const skippedRows = totalRows - validRows.length;
 
   // ── STEP 3: Transform rows ───────────────────────────────────────────────
@@ -232,6 +267,34 @@ export async function POST(request: NextRequest) {
     }
   }
   const finalRows = Array.from(seen.values());
+
+  // ── STEP 3.6: Overlap check ─ nothing in the file may be dated after the period's Sunday.
+  // Coursera timestamps are UTC; anything from Monday 00:00 UTC onward belongs to next week.
+  const periodEndExclusive = new Date(`${addDays(snapshotMonth, 1)}T00:00:00Z`).getTime();
+  const lateRows = finalRows.filter(r =>
+    (r.last_activity_time && new Date(r.last_activity_time).getTime() >= periodEndExclusive) ||
+    (r.completion_time && new Date(r.completion_time).getTime() >= periodEndExclusive)
+  );
+  const warnings: string[] = [];
+  if (lateRows.length > 0) {
+    const latest = lateRows
+      .map(r => [r.last_activity_time, r.completion_time].filter(Boolean).map(t => new Date(t as string).getTime()))
+      .flat()
+      .reduce((a, b) => Math.max(a, b), 0);
+    warnings.push(
+      `${lateRows.length} row(s) have activity after ${period.end} (latest ${new Date(latest).toISOString().replace('T', ' ').slice(0, 16)} UTC). ` +
+      `The report seems to include Monday or later, which would push those hours into the wrong week. Regenerate it in Coursera ending on Sunday ${period.end}.`
+    );
+  }
+  const fileDate = file.name.match(/(\d{4}-\d{2}-\d{2})/)?.[1];
+  if (fileDate && fileDate <= snapshotMonth) {
+    warnings.push(
+      `The file name says it was generated on ${fileDate}, before the week ending ${snapshotMonth} was over, so the last day(s) may be missing. Generate reports on Monday or later.`
+    );
+  }
+  if (warnings.length > 0 && !acknowledgeWarnings) {
+    return NextResponse.json({ error: 'This report may not match its week.', code: 'period_warnings', warnings, period: period.label }, { status: 422 });
+  }
 
   // Find previous snapshot month early for carry-forward
   const { data: prevMonthRow } = await supabase
@@ -416,6 +479,7 @@ export async function POST(request: NextRequest) {
     learners_affected: byEmail.size,
     action:            'import',
     status:            'success',
+    error_message:     warnings.length ? `Imported with acknowledged warnings: ${warnings.join(' | ')}` : null,
     duration_ms:       Date.now() - startTime,
     imported_by:       uploadedBy,
   });
@@ -425,6 +489,8 @@ export async function POST(request: NextRequest) {
     success: true,
     rowsImported: finalRows.length,
     learnersAffected: byEmail.size,
+    period: period.label,
+    warningsAcknowledged: warnings,
     skippedRows: totalRows - finalRows.length,
     durationMs: Date.now() - startTime,
     month: periodKey(snapshotMonth),

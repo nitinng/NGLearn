@@ -12,6 +12,7 @@ import {
 import { CheckCircle2, XCircle, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { describePeriod } from '@/lib/report-periods';
 
 interface MonthRecord {
   month: string;
@@ -42,6 +43,8 @@ interface Course {
 interface Props {
   monthlyHistory: MonthRecord[];
   courses: Course[];
+  /** Oldest snapshot overall (the baseline), for "Week N" labels */
+  baselineDate?: string | null;
 }
 
 function formatMonthShort(dateStr: string) {
@@ -56,14 +59,14 @@ function formatMonth(dateStr: string) {
   return new Date(dateStr + 'T12:00:00Z').toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
-export default function LearnerDetailClient({ monthlyHistory, courses }: Props) {
+export default function LearnerDetailClient({ monthlyHistory, courses, baselineDate }: Props) {
   const [isCourseListExpanded, setIsCourseListExpanded] = useState(false);
   const firstMonth = monthlyHistory[0]?.month;
 
   const chartData = monthlyHistory
-    .filter(r => r.month !== firstMonth)
+    .filter(r => r.month !== (baselineDate ?? firstMonth))
     .map(r => ({
-      label: formatMonthShort(r.month),
+      label: describePeriod(r.month, baselineDate ?? firstMonth).shortLabel,
       monthly_hours: r.monthly_hours,
       is_compliant: r.is_compliant,
     }));
@@ -104,7 +107,7 @@ export default function LearnerDetailClient({ monthlyHistory, courses }: Props) 
             <tbody>
               {[...monthlyHistory].reverse().map(r => (
                 <tr key={r.month} className="border-b border-border/40 last:border-0">
-                  <td className="py-2 pr-4">{r.month === firstMonth || formatMonthShort(r.month) === 'Mar 26' ? `Lifetime till ${formatMonthShort(r.month)}` : formatMonth(r.month)}</td>
+                  <td className="py-2 pr-4">{describePeriod(r.month, baselineDate ?? firstMonth).label}</td>
                   <td className="py-2 px-3 text-right tabular-nums">{r.monthly_hours.toFixed(1)}</td>
                   <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">{r.cumulative_hours.toFixed(1)}</td>
                   <td className="py-2 px-3 text-center">

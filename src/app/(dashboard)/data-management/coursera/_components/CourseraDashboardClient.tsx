@@ -15,6 +15,7 @@ import {
   AlertTriangle, UserX, Zap, Shield,
 } from 'lucide-react';
 import Link from 'next/link';
+import { describePeriod } from '@/lib/report-periods';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,11 +117,11 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
 
   const getLabel = (monthStr: string) => {
     if (availableMonthLabels && availableMonthLabels[monthStr]) return availableMonthLabels[monthStr];
-    return isFirstImport(monthStr) ? `Baseline ${formatMonthShort(monthStr)}` : formatMonth(monthStr);
+    return describePeriod(monthStr, firstImportMonth).label;
   };
   const getShortLabel = (monthStr: string) => {
     if (availableMonthLabels && availableMonthLabels[monthStr]) return availableMonthLabels[monthStr];
-    return isFirstImport(monthStr) ? `Baseline ${formatMonthShort(monthStr)}` : formatMonthShort(monthStr);
+    return describePeriod(monthStr, firstImportMonth).shortLabel;
   };
 
   // Distribution chart data

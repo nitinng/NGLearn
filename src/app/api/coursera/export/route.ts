@@ -10,6 +10,7 @@ import {
 } from '@/lib/coursera-api';
 import ExcelJS from 'exceljs';
 import { denyApiUnlessAccess } from '@/lib/api-guard';
+import { describePeriod } from '@/lib/report-periods';
 
 export const maxDuration = 300;
 
@@ -28,17 +29,12 @@ async function fetchAllSupabase(queryBuilder: any) {
   return allData;
 }
 
-/** Snapshot dates are weekly export dates (YYYY-MM-DD); show them as e.g. "05 Nov 2026". */
-function formatMonthForReport(dateStr: string | null | undefined): string {
+/** Snapshot dates are Sundays; label them "Baseline · …" or "Week N · Mon … – Sun …". */
+function formatMonthForReport(dateStr: string | null | undefined, baseline?: string | null): string {
   if (!dateStr) return '—';
-  try {
-    const cleanStr = String(dateStr).substring(0, 10);
-    const d = new Date(cleanStr + 'T12:00:00Z');
-    if (isNaN(d.getTime())) return String(dateStr);
-    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' });
-  } catch {
-    return String(dateStr);
-  }
+  const d = String(dateStr).substring(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return String(dateStr);
+  return describePeriod(d, baseline ?? d).label;
 }
 
 function formatDateTimeForReport(dateVal: string | number | Date | null | undefined): string {
@@ -109,6 +105,15 @@ export async function POST(request: NextRequest) {
     includeCourseBreakdown = true,
     includeUnmatchedSheet = true,
   } = body;
+
+  // Oldest snapshot = baseline, for "Week N" labels.
+  const { data: baselineRow } = await supabase
+    .from('coursera_computed_metrics')
+    .select('month')
+    .order('month', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const baselineDate: string | null = baselineRow?.month ?? null;
 
   // Cohort scope: the cohort's member list is the email list.
   let emails: string[] = requestEmails;
@@ -256,7 +261,7 @@ export async function POST(request: NextRequest) {
             }
           }
 
-          const formattedMonth = formatMonthForReport(os.snapshot_month);
+          const formattedMonth = formatMonthForReport(os.snapshot_month, baselineDate);
           if (!info.months.includes(formattedMonth)) {
             info.months.push(formattedMonth);
           }
@@ -312,7 +317,7 @@ export async function POST(request: NextRequest) {
   workbook.creator = 'NGLearn';
   workbook.created = new Date();
 
-  const formattedSelectedMonth = (month === 'all' ? 'All Snapshots' : `Snapshot ${formatMonthForReport(month)}`) + (cohortName ? `   |   Cohort: ${cohortName}` : '');
+  const formattedSelectedMonth = (month === 'all' ? 'All Snapshots' : formatMonthForReport(month, baselineDate)) + (cohortName ? `   |   Cohort: ${cohortName}` : '');
   const generatedTimestamp = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -747,7 +752,7 @@ export async function POST(request: NextRequest) {
   wsLearners.columns = [
     { header: 'Learner Name', key: 'name', width: 25 },
     { header: 'Email Address', key: 'email', width: 35 },
-    { header: 'Snapshot Date', key: 'month', width: 16 },
+    { header: 'Week', key: 'month', width: 40 },
     { header: 'Hours This Week', key: 'monthly_hours', width: 16 },
     { header: 'Cumulative Hours', key: 'cumulative_hours', width: 18 },
     { header: 'Courses Enrolled', key: 'courses_enrolled', width: 18 },
@@ -773,7 +778,7 @@ export async function POST(request: NextRequest) {
     const row = wsLearners.addRow({
       name: l.name || emailToAlumniName.get(l.email.toLowerCase().trim()) || '—',
       email: l.email,
-      month: formatMonthForReport(l.month),
+      month: formatMonthForReport(l.month, baselineDate),
       monthly_hours: Number(l.monthly_hours) || 0,
       cumulative_hours: Number(l.cumulative_hours) || 0,
       courses_enrolled: Number(l.courses_enrolled) || 0,
@@ -805,7 +810,7 @@ export async function POST(request: NextRequest) {
     wsSnapshots.columns = [
       { header: 'Learner Name', key: 'name', width: 25 },
       { header: 'Email Address', key: 'email', width: 35 },
-      { header: 'Snapshot Date', key: 'snapshot_month', width: 16 },
+      { header: 'Week', key: 'snapshot_month', width: 40 },
       { header: 'Course Name', key: 'course_name', width: 40 },
       { header: 'Course ID', key: 'course_id', width: 26 },
       { header: 'University / Partner', key: 'university', width: 24 },
@@ -835,7 +840,7 @@ export async function POST(request: NextRequest) {
       const row = wsSnapshots.addRow({
         name: s.name || emailToAlumniName.get(s.email.toLowerCase().trim()) || '—',
         email: s.email,
-        snapshot_month: formatMonthForReport(s.snapshot_month),
+        snapshot_month: formatMonthForReport(s.snapshot_month, baselineDate),
         course_name: s.course_name ?? '—',
         course_id: s.course_id,
         university: s.university ?? '—',
