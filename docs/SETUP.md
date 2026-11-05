@@ -101,7 +101,7 @@ Reports follow a fixed Monday → Sunday schedule so no day is counted twice:
    *Learner activity date range → Custom → Start 04/01/2020 · End 11/01/2026* (the Sunday). Always use the same
    start date so every learner is included. The file's contents are not checked against dates (Coursera exports
    carry data up to the moment they're downloaded), so no warnings appear after upload.
-4. Mistake? Roll back the newest week and import it again.
+4. Mistake? Roll back the newest week and import it again. The baseline cannot be rolled back.
 5. **Dashboard / Activity Logs**: pick a cohort tab (or "All cohorts"); weeks are labelled "Wk N · dates".
 6. **Export Activity Report**: pick the week, pick a cohort card, optionally **Verify Users**, export.
 7. New cohort: on the Export page click **Import Cohort** and upload an .xlsx with `Full Name` and an

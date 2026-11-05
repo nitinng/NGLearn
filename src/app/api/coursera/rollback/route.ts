@@ -41,6 +41,17 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'No successful import found for this snapshot date' }, { status: 404 });
   }
 
+  // STEP 2b: The baseline (oldest snapshot) is permanent; every week is measured against it.
+  const { data: oldest } = await supabase
+    .from('coursera_computed_metrics')
+    .select('month')
+    .order('month', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (oldest?.month === snapshotMonth) {
+    return NextResponse.json({ error: 'The baseline report cannot be rolled back.' }, { status: 403 });
+  }
+
   // STEP 3: Block if a newer month exists
   const { data: newerMonth } = await supabase
     .from('coursera_snapshots')
