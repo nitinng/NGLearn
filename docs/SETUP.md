@@ -97,11 +97,10 @@ Reports follow a fixed Monday → Sunday schedule so no day is counted twice:
    this week, since Coursera can't export a past week), the skipped weeks are merged into one period,
    labelled e.g. "Weeks 1–31 · Mon 30 Mar – Sun 1 Nov 2026", and the weekly hours target is multiplied
    by the number of weeks. Uploads only move forward; nothing is counted twice.
-3. **Overlap check (India time):** a week ends at Sunday 23:59 IST. Coursera exports run up to the moment they
-   are downloaded, so an export taken Monday–Wednesday has a little activity after Sunday: that is shown as a
-   notice and imports normally. If the file has activity much later (more than 3 days after the Sunday), it's
-   a newer export than the week chosen; the import stops and suggests the right Sunday ("Import anyway" is
-   still possible and is logged).
+3. **Coursera date range:** the page shows the exact range to pick for the selected period, e.g.
+   *Learner activity date range → Custom → Start 04/01/2020 · End 11/01/2026* (the Sunday). Always use the same
+   start date so every learner is included. The file's contents are not checked against dates (Coursera exports
+   carry data up to the moment they're downloaded), so no warnings appear after upload.
 4. Mistake? Roll back the newest week and import it again.
 5. **Dashboard / Activity Logs**: pick a cohort tab (or "All cohorts"); weeks are labelled "Wk N · dates".
 6. **Export Activity Report**: pick the week, pick a cohort card, optionally **Verify Users**, export.
