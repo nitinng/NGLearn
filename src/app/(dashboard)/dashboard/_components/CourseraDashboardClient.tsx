@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import {
   Users, Activity, Clock, BookOpen, CheckSquare, TrendingUp, TrendingDown, Award,
-  AlertTriangle, UserX, Zap, Shield,
+  UserX, Zap, Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 import { makePeriodLabeler } from '@/lib/report-periods';
@@ -193,20 +193,6 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
         <BaselineView m={m} label={getLabel(selectedMonth)} />
       ) : (
       <>
-      {/* Alerts */}
-      {(m.alerts ?? []).length > 0 && (
-        <div className="space-y-2">
-          {m.alerts.map((alert: { type: string; count: number; threshold?: number }, i: number) => (
-            <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              {alert.type === 'below_target' && `${alert.count.toLocaleString()} learners active but below ${alert.threshold}h target this week`}
-              {alert.type === 'inactive_30' && `${alert.count.toLocaleString()} learners have had no activity in 30+ days`}
-              {alert.type === 'inactive_90' && `${alert.count.toLocaleString()} learners have had no activity in 90+ days`}
-            </div>
-          ))}
-        </div>
-      )}
-
       {/* Row 1: Learner KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiCard label="Total Learners" value={fmt(m.total_learners)} icon={Users}
