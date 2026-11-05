@@ -14,7 +14,7 @@ export default async function CourseraDashboardPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const denied = await denyUnlessAccess('data_management.coursera', 'view', { backHref: '/', backLabel: 'Back to dashboard' });
+  const denied = await denyUnlessAccess('data_management.coursera', 'view', { backHref: '/', backLabel: 'Back to home' });
   if (denied) return denied;
 
   const { month: monthParam, cohort: cohortParam } = await searchParams;
@@ -39,7 +39,7 @@ export default async function CourseraDashboardPage({
             : 'Upload the weekly Coursera export to start.'}
         </p>
         <Link
-          href={cohorts.length === 0 ? '/data-management/coursera/export' : '/data-management/import-coursera'}
+          href={cohorts.length === 0 ? '/export' : '/import-reports'}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
         >
           {cohorts.length === 0 ? 'Import a cohort →' : 'Import a weekly report →'}
@@ -67,7 +67,7 @@ export default async function CourseraDashboardPage({
         <CohortPicker
           cohorts={cohorts}
           selected={cohortId}
-          hrefFor={id => `/data-management/coursera?month=${targetMonth}${id === 'all' ? '' : `&cohort=${id}`}`}
+          hrefFor={id => `/dashboard?month=${targetMonth}${id === 'all' ? '' : `&cohort=${id}`}`}
         />
       }
     />

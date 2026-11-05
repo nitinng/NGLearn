@@ -71,6 +71,11 @@ export async function DELETE(request: NextRequest) {
     .eq('month', monthFirst);
   if (e2) return NextResponse.json({ error: `Failed to delete learner_month: ${e2.message}` }, { status: 500 });
 
+  for (const table of ['coursera_specialization_snapshots', 'coursera_program_snapshots', 'coursera_clip_snapshots']) {
+    const { error } = await supabase.from(table).delete().eq('snapshot_month', snapshotMonth);
+    if (error) return NextResponse.json({ error: `Failed to delete ${table}: ${error.message}` }, { status: 500 });
+  }
+
   const { error: e3 } = await supabase
     .from('coursera_snapshots')
     .delete()

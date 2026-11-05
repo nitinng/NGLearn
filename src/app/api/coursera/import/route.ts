@@ -6,6 +6,8 @@ import { Readable } from 'stream';
 import { denyApiUnlessAccess } from '@/lib/api-guard';
 import { computeMetricsBlob } from '@/lib/coursera-metrics';
 import { addDays, describePeriod, isSunday, nextExpectedPeriod, weekHasEnded } from '@/lib/report-periods';
+import { courseExtras, parseProgramActivity, parseSpecializations, parseVideoClips } from '@/lib/coursera-extra-sheets';
+import { IMPORT_BUCKET } from '@/lib/coursera-storage';
 
 export const maxDuration = 300;
 
@@ -83,12 +85,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to parse form data' }, { status: 400 });
   }
 
+  // The file arrives either directly (small files) or, for large Coursera
+  // exports, as a path in the private Storage bucket that the browser uploaded to.
   const file = formData.get('file') as File | null;
+  const storagePath = (formData.get('storagePath') as string | null)?.trim() || null;
+  if (storagePath && !/^imports\/[A-Za-z0-9._-]+\.xlsx$/.test(storagePath)) {
+    return NextResponse.json({ error: 'Invalid upload path' }, { status: 400 });
+  }
+  const fileName = file?.name ?? (formData.get('fileName') as string | null)?.trim() ?? storagePath?.split('/').pop() ?? '';
+  let fileSize = file?.size ?? Number(formData.get('fileSize') ?? 0);
   const snapshotMonth = (formData.get('snapshotMonth') as string | null)?.trim();
   const uploadedBy = (formData.get('uploadedBy') as string | null)?.trim() || null;
   const acknowledgeWarnings = formData.get('acknowledgeWarnings') === 'true';
 
-  if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+  if (!file && !storagePath) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   if (!snapshotMonth || !/^\d{4}-\d{2}-\d{2}$/.test(snapshotMonth)) {
     return NextResponse.json({ error: 'snapshotMonth must be in YYYY-MM-DD format' }, { status: 400 });
   }
@@ -128,10 +138,10 @@ export async function POST(request: NextRequest) {
     }
   }
   const period = describePeriod(snapshotMonth, existingDates[0] ?? snapshotMonth);
-  if (!file.name.toLowerCase().endsWith('.xlsx')) {
+  if (!fileName.toLowerCase().endsWith('.xlsx')) {
     return NextResponse.json({ error: 'Only .xlsx files are supported' }, { status: 400 });
   }
-  if (file.size > MAX_FILE_SIZE_BYTES) {
+  if (fileSize > MAX_FILE_SIZE_BYTES) {
     return NextResponse.json({ error: 'File size must be less than 25MB' }, { status: 400 });
   }
 
@@ -151,10 +161,26 @@ export async function POST(request: NextRequest) {
   }
 
   // ── STEP 1: Parse the XLSX file ──────────────────────────────────────────
-  const buffer = Buffer.from(await file.arrayBuffer());
+  let buffer: Buffer;
+  if (file) {
+    buffer = Buffer.from(await file.arrayBuffer());
+  } else {
+    const { data: blob, error: dlErr } = await supabase.storage.from(IMPORT_BUCKET).download(storagePath!);
+    // The bytes are in memory now; remove the upload either way.
+    await supabase.storage.from(IMPORT_BUCKET).remove([storagePath!]);
+    if (dlErr || !blob) {
+      return NextResponse.json({ error: `Could not read the uploaded file: ${dlErr?.message ?? 'not found'}` }, { status: 400 });
+    }
+    buffer = Buffer.from(await blob.arrayBuffer());
+    fileSize = buffer.length;
+    if (fileSize > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json({ error: 'File size must be less than 25MB' }, { status: 400 });
+    }
+  }
+  let workbook: ExcelJS.Workbook;
   let rawRows: Record<string, any>[] = [];
   try {
-    const workbook = new ExcelJS.Workbook();
+    workbook = new ExcelJS.Workbook();
     const stream = Readable.from(buffer);
     await workbook.xlsx.read(stream);
 
@@ -252,6 +278,7 @@ export async function POST(request: NextRequest) {
     completion_time:           parseDate(row['Completion Time']),
     course_grade:              row['Course Grade'] != null ? parseFloat(row['Course Grade']) : null,
     certificate_url:           row['Course Certificate URL']?.toString().trim() || null,
+    ...courseExtras(row),
   }));
 
   // ── STEP 3.5: Deduplicate rows ───────────────────────────────────────────
@@ -286,7 +313,7 @@ export async function POST(request: NextRequest) {
       `The report seems to include Monday or later, which would push those hours into the wrong week. Regenerate it in Coursera ending on Sunday ${period.end}.`
     );
   }
-  const fileDate = file.name.match(/(\d{4}-\d{2}-\d{2})/)?.[1];
+  const fileDate = fileName.match(/(\d{4}-\d{2}-\d{2})/)?.[1];
   if (fileDate && fileDate <= snapshotMonth) {
     warnings.push(
       `The file name says it was generated on ${fileDate}, before the week ending ${snapshotMonth} was over, so the last day(s) may be missing. Generate reports on Monday or later.`
@@ -340,6 +367,15 @@ export async function POST(request: NextRequest) {
             completion_time: p.completion_time ? new Date(p.completion_time).toISOString() : null,
             course_grade: p.course_grade,
             certificate_url: p.certificate_url,
+            external_id: p.external_id ?? null,
+            class_start_time: p.class_start_time ? new Date(p.class_start_time).toISOString() : null,
+            class_end_time: p.class_end_time ? new Date(p.class_end_time).toISOString() : null,
+            collection_id: p.collection_id ?? null,
+            collection_name: p.collection_name ?? null,
+            contract: p.contract ?? null,
+            contract_active: p.contract_active ?? null,
+            business_unit: p.business_unit ?? null,
+            job_title: p.job_title ?? null,
           });
         }
       }
@@ -352,6 +388,26 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 500 });
+  }
+
+  // ── STEP 4b: Extra sheets (specializations, program membership, video clips) ──
+  // Optional in the export; stored for every learner, shown only for cohort members.
+  const extraCounts = { specializations: 0, programMembers: 0, videoClips: 0 };
+  try {
+    const extras: [string, Record<string, unknown>[], string, keyof typeof extraCounts][] = [
+      ['coursera_specialization_snapshots', parseSpecializations(workbook, snapshotMonth), 'snapshot_month,email,specialization_slug', 'specializations'],
+      ['coursera_program_snapshots', parseProgramActivity(workbook, snapshotMonth), 'snapshot_month,email', 'programMembers'],
+      ['coursera_clip_snapshots', parseVideoClips(workbook, snapshotMonth), 'snapshot_month,email,clip_name', 'videoClips'],
+    ];
+    for (const [table, rows, conflict, key] of extras) {
+      if (rows.length) await upsertInBatches(supabase, table, rows, conflict);
+      extraCounts[key] = rows.length;
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({
+      error: `Course data was saved, but the extra sheets failed: ${msg}. Has migration 20261106000001_beta_report_data.sql been run? Roll back this week and import again after fixing.`
+    }, { status: 500 });
   }
 
   // ── STEP 5: Compute monthly metrics ─────────────────────────────────────
@@ -473,8 +529,8 @@ export async function POST(request: NextRequest) {
   // ── STEP 8: Write import log ─────────────────────────────────────────────
   await supabase.from('coursera_import_log').insert({
     snapshot_month:    snapshotMonth,
-    filename:          file.name,
-    file_size_bytes:   file.size,
+    filename:          fileName,
+    file_size_bytes:   fileSize,
     rows_imported:     finalRows.length,
     learners_affected: byEmail.size,
     action:            'import',
@@ -490,6 +546,7 @@ export async function POST(request: NextRequest) {
     rowsImported: finalRows.length,
     learnersAffected: byEmail.size,
     period: period.label,
+    extraSheets: extraCounts,
     warningsAcknowledged: warnings,
     skippedRows: totalRows - finalRows.length,
     durationMs: Date.now() - startTime,

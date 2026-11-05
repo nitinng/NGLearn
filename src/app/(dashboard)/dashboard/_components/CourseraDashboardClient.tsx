@@ -148,13 +148,13 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/data-management/coursera/activity-logs" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
+          <Link href="/activity-logs" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
             Activity Logs
           </Link>
-          <Link href="/data-management/coursera/export" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
+          <Link href="/export" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
             Export Report
           </Link>
-          <Link href="/data-management/import-coursera" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
+          <Link href="/import-reports" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
             Import Reports
           </Link>
         </div>
@@ -169,7 +169,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
             <button
               key={month}
               onClick={() => {
-                const path = basePath ?? '/data-management/coursera';
+                const path = basePath ?? '/dashboard';
                 const param = queryParam ?? 'month';
                 router.push(`${path}?${param}=${month}${extraQuery ? `&${extraQuery}` : ''}`);
               }}
@@ -305,7 +305,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
             {(m.top_learners_by_hours ?? []).slice(0, 10).map((l: { email: string; name: string; monthly_hours: number; cumulative_hours: number }, i: number) => (
               <Link
                 key={l.email}
-                href={`/data-management/coursera/learner/${encodeURIComponent(l.email)}`}
+                href={`/learners/${encodeURIComponent(l.email)}`}
                 className="flex items-center gap-3 px-5 py-3 hover:bg-accent/30 transition-colors"
               >
                 <span className="text-xs font-bold text-muted-foreground w-5 shrink-0 tabular-nums">{i + 1}</span>
@@ -330,7 +330,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
               (m.learners_below_target ?? []).slice(0, 10).map((l: { email: string; name: string; monthly_hours: number }) => (
                 <Link
                   key={l.email}
-                  href={`/data-management/coursera/learner/${encodeURIComponent(l.email)}`}
+                  href={`/learners/${encodeURIComponent(l.email)}`}
                   className="flex items-center gap-3 px-5 py-3 hover:bg-accent/30 transition-colors"
                 >
                   <div className="flex-1 min-w-0">

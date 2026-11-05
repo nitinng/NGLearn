@@ -28,7 +28,7 @@ export function SiteHeader({
   const { toggleSidebar } = useSidebar()
   const pathname = usePathname()
 
-  const activePage = pathname === "/" ? "Dashboard" :
+  const activePage = pathname === "/" ? "Home" :
     pathname.split('/').pop()?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || "Dashboard"
 
   return (
@@ -49,7 +49,7 @@ export function SiteHeader({
               <>
                 <BreadcrumbItem>
                   <BreadcrumbLink href="/" className="text-muted-foreground hover:text-foreground">
-                    Dashboard
+                    Home
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator />

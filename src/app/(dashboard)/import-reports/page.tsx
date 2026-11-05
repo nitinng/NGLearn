@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { IMPORT_BUCKET } from '@/lib/coursera-storage';
 import { describePeriod, nextExpectedPeriod, recentCompletedSundays, weekHasEnded, addDays } from '@/lib/report-periods';
 import { Upload, FileSpreadsheet, Download, RotateCcw, RefreshCw, CheckCircle2, XCircle, AlertTriangle, Clock } from 'lucide-react';
 
@@ -27,6 +28,7 @@ interface UploadResult {
   durationMs: number;
   month: string;
   period?: string;
+  extraSheets?: { specializations: number; programMembers: number; videoClips: number };
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -126,8 +128,35 @@ export default function ImportCourseraPage() {
     if (!acknowledge) setWarnings(null);
 
     const { data: { user } } = await supabase.auth.getUser();
+
+    // 1. Upload straight to private Storage (exports are often >4.5 MB, too big for an API request).
+    const urlRes = await fetch('/api/coursera/import/upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fileName: file.name, fileSize: file.size }),
+    });
+    const urlJson = await urlRes.json().catch(() => ({}));
+    if (!urlRes.ok) {
+      setUploadError(urlJson.error ?? 'Could not start the upload.');
+      setUploading(false);
+      return;
+    }
+    const { error: storageErr } = await supabase.storage
+      .from(IMPORT_BUCKET)
+      .uploadToSignedUrl(urlJson.path, urlJson.token, file, {
+        contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+    if (storageErr) {
+      setUploadError(`Upload failed: ${storageErr.message}`);
+      setUploading(false);
+      return;
+    }
+
+    // 2. Process it.
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('storagePath', urlJson.path);
+    fd.append('fileName', file.name);
+    fd.append('fileSize', String(file.size));
     fd.append('snapshotMonth', selectedMonth);
     if (user?.email) fd.append('uploadedBy', user.email);
     if (acknowledge) fd.append('acknowledgeWarnings', 'true');
@@ -334,6 +363,12 @@ export default function ImportCourseraPage() {
               <div><span className="text-muted-foreground">Learners</span><br /><strong>{uploadResult.learnersAffected.toLocaleString()}</strong></div>
               <div><span className="text-muted-foreground">Duration</span><br /><strong>{formatDuration(uploadResult.durationMs)}</strong></div>
             </div>
+            {uploadResult.extraSheets && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Also saved for the beta report: {uploadResult.extraSheets.specializations.toLocaleString()} specialization rows,{' '}
+                {uploadResult.extraSheets.programMembers.toLocaleString()} program members, {uploadResult.extraSheets.videoClips.toLocaleString()} video clip rows.
+              </p>
+            )}
           </div>
         )}
 

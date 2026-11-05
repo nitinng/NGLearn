@@ -4,9 +4,9 @@ import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/ca
 
 const LINKS = [
   {
-    href: '/data-management/coursera',
+    href: '/dashboard',
     label: 'Dashboard',
-    description: 'Analytics overview: active learners, hours, compliance, and license usage for each weekly snapshot.',
+    description: 'Cohort analytics for each Monday–Sunday week: active learners, hours, on-target learners and trends.',
     icon: BarChart2,
     badge: 'View',
     edit: false,
@@ -15,7 +15,7 @@ const LINKS = [
     iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white',
   },
   {
-    href: '/data-management/coursera/activity-logs',
+    href: '/activity-logs',
     label: 'Activity Logs',
     description: 'Browse, filter, and search per-learner weekly activity records.',
     icon: Activity,
@@ -26,7 +26,7 @@ const LINKS = [
     iconBg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 group-hover:bg-cyan-600 group-hover:text-white',
   },
   {
-    href: '/data-management/coursera/export',
+    href: '/export',
     label: 'Export Activity Report',
     description: 'Pick a cohort (or import a new one) and export its learner activity and course breakdown.',
     icon: FileDown,
@@ -37,7 +37,7 @@ const LINKS = [
     iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white',
   },
   {
-    href: '/data-management/import-coursera',
+    href: '/import-reports',
     label: 'Import Reports',
     description: 'Upload the weekly Coursera XLSX export and manage import history.',
     icon: Upload,

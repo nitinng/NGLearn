@@ -23,6 +23,7 @@ import {
   LayoutDashboard,
   Plus,
   UsersRound,
+  Sparkles,
 } from 'lucide-react';
 import { describePeriod } from '@/lib/report-periods';
 
@@ -74,6 +75,7 @@ export default function ExportCourseraActivityPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Options & export state
+  const [reportVariant, setReportVariant] = useState<'classic' | 'beta'>('classic');
   const [includeMemberDetailsSheet, setIncludeMemberDetailsSheet] = useState(true);
   const [includeCourseBreakdown, setIncludeCourseBreakdown] = useState(true);
   const [includeUnmatchedSheet, setIncludeUnmatchedSheet] = useState(true);
@@ -334,6 +336,7 @@ export default function ExportCourseraActivityPage() {
           month: selectedMonth || 'all',
           userScope: 'cohort',
           cohortId: selectedCohortId,
+          reportVariant,
           includeMemberDetailsSheet,
           includeCourseBreakdown,
           includeUnmatchedSheet,
@@ -349,7 +352,7 @@ export default function ExportCourseraActivityPage() {
       // Download the stream as a file
       const blob = await res.blob();
       const disposition = res.headers.get('Content-Disposition');
-      let filename = `Coursera_Activity_Report_${selectedCohort?.name ?? 'cohort'}_${selectedMonth || 'all'}.xlsx`;
+      let filename = `${reportVariant === 'beta' ? 'Coursera_BETA_Report' : 'Coursera_Activity_Report'}_${selectedCohort?.name ?? 'cohort'}_${selectedMonth || 'all'}.xlsx`;
       if (disposition && disposition.includes('filename=')) {
         const match = disposition.match(/filename="?([^"]+)"?/);
         if (match?.[1]) filename = match[1];
@@ -364,7 +367,7 @@ export default function ExportCourseraActivityPage() {
       a.remove();
       window.URL.revokeObjectURL(url);
 
-      setSuccessMessage('Activity report exported successfully with Member Details and Dashboard sheets!');
+      setSuccessMessage(reportVariant === 'beta' ? 'Beta report exported: Classic sheets plus the purple Beta sheets.' : 'Activity report exported successfully with Member Details and Dashboard sheets!');
     } catch {
       setErrorMessage('Network error while exporting report.');
     } finally {
@@ -380,14 +383,14 @@ export default function ExportCourseraActivityPage() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Link
-              href="/data-management/coursera"
+              href="/dashboard"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5" /> Back to Coursera
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to Dashboard
             </Link>
             <span className="text-muted-foreground/40">•</span>
             <Link
-              href="/data-management/coursera/activity-logs"
+              href="/activity-logs"
               className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               View Activity Logs
@@ -840,10 +843,53 @@ export default function ExportCourseraActivityPage() {
           </div>
         </div>
 
-        {/* Step 3: Options */}
+        {/* Step 3: Report type */}
+        <div className="pt-2 border-t border-border/40 space-y-3">
+          <label className="text-sm font-semibold text-foreground">3. Report Type</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setReportVariant('classic')}
+              className={`p-4 rounded-xl border text-left transition flex items-start gap-3 ${
+                reportVariant === 'classic'
+                  ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                  : 'border-border/60 bg-background/50 hover:bg-muted/40 hover:border-border'
+              }`}
+            >
+              <FileSpreadsheet className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold text-sm text-foreground block">Classic report</span>
+                <span className="text-xs text-muted-foreground">The existing report, unchanged: member details, weekly activity, course breakdown, unmatched learners.</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setReportVariant('beta')}
+              className={`p-4 rounded-xl border text-left transition flex items-start gap-3 ${
+                reportVariant === 'beta'
+                  ? 'border-violet-500 bg-violet-500/5 ring-1 ring-violet-500'
+                  : 'border-border/60 bg-background/50 hover:bg-muted/40 hover:border-border'
+              }`}
+            >
+              <Sparkles className="w-5 h-5 text-violet-500 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold text-sm text-foreground flex items-center gap-2">
+                  New report
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/15 text-violet-700 dark:text-violet-300 font-bold tracking-wider">BETA</span>
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Everything in Classic, plus: Learner 360 (program status, invited/joined dates, certificates, grades), week-by-week trend,
+                  projects (guided / self-paced / labs), specializations, class dates and contracts, and video clips.
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Step 4: Options */}
         <div className="pt-2 border-t border-border/40 space-y-2">
           <label className="text-sm font-semibold text-foreground">
-            3. Report Output Structure
+            4. Report Output Structure
           </label>
           <div className="space-y-2.5 pt-1">
             <div className="flex items-center gap-3">
@@ -924,7 +970,7 @@ export default function ExportCourseraActivityPage() {
             ) : (
               <>
                 <FileDown className="w-4 h-4" />
-                Export Activity Report (.xlsx)
+                {reportVariant === 'beta' ? 'Export Beta Report (.xlsx)' : 'Export Activity Report (.xlsx)'}
               </>
             )}
           </button>

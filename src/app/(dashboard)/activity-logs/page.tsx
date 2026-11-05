@@ -24,7 +24,7 @@ export default async function ActivityLogsPage({
 }: {
   searchParams: Promise<SearchParams>;
 }) {
-  const denied = await denyUnlessAccess('data_management.coursera_activity_logs', 'view', { backHref: '/data-management', backLabel: 'Back to Data Management' });
+  const denied = await denyUnlessAccess('data_management.coursera_activity_logs', 'view', { backHref: '/dashboard', backLabel: 'Back to Dashboard' });
   if (denied) return denied;
 
   const { month: monthParam, cohort: cohortParam, search = '', status = 'all', page: pageParam } = await searchParams;
@@ -82,7 +82,7 @@ export default async function ActivityLogsPage({
     const params = new URLSearchParams();
     const merged = { month: selectedMonth ?? '', cohort: cohortId ?? '', search, status, page: String(page), ...overrides };
     Object.entries(merged).forEach(([k, v]) => { if (v) params.set(k, v); });
-    return `/data-management/coursera/activity-logs?${params.toString()}`;
+    return `/activity-logs?${params.toString()}`;
   }
 
   return (
@@ -92,7 +92,7 @@ export default async function ActivityLogsPage({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Link href="/data-management/coursera" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               ← Dashboard
             </Link>
           </div>
@@ -103,7 +103,7 @@ export default async function ActivityLogsPage({
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/data-management/coursera/export"
+            href="/export"
             className="inline-flex items-center gap-2 text-sm px-3.5 py-2 rounded-lg border border-border/80 bg-background hover:bg-accent transition-colors shadow-sm"
           >
             <FileDown className="w-4 h-4 text-muted-foreground" />
@@ -121,7 +121,7 @@ export default async function ActivityLogsPage({
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         {/* Month — uses form submit to avoid onChange in Server Component */}
-        <form method="get" action="/data-management/coursera/activity-logs" className="flex gap-2 items-center">
+        <form method="get" action="/activity-logs" className="flex gap-2 items-center">
           {search && <input type="hidden" name="search" value={search} />}
           {status !== 'all' && <input type="hidden" name="status" value={status} />}
           {cohortId && <input type="hidden" name="cohort" value={cohortId} />}
@@ -214,7 +214,7 @@ export default async function ActivityLogsPage({
                     <tr key={l.email} className="border-b border-border/40 last:border-0 hover:bg-accent/20 transition-colors">
                       <td className="px-4 py-3">
                         <Link
-                          href={`/data-management/coursera/learner/${encodeURIComponent(l.email)}`}
+                          href={`/learners/${encodeURIComponent(l.email)}`}
                           className="font-medium hover:text-primary transition-colors"
                         >
                           {l.full_name ?? l.name ?? '—'}

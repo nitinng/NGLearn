@@ -4,7 +4,7 @@ import { hasAccess } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardPage() {
+export default async function HomePage() {
   const [canView, canEdit] = await Promise.all([
     hasAccess('data_management.coursera', 'view'),
     hasAccess('data_management.import_coursera', 'edit'),
