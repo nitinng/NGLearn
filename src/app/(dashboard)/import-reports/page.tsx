@@ -113,7 +113,6 @@ export default function ImportCourseraPage() {
   const historyLabel = makePeriodLabeler(importedDates);
   const periodLabel = (d: string) => historyLabel(d).label;
   const latestImported = importedDates[importedDates.length - 1] ?? null;
-  void baselineDate;
 
   // ── File handling ──────────────────────────────────────────────────────────
   const handleFile = (f: File) => {
@@ -466,7 +465,8 @@ export default function ImportCourseraPage() {
                 {(activeTab === 'all' ? importLog : importLog.filter(r => r.action === activeTab)).map((row, idx) => {
                   const isRolledBack = rolledBackMonths.has(row.snapshot_month);
                   const isNewestActive = row.action === 'import' && row.status === 'success' && !isRolledBack && row.snapshot_month === newestImportMonth;
-                  const canRollback = isNewestActive;
+                  const isBaselineRow = row.snapshot_month === baselineDate;
+                  const canRollback = isNewestActive && !isBaselineRow;
                   const olderThanNewest = row.action === 'import' && row.status === 'success' && !isRolledBack && !isNewestActive;
                   
                   let tooltipMsg = undefined;
@@ -520,7 +520,8 @@ export default function ImportCourseraPage() {
                               <RefreshCw className={`w-3 h-3 ${recalcLoading === row.snapshot_month ? 'animate-spin' : ''}`} />
                               Recalculate
                             </button>
-                            {/* Rollback — only the newest import */}
+                            {/* Rollback: only the newest import, never the baseline */}
+                            {!isBaselineRow && (
                             <button
                               id={`rollback-btn-${row.snapshot_month}`}
                               onClick={() => canRollback && setConfirmRollback(row)}
@@ -531,6 +532,7 @@ export default function ImportCourseraPage() {
                               <RotateCcw className="w-3 h-3" />
                               Rollback
                             </button>
+                            )}
                           </div>
                         )}
                       </td>
