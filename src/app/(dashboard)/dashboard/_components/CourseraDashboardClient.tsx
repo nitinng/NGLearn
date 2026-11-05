@@ -12,9 +12,13 @@ import {
 } from 'recharts';
 import {
   Users, Activity, Clock, BookOpen, CheckSquare, TrendingUp, TrendingDown, Award,
-  UserX, Zap, Shield,
+  UserX, Zap, Shield, BarChart3,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PageHeader, PageShell } from '@/components/page-shell';
 import { makePeriodLabeler } from '@/lib/report-periods';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -72,7 +76,7 @@ function KpiCard({
   accent: string; deltaVal?: number;
 }) {
   return (
-    <div className={`rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5 flex flex-col gap-3 hover:shadow-md transition-shadow`}>
+    <Card className="gap-3 p-5 transition-shadow hover:shadow-md">
       <div className="flex items-center justify-between">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
         <div className={`p-2 rounded-lg ${accent}`}>
@@ -88,7 +92,7 @@ function KpiCard({
           vs prev week: {delta(deltaVal)}
         </div>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -140,70 +144,56 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
     .map(t => ({ ...t, label: getShortLabel(t.month) }));
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
-
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Coursera Analytics</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
+    <PageShell>
+      <PageHeader
+        title="Dashboard"
+        icon={BarChart3}
+        description={
+          <>
             {scopeLabel ? `${scopeLabel} · ` : ''}{viewAll ? `All time (up to ${latestEnd})` : getLabel(selectedMonth)}
             {typeof m.cohort_members_total === 'number' && (
               <> · {m.total_learners} of {m.cohort_members_total} members in this snapshot</>
             )}
             {' '}· Generated {new Date(generatedAt).toLocaleString()}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/activity-logs" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
-            Activity Logs
-          </Link>
-          <Link href="/export" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
-            Export Report
-          </Link>
-          <Link href="/import-reports" className="text-sm px-4 py-2 rounded-lg border border-border/80 hover:bg-accent transition-colors">
-            Import Reports
-          </Link>
-        </div>
-
-      {scopeBar}
-      </div>
-
-      {/* Period picker: "All time" + weeks (most recent first, down to the baseline) */}
-      {availableMonths.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              const path = basePath ?? '/dashboard';
-              router.push(`${path}?view=all${extraQuery ? `&${extraQuery}` : ''}`);
-            }}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
-              viewAll ? 'bg-primary text-primary-foreground border-primary' : 'border-border/80 hover:bg-accent'
-            }`}
-          >
-            All time
-          </button>
-          <select
-            aria-label="Week"
-            value={viewAll ? '' : selectedMonth}
-            onChange={e => {
-              if (!e.target.value) return;
-              const path = basePath ?? '/dashboard';
-              const param = queryParam ?? 'month';
-              router.push(`${path}?${param}=${e.target.value}${extraQuery ? `&${extraQuery}` : ''}`);
-            }}
-            className={`h-9 min-w-[18rem] rounded-full border px-4 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-primary/40 ${
-              viewAll ? 'border-border/80 bg-background text-muted-foreground' : 'border-primary bg-primary/5 text-foreground'
-            }`}
-          >
-            {viewAll && <option value="">Pick a week…</option>}
-            {[...availableMonths].sort().reverse().map(month => (
-              <option key={month} value={month}>{getLabel(month)}</option>
-            ))}
-          </select>
-        </div>
-      )}
+          </>
+        }
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm"><Link href="/activity-logs">Activity Logs</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link href="/export">Export Report</Link></Button>
+            <Button asChild variant="outline" size="sm"><Link href="/import-reports">Import Reports</Link></Button>
+          </>
+        }
+      >
+        {scopeBar}
+        {availableMonths.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              variant={viewAll ? 'default' : 'outline'}
+              onClick={() => router.push(`${basePath ?? '/dashboard'}?view=all${extraQuery ? `&${extraQuery}` : ''}`)}
+            >
+              All time
+            </Button>
+            <Select
+              value={viewAll ? undefined : selectedMonth}
+              onValueChange={v => {
+                const param = queryParam ?? 'month';
+                router.push(`${basePath ?? '/dashboard'}?${param}=${v}${extraQuery ? `&${extraQuery}` : ''}`);
+              }}
+            >
+              <SelectTrigger size="sm" className="min-w-72" aria-label="Week">
+                <SelectValue placeholder="Pick a week…" />
+              </SelectTrigger>
+              <SelectContent>
+                {[...availableMonths].sort().reverse().map(month => (
+                  <SelectItem key={month} value={month}>{getLabel(month)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+      </PageHeader>
 
       {viewAll ? (
         <BaselineView
@@ -251,7 +241,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
       {/* Row 3: Trend Charts */}
       {trendWithLabel.length > 1 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5">
+          <Card className="gap-0 p-5">
             <h3 className="text-sm font-semibold mb-4">Weekly Learning Hours</h3>
             <ChartContainer config={chartConfig} className="w-full h-[200px]">
               <BarChart data={trendWithLabel} barSize={28}>
@@ -262,8 +252,8 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
                 <Bar dataKey="monthly_hours" name="Hours" fill="var(--color-monthly_hours)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ChartContainer>
-          </div>
-          <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5">
+          </Card>
+          <Card className="gap-0 p-5">
             <h3 className="text-sm font-semibold mb-4">Active Learners</h3>
             <ChartContainer config={chartConfig} className="w-full h-[200px]">
               <LineChart data={trendWithLabel}>
@@ -274,13 +264,13 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
                 <Line type="monotone" dataKey="active_learners" name="Active" stroke="var(--color-active_learners)" strokeWidth={2} dot={{ r: 4, fill: 'var(--color-active_learners)' }} />
               </LineChart>
             </ChartContainer>
-          </div>
+          </Card>
         </div>
       )}
 
       {/* Row 4: Distribution Charts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5">
+        <Card className="gap-0 p-5">
           <h3 className="text-sm font-semibold mb-4">Hours Distribution This Week</h3>
           <ChartContainer config={chartConfig} className="w-full h-[200px]">
             <BarChart data={hoursDistData} barSize={32}>
@@ -293,8 +283,8 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
               </Bar>
             </BarChart>
           </ChartContainer>
-        </div>
-        <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5">
+        </Card>
+        <Card className="gap-0 p-5">
           <h3 className="text-sm font-semibold mb-4">Progress Distribution</h3>
           <ChartContainer config={chartConfig} className="w-full h-[200px]">
             <BarChart data={progressDistData} barSize={32}>
@@ -307,13 +297,13 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
               </Bar>
             </BarChart>
           </ChartContainer>
-        </div>
+        </Card>
       </div>
 
       {/* Row 5: Tables */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Top Learners */}
-        <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm overflow-hidden">
+        <Card className="gap-0 overflow-hidden py-0">
           <div className="px-5 py-4 border-b border-border/60 flex items-center gap-2">
             <Award className="w-4 h-4 text-amber-500" />
             <h3 className="text-sm font-semibold">Top Learners This Week</h3>
@@ -334,10 +324,10 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
               </Link>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Needs Intervention */}
-        <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm overflow-hidden">
+        <Card className="gap-0 overflow-hidden py-0">
           <div className="px-5 py-4 border-b border-border/60 flex items-center gap-2">
             <TrendingDown className="w-4 h-4 text-rose-500" />
             <h3 className="text-sm font-semibold">Needs Intervention</h3>
@@ -365,11 +355,11 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
               </div>
             )}
           </div>
-        </div>
+        </Card>
       </div>
       </>
       )}
-    </div>
+    </PageShell>
   );
 }
 
@@ -399,7 +389,7 @@ function BaselineView({ m, label, note, topTitle }: { m: Metrics; label: string;
         <KpiCard label="Courses Completed" value={fmt(m.total_courses_completed)} icon={CheckSquare} accent="bg-amber-500/10 text-amber-500"
           sub={`${fmt(m.overall_completion_rate, 1)}% completion rate`} />
       </div>
-      <div className="overflow-hidden rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm">
+      <Card className="gap-0 overflow-hidden py-0">
         <div className="flex items-center gap-2 border-b border-border/60 px-5 py-4">
           <Award className="h-4 w-4 text-amber-500" />
           <h3 className="text-sm font-semibold">{topTitle ?? 'Top Learners by Lifetime Hours (up to baseline)'}</h3>
@@ -414,7 +404,7 @@ function BaselineView({ m, label, note, topTitle }: { m: Metrics; label: string;
             </Link>
           ))}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

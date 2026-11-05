@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { denyUnlessAccess } from '@/lib/guard';
 import { buildScopedDashboard, listCohortOptions, resolveCohort } from '@/lib/cohort-scope';
@@ -40,12 +41,11 @@ export default async function CourseraDashboardPage({
             ? 'Import a cohort list (Full Name + email) on the Export page first.'
             : 'Upload the weekly Coursera export to start.'}
         </p>
-        <Link
-          href={cohorts.length === 0 ? '/export' : '/import-reports'}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90"
-        >
-          {cohorts.length === 0 ? 'Import a cohort →' : 'Import a weekly report →'}
-        </Link>
+        <Button asChild>
+          <Link href={cohorts.length === 0 ? '/export' : '/import-reports'}>
+            {cohorts.length === 0 ? 'Import a cohort →' : 'Import a weekly report →'}
+          </Link>
+        </Button>
       </div>
     );
   }
