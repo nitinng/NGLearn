@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
 import { denyUnlessAccess } from '@/lib/guard';
 import { listCohortOptions, resolveCohort, scopedLearnerQuery } from '@/lib/cohort-scope';
 import { CohortPicker } from '@/components/cohort-picker';
-import { describePeriod } from '@/lib/report-periods';
+import { makePeriodLabeler } from '@/lib/report-periods';
 
 interface SearchParams {
   month?: string;
@@ -40,6 +40,8 @@ export default async function ActivityLogsPage({
     .order('month', { ascending: false });
 
   const firstImportMonth = monthsList?.[monthsList.length - 1]?.month;
+  const periodOf = makePeriodLabeler((monthsList ?? []).map(m => m.month as string));
+  void firstImportMonth;
   const selectedMonth = monthParam ?? monthsList?.[0]?.month ?? null;
 
   // Only cohort members are listed (full reports are stored; filtering happens here).
@@ -98,7 +100,7 @@ export default async function ActivityLogsPage({
           </div>
           <h1 className="text-2xl font-bold tracking-tight">Activity Logs</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            {scopeLabel} · {selectedMonth ? describePeriod(selectedMonth, firstImportMonth).label : 'All snapshots'} · {(count ?? 0).toLocaleString()} learners
+            {scopeLabel} · {selectedMonth ? periodOf(selectedMonth).label : 'All snapshots'} · {(count ?? 0).toLocaleString()} learners
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -131,7 +133,7 @@ export default async function ActivityLogsPage({
             className="bg-background border border-border/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
           >
             {(monthsList ?? []).map(m => (
-              <option key={m.month} value={m.month}>{describePeriod(m.month, firstImportMonth).label}</option>
+              <option key={m.month} value={m.month}>{periodOf(m.month).label}</option>
             ))}
           </select>
           <button type="submit" className="px-3 py-2 rounded-lg border border-border/80 text-sm hover:bg-accent transition-colors">Filter</button>

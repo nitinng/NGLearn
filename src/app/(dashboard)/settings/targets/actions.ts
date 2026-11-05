@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { hasAccess } from '@/lib/access';
+import { makePeriodLabeler } from '@/lib/report-periods';
 
 export interface CourseraSettings {
   weeklyTargetHours: number;
@@ -42,12 +43,25 @@ export async function saveCourseraSettings(input: CourseraSettings): Promise<{ o
     .upsert({ id: 1, minimum_monthly_hours: target, inactive_after_days: inactive, updated_at: new Date().toISOString() }, { onConflict: 'id' });
   if (error) return { ok: false, error: error.message };
 
-  // Re-flag stored weeks: on target = hours learned that week >= target.
-  const on = await supabase.from('coursera_learner_month').update({ is_compliant: true }, { count: 'exact' }).gte('monthly_hours', target).eq('is_compliant', false);
-  const off = await supabase.from('coursera_learner_month').update({ is_compliant: false }, { count: 'exact' }).lt('monthly_hours', target).eq('is_compliant', true);
-  if (on.error || off.error) return { ok: false, error: (on.error ?? off.error)!.message };
+  // Re-flag stored weeks: on target = hours learned in the period >= target × weeks covered.
+  const { data: snaps, error: snapErr } = await supabase
+    .from('coursera_computed_metrics')
+    .select('month')
+    .order('month', { ascending: true });
+  if (snapErr) return { ok: false, error: snapErr.message };
+  const label = makePeriodLabeler((snaps ?? []).map(r => r.month as string));
+  let reflagged = 0;
+  for (const { month } of snaps ?? []) {
+    const needed = target * Math.max(1, label(month).weeks);
+    const on = await supabase.from('coursera_learner_month').update({ is_compliant: true }, { count: 'exact' })
+      .eq('month', month).gte('monthly_hours', needed).eq('is_compliant', false);
+    const off = await supabase.from('coursera_learner_month').update({ is_compliant: false }, { count: 'exact' })
+      .eq('month', month).lt('monthly_hours', needed).eq('is_compliant', true);
+    if (on.error || off.error) return { ok: false, error: (on.error ?? off.error)!.message };
+    reflagged += (on.count ?? 0) + (off.count ?? 0);
+  }
 
   revalidatePath('/settings/targets');
   revalidatePath('/dashboard');
-  return { ok: true, reflagged: (on.count ?? 0) + (off.count ?? 0) };
+  return { ok: true, reflagged };
 }

@@ -4,6 +4,7 @@ import {
   normaliseLearnerRecord,
   type LearnerMonthRecord,
 } from '@/lib/coursera-metrics';
+import { makePeriodLabeler } from '@/lib/report-periods';
 
 /**
  * Everything users see is limited to cohort members. Full weekly reports are
@@ -135,8 +136,11 @@ export async function buildScopedDashboard(
   const current = [...(byMonth.get(month)?.values() ?? [])];
   const previous = prevMonth ? [...(byMonth.get(prevMonth)?.values() ?? [])] : [];
 
+  // A merged multi-week period needs the weekly target once per week.
+  const weeksCovered = Math.max(1, makePeriodLabeler(snapshotsDesc)(month).weeks);
   const metrics = {
-    ...computeMetricsBlob(current, previous, config, month),
+    ...computeMetricsBlob(current, previous, { ...config, minMonthlyHours: config.minMonthlyHours * weeksCovered }, month),
+    weeks_covered: weeksCovered,
     cohort_members_total: memberCount,
     cohort_members_not_found: Math.max(0, memberCount - current.length),
   };

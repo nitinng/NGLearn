@@ -34,8 +34,9 @@ export function CourseraSettingsForm({ initial, canEdit }: { initial: CourseraSe
         </div>
         <p className="text-xs text-muted-foreground">
           A learner is <strong>on target</strong> for a week when they log at least this many hours that week. Learners
-          who learned something but less than this show as <strong>below target</strong>. Default: 5 hours. Changing it
-          updates every week already imported.
+          who learned something but less than this show as <strong>below target</strong>. Default: 5 hours. For an upload
+          that covers several weeks (skipped weeks), the target is multiplied by the number of weeks. Changing it
+          updates every period already imported.
         </p>
       </div>
 

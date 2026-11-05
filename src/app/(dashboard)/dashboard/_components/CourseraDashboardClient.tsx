@@ -15,7 +15,7 @@ import {
   AlertTriangle, UserX, Zap, Shield,
 } from 'lucide-react';
 import Link from 'next/link';
-import { describePeriod } from '@/lib/report-periods';
+import { makePeriodLabeler } from '@/lib/report-periods';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,6 +109,7 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
   const m = metrics;
 
   const firstImportMonth = availableMonths[availableMonths.length - 1];
+  const periodOf = makePeriodLabeler(availableMonths);
   const isSecondMonth = availableMonths.length >= 2 && selectedMonth === availableMonths[availableMonths.length - 2];
 
   const isFirstImport = (monthStr: string) => {
@@ -117,11 +118,11 @@ export default function CourseraDashboardClient({ metrics, trend, selectedMonth,
 
   const getLabel = (monthStr: string) => {
     if (availableMonthLabels && availableMonthLabels[monthStr]) return availableMonthLabels[monthStr];
-    return describePeriod(monthStr, firstImportMonth).label;
+    return periodOf(monthStr).label;
   };
   const getShortLabel = (monthStr: string) => {
     if (availableMonthLabels && availableMonthLabels[monthStr]) return availableMonthLabels[monthStr];
-    return describePeriod(monthStr, firstImportMonth).shortLabel;
+    return periodOf(monthStr).shortLabel;
   };
 
   // Distribution chart data

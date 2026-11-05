@@ -1,6 +1,6 @@
 import type ExcelJS from 'exceljs';
 import type { createAdminClient } from '@/lib/supabase/admin';
-import { addDays, describePeriod } from '@/lib/report-periods';
+import { addDays, makePeriodLabeler } from '@/lib/report-periods';
 
 /**
  * BETA report: the Classic workbook plus extra sheets built from the parts
@@ -76,7 +76,9 @@ export async function addBetaSheets(wb: ExcelJS.Workbook, ctx: BetaContext): Pro
     snap = data?.month ?? '';
   }
   if (!snap || emails.length === 0) return;
-  const period = describePeriod(snap, baselineDate ?? snap);
+  const { data: snapshotRows } = await supabase.from('coursera_computed_metrics').select('month').order('month', { ascending: true });
+  const periodOf = makePeriodLabeler([...(snapshotRows ?? []).map((r: Row) => r.month as string), ...(baselineDate ? [baselineDate] : [])]);
+  const period = periodOf(snap);
   const periodEnd = new Date(`${addDays(snap, 1)}T00:00:00Z`).getTime();
 
   const [courses, programs, specs, clips, weeks] = await Promise.all([
@@ -253,11 +255,11 @@ export async function addBetaSheets(wb: ExcelJS.Workbook, ctx: BetaContext): Pro
   }
   for (const m of [...byWeek.keys()].sort()) {
     const rows = byWeek.get(m)!;
-    const isBase = describePeriod(m, baselineDate ?? m).kind === 'baseline';
+    const isBase = periodOf(m).kind === 'baseline';
     const active = rows.filter(r => n(r.monthly_hours) > 0).length;
     const hours = rows.reduce((t, r) => t + n(r.monthly_hours), 0);
     ws2.addRow({
-      week: describePeriod(m, baselineDate ?? m).label,
+      week: periodOf(m).label,
       members: rows.length,
       active: isBase ? null : active,
       hours: isBase ? null : round1(hours),
