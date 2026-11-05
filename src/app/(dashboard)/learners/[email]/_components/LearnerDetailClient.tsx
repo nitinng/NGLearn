@@ -12,6 +12,8 @@ import {
 import { CheckCircle2, XCircle, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { makePeriodLabeler } from '@/lib/report-periods';
 
 interface MonthRecord {
@@ -77,7 +79,7 @@ export default function LearnerDetailClient({ monthlyHistory, courses, snapshotD
   return (
     <div className="space-y-6">
       {/* Monthly Hours Chart */}
-      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm p-5 shadow-2xs">
+      <Card className="gap-0 p-5">
         <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
           <BookOpen className="w-4 h-4 text-primary" /> Weekly Learning Hours & Compliance
         </h2>
@@ -96,42 +98,42 @@ export default function LearnerDetailClient({ monthlyHistory, courses, snapshotD
         </ChartContainer>
 
         {/* Monthly table below chart */}
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-border/60">
-                <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Month</th>
-                <th className="text-right py-2 px-3 font-medium text-muted-foreground">Weekly h</th>
-                <th className="text-right py-2 px-3 font-medium text-muted-foreground">Cumulative h</th>
-                <th className="text-center py-2 px-3 font-medium text-muted-foreground">Active</th>
-                <th className="text-center py-2 px-3 font-medium text-muted-foreground">Compliant</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="mt-4">
+          <Table className="text-xs">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pr-4">Week</TableHead>
+                <TableHead className="px-3 text-right">Weekly h</TableHead>
+                <TableHead className="px-3 text-right">Cumulative h</TableHead>
+                <TableHead className="px-3 text-center">Active</TableHead>
+                <TableHead className="px-3 text-center">Compliant</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {[...monthlyHistory].reverse().map(r => (
-                <tr key={r.month} className="border-b border-border/40 last:border-0">
-                  <td className="py-2 pr-4">{periodOf(r.month).label}</td>
-                  <td className="py-2 px-3 text-right tabular-nums">{r.month === baselineDate ? <span className="text-muted-foreground" title="Baseline: lifetime totals only">—</span> : Number(r.monthly_hours).toFixed(1)}</td>
-                  <td className="py-2 px-3 text-right tabular-nums text-muted-foreground">{r.cumulative_hours.toFixed(1)}</td>
-                  <td className="py-2 px-3 text-center">
+                <TableRow key={r.month}>
+                  <TableCell className="py-2 pr-4">{periodOf(r.month).label}</TableCell>
+                  <TableCell className="py-2 px-3 text-right tabular-nums">{r.month === baselineDate ? <span className="text-muted-foreground" title="Baseline: lifetime totals only">—</span> : Number(r.monthly_hours).toFixed(1)}</TableCell>
+                  <TableCell className="py-2 px-3 text-right tabular-nums text-muted-foreground">{r.cumulative_hours.toFixed(1)}</TableCell>
+                  <TableCell className="py-2 px-3 text-center">
                     {r.is_active
                       ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mx-auto" />
                       : <XCircle className="w-3.5 h-3.5 text-rose-400 mx-auto" />}
-                  </td>
-                  <td className="py-2 px-3 text-center">
+                  </TableCell>
+                  <TableCell className="py-2 px-3 text-center">
                     {r.is_compliant
                       ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 mx-auto" />
                       : <XCircle className="w-3.5 h-3.5 text-amber-400 mx-auto" />}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
-      </div>
+      </Card>
 
       {/* Course List (Collapsible) */}
-      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm overflow-hidden shadow-2xs">
+      <Card className="gap-0 overflow-hidden py-0">
         <div className="px-5 py-3.5 border-b border-border/60 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold">Course List (Latest Snapshot)</h2>
@@ -162,28 +164,28 @@ export default function LearnerDetailClient({ monthlyHistory, courses, snapshotD
             {courses.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">No course data available.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border/60 bg-muted/30">
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs">Course</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs">Type</th>
-                      <th className="text-right px-4 py-3 font-medium text-muted-foreground text-xs">Progress</th>
-                      <th className="text-right px-4 py-3 font-medium text-muted-foreground text-xs">Hours</th>
-                      <th className="text-center px-4 py-3 font-medium text-muted-foreground text-xs">Done</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs">Last Active</th>
-                      <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs">Links</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div>
+                <Table>
+                  <TableHeader className="bg-muted/30">
+                    <TableRow>
+                      <TableHead className="text-left px-4 py-3 text-xs">Course</TableHead>
+                      <TableHead className="text-left px-4 py-3 text-xs">Type</TableHead>
+                      <TableHead className="text-right px-4 py-3 text-xs">Progress</TableHead>
+                      <TableHead className="text-right px-4 py-3 text-xs">Hours</TableHead>
+                      <TableHead className="text-center px-4 py-3 text-xs">Done</TableHead>
+                      <TableHead className="text-left px-4 py-3 text-xs">Last Active</TableHead>
+                      <TableHead className="text-left px-4 py-3 text-xs">Links</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {courses.map(c => (
-                      <tr key={c.course_id} className="border-b border-border/40 last:border-0 hover:bg-accent/20 transition-colors">
-                        <td className="px-4 py-3">
+                      <TableRow key={c.course_id}>
+                        <TableCell className="px-4 py-3">
                           <div className="font-medium text-xs text-foreground">{c.course_name ?? c.course_id}</div>
                           {c.university && <div className="text-[10px] text-muted-foreground">{c.university}</div>}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">{c.course_type ?? '—'}</td>
-                        <td className="px-4 py-3 text-right tabular-nums">
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-muted-foreground text-xs">{c.course_type ?? '—'}</TableCell>
+                        <TableCell className="px-4 py-3 text-right tabular-nums">
                           <div className="flex items-center justify-end gap-2">
                             <div className="w-16 h-1.5 rounded-full bg-border/60 overflow-hidden">
                               <div
@@ -193,19 +195,19 @@ export default function LearnerDetailClient({ monthlyHistory, courses, snapshotD
                             </div>
                             <span className="text-xs">{c.overall_progress.toFixed(0)}%</span>
                           </div>
-                        </td>
-                        <td className="px-4 py-3 text-right tabular-nums text-xs">{c.cumulative_learning_hours.toFixed(1)}h</td>
-                        <td className="px-4 py-3 text-center">
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-right tabular-nums text-xs">{c.cumulative_learning_hours.toFixed(1)}h</TableCell>
+                        <TableCell className="px-4 py-3 text-center">
                           {c.completed
                             ? <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto" />
                             : <XCircle className="w-4 h-4 text-muted-foreground/40 mx-auto" />}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                        </TableCell>
+                        <TableCell className="px-4 py-3 text-xs text-muted-foreground">
                           {c.last_activity_time
                             ? new Date(c.last_activity_time).toLocaleDateString('en-US', { month: 'short', year: 'numeric', day: 'numeric' })
                             : '—'}
-                        </td>
-                        <td className="px-4 py-3">
+                        </TableCell>
+                        <TableCell className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {c.course_slug && (
                               <a
@@ -228,16 +230,16 @@ export default function LearnerDetailClient({ monthlyHistory, courses, snapshotD
                               </a>
                             )}
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

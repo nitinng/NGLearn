@@ -2,6 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect, notFound } from 'next/navigation';
 import { getUserRole } from '@/lib/roles';
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
+import { PageShell } from '@/components/page-shell';
 import LearnerDetailClient from './_components/LearnerDetailClient';
 import { denyUnlessAccess } from '@/lib/guard';
 import { isCohortMember } from '@/lib/cohort-scope';
@@ -74,14 +76,12 @@ export default async function LearnerDetailPage({ params }: PageProps) {
   const coursesCompleted = latestRecord.courses_completed;
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-5xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
+    <PageShell className="animate-in fade-in slide-in-from-bottom-3 duration-500">
 
       {/* Back link */}
-      <div>
-        <Link href="/activity-logs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-          ← Activity Logs
-        </Link>
-      </div>
+      <Link href="/activity-logs" className="inline-flex w-fit items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-3.5 w-3.5" /> Activity Logs
+      </Link>
 
       {/* Learner header */}
       <div className="flex flex-col md:flex-row md:items-center gap-4 border-b border-border/60 pb-6">
@@ -109,6 +109,6 @@ export default async function LearnerDetailPage({ params }: PageProps) {
       </div>
 
       <LearnerDetailClient monthlyHistory={monthlyHistory} courses={courses ?? []} snapshotDates={(snapshotRows ?? []).map(r => r.month as string)} />
-    </div>
+    </PageShell>
   );
 }

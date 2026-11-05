@@ -1,6 +1,7 @@
 import { DashboardGreeting } from '@/components/dashboard-greeting';
 import { CourseraHub } from '@/components/coursera-hub';
 import { hasAccess } from '@/lib/access';
+import { PageShell } from '@/components/page-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,7 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 p-4 pb-20 md:p-6 lg:p-8">
+    <PageShell className="gap-8">
       <DashboardGreeting />
       {canView ? (
         <CourseraHub canEdit={canEdit} />
@@ -20,6 +21,6 @@ export default async function HomePage() {
           You don&rsquo;t have access to Coursera reports yet. Ask an admin to give you the Program role.
         </p>
       )}
-    </div>
+    </PageShell>
   );
 }

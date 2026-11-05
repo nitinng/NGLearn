@@ -36,7 +36,7 @@ export default function GreetingsPreviewPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20">
+    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 w-full pb-20">
       
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 dark:border-zinc-800 pb-5">

@@ -4,6 +4,8 @@ import { EDIT_ROLES } from '@/lib/access';
 import Link from 'next/link';
 import { Settings, ArrowRight } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { PageShell, PageHeader } from '@/components/page-shell';
 import { Shield, Target } from 'lucide-react';
 
 const SETTINGS_CARDS = [
@@ -36,27 +38,12 @@ export default async function SettingsPage() {
   if (!USER_MANAGER_ROLES.includes(role) && !EDIT_ROLES.includes(role)) redirect('/');
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
-
-      {/* Decorative background ambient glows */}
-      <div className="absolute top-0 right-1/4 w-80 h-80 bg-primary/5 rounded-full filter blur-[80px] pointer-events-none -z-10" />
-      <div className="absolute bottom-20 left-1/3 w-96 h-96 bg-indigo-500/5 rounded-full filter blur-[100px] pointer-events-none -z-10" />
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border/60 pb-6">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-gradient-to-br from-primary/10 to-violet-500/10 text-primary rounded-xl border border-primary/20 shadow-inner">
-            <Settings className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground/90 to-muted-foreground/80">
-              Settings
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              User access, roles and Coursera targets.
-            </p>
-          </div>
-        </div>
-      </div>
+    <PageShell className="animate-in fade-in slide-in-from-bottom-3 duration-500">
+      <PageHeader
+        title="Settings"
+        icon={Settings}
+        description="User access, roles and Coursera targets."
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {SETTINGS_CARDS.filter(card => card.roles.includes(role)).map((card) => {
@@ -78,9 +65,7 @@ export default async function SettingsPage() {
                         {card.label}
                       </CardTitle>
                       <div className="flex items-center">
-                        <span className="text-[10px] px-2 py-0.5 font-bold rounded-md bg-secondary/80 border border-border/80 text-muted-foreground uppercase tracking-widest inline-block leading-none">
-                          {card.badge}
-                        </span>
+                        <Badge variant="secondary" className="text-[10px] uppercase tracking-widest">{card.badge}</Badge>
                       </div>
                     </div>
                   </div>
@@ -93,6 +78,6 @@ export default async function SettingsPage() {
           );
         })}
       </div>
-    </div>
+    </PageShell>
   );
 }

@@ -4,7 +4,13 @@ import { useState } from 'react';
 import { updateUserRole, inviteNewUser } from '@/app/actions/users';
 import { UserRole } from '@/lib/roles';
 import { toast } from 'sonner';
-import { RefreshCw, Shield, AlertTriangle, ChevronDown, Plus, UserPlus, X } from 'lucide-react';
+import { RefreshCw, Shield, AlertTriangle, Plus, UserPlus, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Props {
   users: any[];
@@ -70,150 +76,134 @@ export function UsersTable({ users, currentUserRole, currentUserId }: Props) {
     }
   };
 
+  const roleBadgeClass = (role: UserRole) =>
+    role === 'Admin' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' :
+    role === 'CEOs Office' ? 'bg-purple-500/10 border-purple-500/20 text-purple-600' :
+    role === 'PNC' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' :
+    role === 'Program' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600' : '';
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <button 
-          onClick={() => setIsAdding(!isAdding)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors shadow-sm"
-        >
+        <Button onClick={() => setIsAdding(!isAdding)}>
           {isAdding ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
           {isAdding ? 'Cancel' : 'Add User'}
-        </button>
+        </Button>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border/60 bg-muted/30">
-              <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted-foreground text-xs">Name</th>
-              <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted-foreground text-xs">Email</th>
-              <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted-foreground text-xs">Current Role</th>
-              <th className="px-4 py-3 text-left font-semibold uppercase tracking-wider text-muted-foreground text-xs">Assign Role</th>
-            </tr>
-          </thead>
-          <tbody>
+      <Card className="overflow-hidden py-0">
+        <Table>
+          <TableHeader className="bg-muted/30">
+            <TableRow>
+              <TableHead className="px-4 text-xs font-semibold uppercase tracking-wider">Name</TableHead>
+              <TableHead className="px-4 text-xs font-semibold uppercase tracking-wider">Email</TableHead>
+              <TableHead className="px-4 text-xs font-semibold uppercase tracking-wider">Current Role</TableHead>
+              <TableHead className="px-4 text-xs font-semibold uppercase tracking-wider">Assign Role</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {isAdding && (
-              <tr className="border-b border-border/60 bg-primary/5">
-                <td className="px-4 py-3">
-                  <input
+              <TableRow className="bg-primary/5">
+                <TableCell className="px-4 py-3">
+                  <Input
                     type="text"
                     placeholder="Full Name"
                     value={addName}
                     onChange={(e) => setAddName(e.target.value)}
-                    className="w-full bg-background border border-border/80 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     disabled={isSubmitting}
                   />
-                </td>
-                <td className="px-4 py-3">
-                  <input
+                </TableCell>
+                <TableCell className="px-4 py-3">
+                  <Input
                     type="email"
                     placeholder="Email Address"
                     value={addEmail}
                     onChange={(e) => setAddEmail(e.target.value)}
-                    className="w-full bg-background border border-border/80 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     disabled={isSubmitting}
                   />
-                </td>
-                <td className="px-4 py-3">
-                  <div className="relative inline-block w-40">
-                    <select
-                      value={addRole}
-                      onChange={(e) => setAddRole(e.target.value as UserRole)}
-                      disabled={isSubmitting}
-                      className="w-full bg-background border border-border/80 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 appearance-none pr-8 cursor-pointer"
-                    >
+                </TableCell>
+                <TableCell className="px-4 py-3">
+                  <Select value={addRole} onValueChange={(v) => setAddRole(v as UserRole)} disabled={isSubmitting}>
+                    <SelectTrigger className="w-40" aria-label="Role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
                       {roleOptions.map(role => (
-                        <option key={role} value={role}>{role}</option>
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
                       ))}
-                    </select>
-                    <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <button
-                    onClick={handleInvite}
-                    disabled={isSubmitting}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-sm font-medium hover:bg-primary/20 transition-colors disabled:opacity-50"
-                  >
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell className="px-4 py-3">
+                  <Button variant="secondary" size="sm" onClick={handleInvite} disabled={isSubmitting}>
                     {isSubmitting ? (
                       <RefreshCw className="w-4 h-4 animate-spin" />
                     ) : (
                       <UserPlus className="w-4 h-4" />
                     )}
                     Add user
-                  </button>
-                </td>
-              </tr>
+                  </Button>
+                </TableCell>
+              </TableRow>
             )}
             {users.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">No users found.</td>
-              </tr>
+              <TableRow>
+                <TableCell colSpan={4} className="px-4 py-8 text-center text-muted-foreground">No users found.</TableCell>
+              </TableRow>
             ) : (
               users.map(u => {
                 const isSelf = u.id === currentUserId;
                 const userRole = u.app_metadata?.role as UserRole | undefined ?? 'Member';
                 const isTargetAdmin = userRole === 'Admin';
-                
+
                 // Rules:
                 // 1. Cannot demote/change another Admin unless caller is Admin
                 // 2. Cannot demote/change self role from this UI easily (optional, but good practice)
-                const disabled = updatingId === u.id || 
-                                 isSelf || 
+                const disabled = updatingId === u.id ||
+                                 isSelf ||
                                  (!canAssignAdmin && isTargetAdmin);
 
                 return (
-                  <tr key={u.id} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">
+                  <TableRow key={u.id}>
+                    <TableCell className="px-4 py-3 font-medium text-foreground">
                       {u.user_metadata?.full_name || u.user_metadata?.name || 'Unknown User'}
-                      {isSelf && <span className="ml-2 text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded-md">You</span>}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-medium border
-                        ${userRole === 'Admin' ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' :
-                          userRole === 'CEOs Office' ? 'bg-purple-500/10 border-purple-500/20 text-purple-600' :
-                          userRole === 'PNC' ? 'bg-blue-500/10 border-blue-500/20 text-blue-600' :
-                          'bg-secondary border-border/60 text-muted-foreground'}`}>
+                      {isSelf && <Badge variant="secondary" className="ml-2">You</Badge>}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-muted-foreground">{u.email}</TableCell>
+                    <TableCell className="px-4 py-3">
+                      <Badge variant="outline" className={roleBadgeClass(userRole)}>
                         {userRole === 'Admin' && <Shield className="w-3 h-3" />}
                         {userRole}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="px-4 py-3">
                       {disabled && !updatingId ? (
                          <span className="text-xs text-muted-foreground italic flex items-center gap-1">
                            <AlertTriangle className="w-3 h-3" /> Cannot edit
                          </span>
                       ) : (
-                        <div className="relative inline-block w-40">
-                          <select
-                            value={userRole}
-                            onChange={(e) => handleRoleChange(u.id, e.target.value as UserRole)}
-                            disabled={disabled}
-                            className="w-full bg-background border border-border/80 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 appearance-none pr-8 cursor-pointer"
-                          >
-                            {roleOptions.map(role => (
-                              <option key={role} value={role}>{role}</option>
-                            ))}
-                          </select>
-                          {updatingId === u.id ? (
-                            <RefreshCw className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
-                          ) : (
-                            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                          )}
+                        <div className="flex items-center gap-2">
+                          <Select value={userRole} onValueChange={(v) => handleRoleChange(u.id, v as UserRole)} disabled={disabled}>
+                            <SelectTrigger className="w-40" aria-label={`Role for ${u.email}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {roleOptions.map(role => (
+                                <SelectItem key={role} value={role}>{role}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {updatingId === u.id && <RefreshCw className="w-4 h-4 text-muted-foreground animate-spin" />}
                         </div>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

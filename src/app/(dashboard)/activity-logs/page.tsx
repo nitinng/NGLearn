@@ -1,8 +1,13 @@
 import { createAdminClient } from '@/lib/supabase/admin';
-import { redirect } from 'next/navigation';
-import { getUserRole } from '@/lib/roles';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
+import { Activity, ChevronLeft, ChevronRight, FileDown } from 'lucide-react';
+import { PageShell, PageHeader } from '@/components/page-shell';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { LinkSelect } from './_components/LinkSelect';
 import { denyUnlessAccess } from '@/lib/guard';
 import { listCohortOptions, resolveCohort, scopedLearnerQuery } from '@/lib/cohort-scope';
 import { CohortPicker } from '@/components/cohort-picker';
@@ -89,38 +94,49 @@ export default async function ActivityLogsPage({
     return `/activity-logs?${params.toString()}`;
   }
 
+  const statusOptions = [
+    { value: 'all', label: 'All' },
+    { value: 'active', label: 'Active', weekly: true },
+    { value: 'inactive', label: 'Inactive', weekly: true },
+    { value: 'below_target', label: 'Below Target', weekly: true },
+    { value: 'no_activity_30', label: 'No Activity 30d' },
+    { value: 'no_activity_90', label: 'No Activity 90d' },
+  ].filter(opt => !(isBaseline && opt.weekly));
+
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full pb-20 animate-in fade-in slide-in-from-bottom-3 duration-500">
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              ← Dashboard
+    <PageShell className="animate-in fade-in slide-in-from-bottom-3 duration-500">
+      <PageHeader
+        title="Activity Logs"
+        icon={Activity}
+        back={{ href: '/dashboard', label: 'Dashboard' }}
+        description={<>{scopeLabel} · {selectedMonth ? periodOf(selectedMonth).label : 'All snapshots'} · {(count ?? 0).toLocaleString()} learners</>}
+        actions={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/export">
+              <FileDown className="w-4 h-4" />
+              Export Report
             </Link>
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">Activity Logs</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">
-            {scopeLabel} · {selectedMonth ? periodOf(selectedMonth).label : 'All snapshots'} · {(count ?? 0).toLocaleString()} learners
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/export"
-            className="inline-flex items-center gap-2 text-sm px-3.5 py-2 rounded-lg border border-border/80 bg-background hover:bg-accent transition-colors shadow-sm"
-          >
-            <FileDown className="w-4 h-4 text-muted-foreground" />
-            Export Report
-          </Link>
-        </div>
-      </div>
-
-      <CohortPicker
-        cohorts={cohorts}
-        selected={cohortId}
-        hrefFor={id => buildUrl({ cohort: id === 'all' ? '' : id, page: '1' })}
-      />
+          </Button>
+        }
+      >
+        <CohortPicker
+          cohorts={cohorts}
+          selected={cohortId}
+          hrefFor={id => buildUrl({ cohort: id === 'all' ? '' : id, page: '1' })}
+        />
+        {(monthsList ?? []).length > 0 && (
+          <LinkSelect
+            ariaLabel="Week"
+            className="min-w-72"
+            value={selectedMonth ?? undefined}
+            items={(monthsList ?? []).map(m => ({
+              value: m.month as string,
+              label: periodOf(m.month).label,
+              href: buildUrl({ month: m.month as string, page: '1' }),
+            }))}
+          />
+        )}
+      </PageHeader>
 
       {isBaseline && (
         <div className="rounded-lg border border-sky-500/30 bg-sky-500/5 p-3 text-sm text-muted-foreground">
@@ -130,133 +146,101 @@ export default async function ActivityLogsPage({
       )}
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        {/* Month — uses form submit to avoid onChange in Server Component */}
-        <form method="get" action="/activity-logs" className="flex gap-2 items-center">
-          {search && <input type="hidden" name="search" value={search} />}
-          {status !== 'all' && <input type="hidden" name="status" value={status} />}
-          {cohortId && <input type="hidden" name="cohort" value={cohortId} />}
-          <select
-            name="month"
-            defaultValue={selectedMonth ?? ''}
-            className="bg-background border border-border/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-          >
-            {(monthsList ?? []).map(m => (
-              <option key={m.month} value={m.month}>{periodOf(m.month).label}</option>
-            ))}
-          </select>
-          <button type="submit" className="px-3 py-2 rounded-lg border border-border/80 text-sm hover:bg-accent transition-colors">Filter</button>
-        </form>
-
+      <div className="flex flex-wrap items-center gap-3">
         {/* Search */}
-        <form action={buildUrl({ page: '1' }).split('?')[0]} method="get" className="flex gap-2">
+        <form action="/activity-logs" method="get" className="flex gap-2">
           {selectedMonth && <input type="hidden" name="month" value={selectedMonth} />}
           {status !== 'all' && <input type="hidden" name="status" value={status} />}
           {cohortId && <input type="hidden" name="cohort" value={cohortId} />}
-          <input
+          <Input
             name="search"
             defaultValue={search}
             placeholder="Search name or email…"
-            className="bg-background border border-border/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition w-56"
+            className="w-56"
           />
-          <button type="submit" className="px-3 py-2 rounded-lg border border-border/80 text-sm hover:bg-accent transition-colors">Search</button>
+          <Button type="submit" variant="outline">Search</Button>
           {search && (
-            <Link href={buildUrl({ search: '', page: '1' })} className="px-3 py-2 rounded-lg border border-border/80 text-sm hover:bg-accent transition-colors text-muted-foreground">
-              Clear
-            </Link>
+            <Button asChild variant="ghost">
+              <Link href={buildUrl({ search: '', page: '1' })}>Clear</Link>
+            </Button>
           )}
         </form>
 
         {/* Status filter */}
-        <div className="flex gap-1 flex-wrap">
-          {[
-            { value: 'all', label: 'All' },
-            { value: 'active', label: 'Active', weekly: true },
-            { value: 'inactive', label: 'Inactive', weekly: true },
-            { value: 'below_target', label: 'Below Target', weekly: true },
-            { value: 'no_activity_30', label: 'No Activity 30d' },
-            { value: 'no_activity_90', label: 'No Activity 90d' },
-          ].filter(opt => !(isBaseline && opt.weekly)).map(opt => (
-            <Link
-              key={opt.value}
-              href={buildUrl({ status: opt.value, page: '1' })}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                status === opt.value
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'border-border/80 hover:bg-accent'
-              }`}
-            >
-              {opt.label}
-            </Link>
+        <div className="flex flex-wrap gap-1">
+          {statusOptions.map(opt => (
+            <Button key={opt.value} asChild size="sm" variant={status === opt.value ? 'default' : 'outline'} className="rounded-full">
+              <Link href={buildUrl({ status: opt.value, page: '1' })}>{opt.label}</Link>
+            </Button>
           ))}
         </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-xl border border-border/80 bg-card/60 backdrop-blur-sm overflow-hidden">
+      <Card className="overflow-hidden py-0">
         {!selectedMonth ? (
           <div className="p-8 text-center text-muted-foreground text-sm">No data imported yet.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/60 bg-muted/30">
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Name</th>
-                  <th className="text-left px-4 py-3 font-medium text-muted-foreground">Email</th>
-                  {!isBaseline && <th className="text-right px-4 py-3 font-medium text-muted-foreground">Weekly h</th>}
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Cumulative h</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Courses</th>
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Completed</th>
-                  {!isBaseline && <th className="text-center px-4 py-3 font-medium text-muted-foreground">Active</th>}
-                  {!isBaseline && <th className="text-center px-4 py-3 font-medium text-muted-foreground">On Target</th>}
-                  <th className="text-right px-4 py-3 font-medium text-muted-foreground">Days Inactive</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(learners ?? []).length === 0 ? (
-                  <tr><td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No learners match your filters.</td></tr>
-                ) : (
-                  (learners ?? []).map((l: {
-                    email: string; name: string | null; full_name?: string | null;
-                    monthly_hours: number; cumulative_hours: number;
-                    courses_enrolled: number; courses_completed: number;
-                    is_active: boolean; is_compliant: boolean; days_since_activity: number | null;
-                  }) => (
-                    <tr key={l.email} className="border-b border-border/40 last:border-0 hover:bg-accent/20 transition-colors">
-                      <td className="px-4 py-3">
-                        <Link
-                          href={`/learners/${encodeURIComponent(l.email)}`}
-                          className="font-medium hover:text-primary transition-colors"
-                        >
-                          {l.full_name ?? l.name ?? '—'}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{l.email}</td>
-                      {!isBaseline && <td className="px-4 py-3 text-right tabular-nums font-medium">{Number(l.monthly_hours).toFixed(1)}</td>}
-                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{Number(l.cumulative_hours).toFixed(1)}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{l.courses_enrolled}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{l.courses_completed}</td>
-                      {!isBaseline && (
-                        <td className="px-4 py-3 text-center">
-                          <span className={`inline-block w-2 h-2 rounded-full ${l.is_active ? 'bg-emerald-500' : 'bg-rose-400'}`} />
-                        </td>
-                      )}
-                      {!isBaseline && (
-                        <td className="px-4 py-3 text-center">
-                          <span className={`inline-block w-2 h-2 rounded-full ${l.is_compliant ? 'bg-emerald-500' : 'bg-amber-400'}`} />
-                        </td>
-                      )}
-                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
-                        {l.days_since_activity !== null ? l.days_since_activity : '—'}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader className="bg-muted/30">
+              <TableRow>
+                <TableHead className="px-4">Name</TableHead>
+                <TableHead className="px-4">Email</TableHead>
+                {!isBaseline && <TableHead className="px-4 text-right">Weekly h</TableHead>}
+                <TableHead className="px-4 text-right">Cumulative h</TableHead>
+                <TableHead className="px-4 text-right">Courses</TableHead>
+                <TableHead className="px-4 text-right">Completed</TableHead>
+                {!isBaseline && <TableHead className="px-4 text-center">Active</TableHead>}
+                {!isBaseline && <TableHead className="px-4 text-center">On Target</TableHead>}
+                <TableHead className="px-4 text-right">Days Inactive</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {(learners ?? []).length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No learners match your filters.</TableCell>
+                </TableRow>
+              ) : (
+                (learners ?? []).map((l: {
+                  email: string; name: string | null; full_name?: string | null;
+                  monthly_hours: number; cumulative_hours: number;
+                  courses_enrolled: number; courses_completed: number;
+                  is_active: boolean; is_compliant: boolean; days_since_activity: number | null;
+                }) => (
+                  <TableRow key={l.email}>
+                    <TableCell className="px-4 py-3">
+                      <Link
+                        href={`/learners/${encodeURIComponent(l.email)}`}
+                        className="font-medium hover:text-primary transition-colors"
+                      >
+                        {l.full_name ?? l.name ?? '—'}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 text-muted-foreground text-xs">{l.email}</TableCell>
+                    {!isBaseline && <TableCell className="px-4 py-3 text-right tabular-nums font-medium">{Number(l.monthly_hours).toFixed(1)}</TableCell>}
+                    <TableCell className="px-4 py-3 text-right tabular-nums text-muted-foreground">{Number(l.cumulative_hours).toFixed(1)}</TableCell>
+                    <TableCell className="px-4 py-3 text-right tabular-nums">{l.courses_enrolled}</TableCell>
+                    <TableCell className="px-4 py-3 text-right tabular-nums">{l.courses_completed}</TableCell>
+                    {!isBaseline && (
+                      <TableCell className="px-4 py-3 text-center">
+                        <Badge variant={l.is_active ? 'default' : 'secondary'}>{l.is_active ? 'Active' : 'Inactive'}</Badge>
+                      </TableCell>
+                    )}
+                    {!isBaseline && (
+                      <TableCell className="px-4 py-3 text-center">
+                        <Badge variant={l.is_compliant ? 'default' : 'outline'}>{l.is_compliant ? 'Yes' : 'No'}</Badge>
+                      </TableCell>
+                    )}
+                    <TableCell className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                      {l.days_since_activity !== null ? l.days_since_activity : '—'}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         )}
-      </div>
+      </Card>
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -266,18 +250,22 @@ export default async function ActivityLogsPage({
           </p>
           <div className="flex gap-2">
             {page > 1 && (
-              <Link href={buildUrl({ page: String(page - 1) })} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border/80 text-sm hover:bg-accent transition-colors">
-                <ChevronLeft className="w-4 h-4" /> Previous
-              </Link>
+              <Button asChild variant="outline" size="sm">
+                <Link href={buildUrl({ page: String(page - 1) })}>
+                  <ChevronLeft className="w-4 h-4" /> Previous
+                </Link>
+              </Button>
             )}
             {page < totalPages && (
-              <Link href={buildUrl({ page: String(page + 1) })} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-border/80 text-sm hover:bg-accent transition-colors">
-                Next <ChevronRight className="w-4 h-4" />
-              </Link>
+              <Button asChild variant="outline" size="sm">
+                <Link href={buildUrl({ page: String(page + 1) })}>
+                  Next <ChevronRight className="w-4 h-4" />
+                </Link>
+              </Button>
             )}
           </div>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
