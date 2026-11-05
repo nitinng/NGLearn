@@ -308,7 +308,7 @@ export default function ImportCourseraPage() {
           </div>
         ) : (
           <div className="space-y-1.5">
-            <label htmlFor="week-choice" className="text-sm font-medium text-foreground/80">Week this report covers</label>
+            <label htmlFor="week-choice" className="text-sm font-medium text-foreground/80">Week (report end date)</label>
             {choices.length > 0 ? (
               <>
                 <select
@@ -322,12 +322,10 @@ export default function ImportCourseraPage() {
                   ))}
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  {selectedPeriod && selectedPeriod.weeks > 1 ? (
-                    <>This skips weeks: everything learned from Monday {longDate(selectedPeriod.start!)} to Sunday {longDate(selectedPeriod.end)} is counted as one period ({selectedPeriod.weeks} weeks), and the weekly target is multiplied by {selectedPeriod.weeks}. </>
-                  ) : selectedPeriod ? (
-                    <>In Coursera, generate the report on Monday {longDate(addDays(selectedPeriod.end, 1))}, covering up to Sunday {longDate(selectedPeriod.end)}. </>
-                  ) : null}
-                  The list shows every finished week after your last upload; pick the Sunday your export runs up to.
+                  Report start date is always <strong className="text-foreground">1 April 2020</strong>; the end date is the Sunday shown.
+                  {selectedPeriod && selectedPeriod.weeks > 1 && (
+                    <> Weeks since your last upload ({selectedPeriod.weeks} weeks) will be counted together in this report, and the weekly target is multiplied by {selectedPeriod.weeks}.</>
+                  )}
                 </p>
               </>
             ) : (

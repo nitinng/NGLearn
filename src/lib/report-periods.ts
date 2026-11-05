@@ -5,7 +5,7 @@
  *   - The FIRST import is a one-off "baseline": Coursera's lifetime report up to a Sunday.
  *   - Every later import ends on a later Sunday whose week has finished. Normally that is
  *     the very next week; weeks may be skipped (Coursera can't export a past week), in which
- *     case that import covers several weeks ("Weeks 2–5") and hours are merged.
+ *     case that import covers several weeks (still named by its end week) and hours are merged.
  *   - A snapshot is stored under its Sunday (period end) date. Nothing may be inserted
  *     before the latest import.
  *   - Week 1 = the Monday after the baseline Sunday through the next Sunday.
@@ -68,7 +68,7 @@ export interface ReportPeriod {
 
 /**
  * Describes a stored snapshot date. `prev` is the snapshot before it (defaults to one week
- * earlier); when the gap is several weeks the period is labelled "Weeks M–N".
+ * earlier). Reports are named "Week N · report end date …"; `weeks` says how many weeks the hours cover.
  */
 export function describePeriod(end: string, baseline: string | null | undefined, prev?: string | null): ReportPeriod & { weeks: number } {
   const endLong = fmt(end, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -84,18 +84,13 @@ export function describePeriod(end: string, baseline: string | null | undefined,
     const week = diff / 7;
     const prevDiff = prev ? Math.round((toUtc(end).getTime() - toUtc(prev).getTime()) / DAY_MS) : 7;
     const weeks = prevDiff > 0 && prevDiff % 7 === 0 ? prevDiff / 7 : 1;
-    const firstWeek = week - weeks + 1;
     const start = addDays(end, -7 * weeks + 1);
-    const sameMonth = start.slice(0, 7) === end.slice(0, 7);
-    const short = sameMonth
-      ? `${fmt(start, { day: 'numeric' })}–${fmt(end, { day: 'numeric', month: 'short' })}`
-      : `${fmt(start, { day: 'numeric', month: 'short' })} – ${fmt(end, { day: 'numeric', month: 'short' })}`;
-    const name = weeks === 1 ? `Week ${week}` : `Weeks ${firstWeek}–${week}`;
-    const shortName = weeks === 1 ? `Wk ${week}` : `Wks ${firstWeek}–${week}`;
+    // Every Coursera report is lifetime (from 1 Apr 2020) up to its Sunday, so a report is
+    // named by the week it ends on. If weeks were skipped, its hours cover `weeks` weeks.
     return {
       kind: 'week', week, weeks, start, end,
-      label: `${name} · ${fmt(start, { weekday: 'short', day: 'numeric', month: 'short' })} – ${endLong}`,
-      shortLabel: `${shortName} · ${short}`,
+      label: `Week ${week} · report end date ${endLong}`,
+      shortLabel: `Wk ${week} · ${fmt(end, { day: 'numeric', month: 'short' })}`,
     };
   }
   // Snapshot that does not fit the weekly grid (should not happen with the guarded importer).
