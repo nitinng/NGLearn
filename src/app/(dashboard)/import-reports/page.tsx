@@ -195,23 +195,27 @@ export default function ImportCourseraPage() {
   };
 
   // ── Rollback ───────────────────────────────────────────────────────────────
-  // Find the most-recently-imported month (the only one that can be rolled back)
-  const monthStatus = new Map<string, string>();
-  for (const r of importLog) {
-    if (r.status === 'success' && !monthStatus.has(r.snapshot_month)) {
-      monthStatus.set(r.snapshot_month, r.action);
-    }
-  }
-
-  const rolledBackMonths = new Set(
-    Array.from(monthStatus.entries())
-      .filter(([_, action]) => action === 'rollback')
-      .map(([month]) => month)
+  // An import is rolled back when a successful rollback for the same week was logged after it.
+  // Re-importing the week afterwards creates a fresh import row that is active again.
+  const rolledBackImportIds = new Set(
+    importLog
+      .filter(r => r.action === 'import' && importLog.some(x =>
+        x.action === 'rollback' && x.status === 'success' &&
+        x.snapshot_month === r.snapshot_month && x.id > r.id))
+      .map(r => r.id)
   );
   const activeImports = importLog.filter(
-    r => r.action === 'import' && r.status === 'success' && !rolledBackMonths.has(r.snapshot_month)
+    r => r.action === 'import' && r.status === 'success' && !rolledBackImportIds.has(r.id)
   );
-  const newestImportMonth = activeImports[0]?.snapshot_month ?? null;
+  // Only the newest active import (latest week, latest upload) can be rolled back.
+  const newestActiveImport = activeImports.reduce<ImportLogRow | null>((best, r) =>
+    !best || r.snapshot_month > best.snapshot_month || (r.snapshot_month === best.snapshot_month && r.id > best.id) ? r : best, null);
+  const newestImportMonth = newestActiveImport?.snapshot_month ?? null;
+  const visibleLog =
+    activeTab === 'all' ? importLog :
+    activeTab === 'import' ? importLog.filter(r => r.action === 'import' && !rolledBackImportIds.has(r.id)) :
+    activeTab === 'rollback' ? importLog.filter(r => r.action === 'rollback' || rolledBackImportIds.has(r.id)) :
+    importLog.filter(r => r.action === activeTab);
 
   const handleRollback = async () => {
     if (!confirmRollback) return;
@@ -462,15 +466,15 @@ export default function ImportCourseraPage() {
                 </tr>
               </thead>
               <tbody>
-                {(activeTab === 'all' ? importLog : importLog.filter(r => r.action === activeTab)).map((row, idx) => {
-                  const isRolledBack = rolledBackMonths.has(row.snapshot_month);
-                  const isNewestActive = row.action === 'import' && row.status === 'success' && !isRolledBack && row.snapshot_month === newestImportMonth;
+                {visibleLog.map((row, idx) => {
+                  const isRolledBack = rolledBackImportIds.has(row.id);
+                  const isNewestActive = row.id === newestActiveImport?.id;
                   const isBaselineRow = row.snapshot_month === baselineDate;
                   const canRollback = isNewestActive && !isBaselineRow;
                   const olderThanNewest = row.action === 'import' && row.status === 'success' && !isRolledBack && !isNewestActive;
-                  
+
                   let tooltipMsg = undefined;
-                  if (isRolledBack && row.action === 'import') tooltipMsg = 'Already rolled back';
+                  if (olderThanNewest && row.snapshot_month === newestImportMonth) tooltipMsg = 'Only the latest upload for this week can be rolled back';
                   else if (olderThanNewest) tooltipMsg = `Roll back ${periodLabel(newestImportMonth!)} first`;
 
                   return (
@@ -481,13 +485,13 @@ export default function ImportCourseraPage() {
                       <td className="px-4 py-3 text-right tabular-nums">{formatRows(row.learners_affected)}</td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium
-                          ${row.action === 'import' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
-                            row.action === 'rollback' ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' :
+                          ${row.action === 'import' && !isRolledBack ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                            row.action === 'rollback' || isRolledBack ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400' :
                             'bg-amber-500/10 text-amber-600 dark:text-amber-400'}`}>
-                          {row.action === 'import' && <Upload className="w-3 h-3" />}
-                          {row.action === 'rollback' && <RotateCcw className="w-3 h-3" />}
+                          {row.action === 'import' && !isRolledBack && <Upload className="w-3 h-3" />}
+                          {(row.action === 'rollback' || isRolledBack) && <RotateCcw className="w-3 h-3" />}
                           {row.action === 'recalculate' && <RefreshCw className="w-3 h-3" />}
-                          {row.action}
+                          {isRolledBack ? 'rolled back' : row.action}
                         </span>
                       </td>
                       <td className="px-4 py-3">
@@ -507,7 +511,7 @@ export default function ImportCourseraPage() {
                       </td>
                       <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">{formatDuration(row.duration_ms)}</td>
                       <td className="px-4 py-3">
-                        {row.action === 'import' && row.status === 'success' && (
+                        {row.action === 'import' && row.status === 'success' && !isRolledBack && (
                           <div className="flex items-center gap-2">
                             {/* Recalculate — always available for successful imports */}
                             <button
